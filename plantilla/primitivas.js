@@ -734,7 +734,16 @@
     franjaSubtitulos(ctx);
     if (escena.escala !== false) barraEscala(ctx, v, escena.unidad);
     ocupado = [];
-    for (const c of escena.capas) if (PANTALLA.has(c.tipo) && c.tipo !== 'etiqueta') P[c.tipo]?.(ctx, c, t, v);
+    // Número y cita ocupan siempre el mismo lugar: si la IA pone varios a la vez (pasó: "$500" sobre "$1000"),
+    // solo se muestra el que empezó más recientemente.
+    const ultimo = {};
+    for (const c of escena.capas) if ((c.tipo === 'numero' || c.tipo === 'cita') && (c.desde ?? 0) <= t + .6 &&
+      (!ultimo[c.tipo] || (c.desde ?? 0) >= (ultimo[c.tipo].desde ?? 0))) ultimo[c.tipo] = c;
+    for (const c of escena.capas) {
+      if (!PANTALLA.has(c.tipo) || c.tipo === 'etiqueta') continue;
+      if ((c.tipo === 'numero' || c.tipo === 'cita') && ultimo[c.tipo] !== c) continue;
+      P[c.tipo]?.(ctx, c, t, v);
+    }
     for (const c of escena.capas) if (c.tipo === 'etiqueta') P.etiqueta(ctx, c, t, v);
   }
 
