@@ -48,6 +48,7 @@ GEMINI_RETRY_WAITS = (0, 10, 30, 60)
 # 2026-10-19: 2399 tokens pensando dejaron 96 para el guion y el JSON salió cortado). Este
 # margen se suma para que max_tokens siga siendo el espacio de la respuesta.
 GEMINI_THINKING_ROOM = 8192
+GEMINI_TIMEOUT_MS = 120_000  # por petición
 
 
 # Groq retira y renombra modelos con frecuencia (un nombre fijo acaba en 404). Se consulta su
@@ -159,7 +160,8 @@ class LLMRouter:
     def _gemini_call(self, build_config, contents: str):
         """Prueba los modelos Gemini en orden; un modelo saturado (503) o retirado (404) pasa al siguiente."""
         from google import genai
-        client = genai.Client(api_key=self.keys["gemini"])
+        # Sin timeout, una conexión colgada bloquea para siempre (pasó en GitHub Actions: 43 min parado).
+        client = genai.Client(api_key=self.keys["gemini"], http_options={"timeout": GEMINI_TIMEOUT_MS})
         last_error: Optional[Exception] = None
         # Los picos de demanda (503) suelen durar segundos: si todos los modelos están
         # saturados se espera y se reintenta la ronda completa.

@@ -21,6 +21,22 @@ EJEMPLO = """<div class="titulo aparece">El sifón</div>
   <g class="pop" style="animation-delay:4.5s"><use href="#i-equis" x="760" y="600" width="140" height="140" style="color:#e63946"/></g>
 </svg>"""
 
+ESTILOS = {
+    "plano": "ESTILO DIAGRAMA: explicación visual clara con formas, flechas, íconos y pocas etiquetas.",
+    # Probado: dibujar anatomía detallada a mano en SVG sale deforme (manchas). Se pide composición simple y grande.
+    "ilustracion": """ESTILO DOCUMENTAL (el fondo ya es cálido con grano; aquí importa UN protagonista claro):
+  - UNA figura protagonista GRANDE (60-80 % del lienzo) en primer plano, armada con íconos de la biblioteca
+    ampliados (300-700 px) y formas geométricas simples (círculos, elipses, curvas suaves).
+  - Simplificado y reconocible antes que detallado y deforme: NO intentes dibujar anatomía realista a mano.
+  - Cada cosa con su color natural (delfín gris azulado, sangre roja, hoja verde, piel); el acento solo para el giro.
+  - Máximo 2 etiquetas cortas. Movimiento sutil: lo importante late (pulso), partículas que suben, trazos que se dibujan.""",
+}
+
+NOTA_PORTADA = """
+- ¡ESTA ESCENA ES LA PORTADA (la miniatura del video)! El dibujo protagonista debe verse COMPLETO desde el segundo 0
+  (sin animation-delay, usa solo pulso/sube/flujo para moverlo) y quedarse en la mitad SUPERIOR (y 20-640):
+  abajo se pone un título gigante encima. Sin título <div class="titulo"> en esta escena."""
+
 PROMPT_ESCENA = """Eres animador de videos explicativos verticales para celular. Dibuja UNA escena como HTML + SVG animado con CSS.
 
 Video: "{titulo}" (escena {n} de {total}). Guion completo, para que el estilo sea coherente:
@@ -29,7 +45,9 @@ Video: "{titulo}" (escena {n} de {total}). Guion completo, para que el estilo se
 ESTA ESCENA
 - Narración: "{voz}"
 - Qué dibujar: {visual}
-- Dura unos {dur:.0f} segundos: haz aparecer los elementos entre 0 s y {fin:.1f} s en el orden de la narración.
+- Dura unos {dur:.0f} segundos: haz aparecer los elementos entre 0 s y {fin:.1f} s en el orden de la narración.{nota_portada}
+
+{guia_estilo}
 
 LIENZO
 - Devuelve SOLO el contenido de la escena (sin <section>, <html>, <style>, <script>, ni ```).
@@ -106,7 +124,7 @@ def escena_texto(voz: str, paleta: dict) -> str:
             f'stroke="{paleta["secundario"]}" stroke-width="10" stroke-dasharray="30 22" opacity=".5"/></g>{"".join(partes)}</svg>')
 
 
-def animar_escena(router: LLMRouter, guion: dict, indice: int, paleta: dict) -> tuple[str, str]:
+def animar_escena(router: LLMRouter, guion: dict, indice: int, paleta: dict, estilo: str = "plano") -> tuple[str, str]:
     """Devuelve (html, origen) donde origen es 'ia' o 'respaldo'."""
     escenas = guion["escenas"]
     escena = escenas[indice]
@@ -115,7 +133,9 @@ def animar_escena(router: LLMRouter, guion: dict, indice: int, paleta: dict) -> 
         titulo=guion.get("titulo", ""), n=indice + 1, total=len(escenas),
         resumen="\n".join(f"{i + 1}. {e['voz']}" for i, e in enumerate(escenas)),
         voz=escena["voz"], visual=escena.get("visual") or "un diagrama que explique la narración",
-        dur=dur, fin=max(1.0, dur - 1.5), iconos=", ".join(ICONOS), ejemplo=EJEMPLO, **paleta)
+        dur=dur, fin=max(1.0, dur - 1.5), iconos=", ".join(ICONOS), ejemplo=EJEMPLO,
+        guia_estilo=ESTILOS.get(estilo, ESTILOS["plano"]),
+        nota_portada=NOTA_PORTADA if indice == 0 and guion.get("portada", {}).get("texto") else "", **paleta)
     if router.has_any:
         for intento in range(2):
             try:

@@ -1,7 +1,28 @@
 # Nichos de la fábrica. Voces: gemini:Puck, gemini:Fenrir, gemini:Achird, en-US-BrianMultilingualNeural
 # (o cualquier voz de Edge-TTS). Puedes editarlos aquí o en la pestaña 🧭 Nichos.
+# estilo: plano (diagramas con cuadrícula, por defecto) o ilustracion (editorial, fondo cálido con grano).
 # paleta: colores del fondo (centro, medio, borde), acento (títulos y palabra resaltada)
 #         y colores que la IA usa para dibujar (principal, secundario, peligro, ok).
+
+biologia:
+  nombre: 🧬 Biología que no te contaron
+  descripcion: Datos reales del cuerpo y los animales que contradicen lo que la gente cree, con giro sorprendente.
+  tono: Directo y sorprendente desde la primera frase, frases cortas, revela el giro rápido y lo explica simple.
+  voz: "gemini:Fenrir"
+  estilo: ilustracion
+  cta: Sígueme para más biología que no te contaron.
+  paleta: {fondo: ["#3b2a24", "#221713", "#0d0907"], acento: "#5BE37D", principal: "#E8B18F", secundario: "#B5654B", peligro: "#D64545", ok: "#5BE37D"}
+  ideas:
+    - Por qué los flamencos son rosados si nacen grises
+    - El pulpo tiene tres corazones y sangre azul
+    - Tu cerebro no siente dolor
+    - Los delfines duermen con medio cerebro
+    - Las uñas no siguen creciendo después de morir
+    - Los murciélagos no son ciegos
+    - Los tiburones existen desde antes que los árboles
+    - Los gatos no pueden saborear lo dulce
+    - En los caballitos de mar el macho lleva las crías
+    - Las abejas bailan para indicar dónde hay flores
 
 cotidiano:
   nombre: 🏠 Cosas de todos los días
@@ -42,6 +63,7 @@ cuerpo:
   descripcion: Cómo funciona el cuerpo humano, con diagramas de órganos y procesos.
   tono: Cercano y sorprendente, sin dar consejos médicos.
   voz: "gemini:Achird"
+  estilo: ilustracion
   cta: Sígueme para conocer tu cuerpo por dentro.
   paleta: {fondo: ["#4a1020", "#2a0812", "#120307"], acento: "#FFB703", principal: "#FF8FA3", secundario: "#FFC2D1", peligro: "#ff3b3b", ok: "#80ED99"}
   ideas:

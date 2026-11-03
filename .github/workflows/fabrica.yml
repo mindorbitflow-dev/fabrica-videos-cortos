@@ -1,17 +1,17 @@
-# Crea un video cada 6 horas y lo envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
+# Crea un video cada 3 horas y lo envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
 name: Fábrica de videos
 
 on:
   schedule:
-    # Hora UTC. 05,11,17,23 UTC = 0:17, 6:17, 12:17 y 18:17 en Colombia (UTC-5).
+    # Cada 3 horas (8 videos al día). Hora UTC: 2,5,8,...,23 UTC = 21:17, 0:17, 3:17, ..., 18:17 en Colombia (UTC-5).
     # GitHub puede retrasar las tareas programadas unos minutos en horas de mucha demanda.
-    - cron: "17 5,11,17,23 * * *"
+    - cron: "17 2-23/3 * * *"
   workflow_dispatch:
     inputs:
       nicho:
         description: Nicho (rotar = el que lleva más tiempo sin video)
         type: choice
-        options: [rotar, cotidiano, ciencia, cuerpo, tecnologia, dinero, mente]
+        options: [rotar, biologia, cotidiano, ciencia, cuerpo, tecnologia, dinero, mente]
         default: rotar
 
 permissions:
@@ -27,6 +27,7 @@ jobs:
     timeout-minutes: 45
     env:
       PYTHONIOENCODING: utf-8
+      PYTHONUNBUFFERED: "1"   # ver el avance en vivo en el registro
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       CUSTOM_LLM_BASE_URL: ${{ secrets.CUSTOM_LLM_BASE_URL }}

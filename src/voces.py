@@ -133,7 +133,7 @@ def _gemini_pcm(texto: str, voz: str) -> bytes:
     clave = os.getenv("GEMINI_API_KEY", "").strip()
     if not clave:
         raise RuntimeError("falta GEMINI_API_KEY")
-    cliente = genai.Client(api_key=clave)
+    cliente = genai.Client(api_key=clave, http_options={"timeout": 120_000})  # ms: evita esperas infinitas
     ultimo: Optional[Exception] = None
     for espera in (0, 10, 25):
         if espera:

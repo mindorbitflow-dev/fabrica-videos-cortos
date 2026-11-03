@@ -21,7 +21,8 @@ def configurado() -> bool:
     return bool(os.getenv("GMAIL_USUARIO", "").strip() and os.getenv("GMAIL_CLAVE_APP", "").strip())
 
 
-def _enviar(asunto: str, cuerpo: str, adjunto: tuple[bytes, str] | None = None) -> None:
+def _enviar(asunto: str, cuerpo: str, adjunto: tuple[bytes, str] | None = None,
+            imagen: tuple[bytes, str] | None = None) -> None:
     usuario = os.getenv("GMAIL_USUARIO", "").strip()
     clave = os.getenv("GMAIL_CLAVE_APP", "").replace(" ", "").strip()
     if not (usuario and clave):
@@ -34,6 +35,8 @@ def _enviar(asunto: str, cuerpo: str, adjunto: tuple[bytes, str] | None = None) 
     if adjunto:
         datos, nombre = adjunto
         msg.add_attachment(datos, maintype="video", subtype="mp4", filename=nombre)
+    if imagen:
+        msg.add_attachment(imagen[0], maintype="image", subtype="jpeg", filename=imagen[1])
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=120) as smtp:
         smtp.login(usuario, clave)
         smtp.send_message(msg)
@@ -61,9 +64,12 @@ def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
         f"Nicho: {nicho}",
         f"Duración: {p.get('duracion', '?')} s · Voz: {voces.nombre_voz(p.get('voz_usada') or p.get('voz', ''))}",
         *[f"⚠️ {a}" for a in avisos], "",
+        "La imagen adjunta es la portada: úsala como miniatura del reel.",
         "Antes de publicar, revisa que los datos del video sean correctos.",
     ])
-    _enviar(f"🎬 {p['titulo']}", cuerpo, adjunto)
+    portada = fabrica.portada_jpg(p)
+    imagen = (portada.read_bytes(), f"portada_{p['id']}.jpg") if portada.exists() else None
+    _enviar(f"🎬 {p['titulo']}", cuerpo, adjunto, imagen)
 
 
 def enviar_error(detalle: str, enlace: str = "") -> None:

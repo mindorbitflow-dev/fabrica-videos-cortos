@@ -59,7 +59,10 @@
       e.style.visibility = activa ? 'visible' : 'hidden';
       e.style.opacity = activa ? Math.min(1, local / 0.2) : 0;
       e.getAnimations({ subtree: true }).forEach(a => { a.pause(); a.currentTime = Math.max(0, local) * 1000; });
-      if (activa) subtitular(p, local);
+      if (activa) {
+        if (e.querySelector('.portada')) { if (ultimoSub) { sub.innerHTML = ''; ultimoSub = ''; } }
+        else subtitular(p, local);
+      }
     });
   }
 

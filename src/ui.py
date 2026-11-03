@@ -128,6 +128,13 @@ with tab_crear:
             st.markdown("#### 1. Guion")
             st.caption("⚠️ Verifica cada dato antes de publicar: los errores en los comentarios hunden un canal.")
             titulo = st.text_input("Título", p["titulo"], key=f"{pid}_titulo")
+            portada = p.get("portada") or {}
+            with st.container(border=True):
+                st.markdown("**Portada** (gancho del primer segundo y miniatura)")
+                pc = st.columns([3, 2])
+                port_texto = pc[0].text_input("Texto (2-5 palabras)", portada.get("texto", ""), key=f"{pid}_pt")
+                port_dest = pc[1].text_input("Palabra en color", portada.get("destacado", ""), key=f"{pid}_pd")
+                port_sub = st.text_input("Línea pequeña", portada.get("sub", ""), key=f"{pid}_ps")
             nuevas = []
             for i, e in enumerate(p["escenas"]):
                 with st.container(border=True):
@@ -150,7 +157,8 @@ with tab_crear:
             hashtags = st.text_input("Hashtags", " ".join(p.get("hashtags", [])), key=f"{pid}_hash")
             g1, g2 = st.columns(2)
             if g1.button("💾 Guardar guion", width="stretch"):
-                p.update(titulo=titulo, escenas=[e for e in nuevas if e["voz"].strip()], caption=caption,
+                p.update(titulo=titulo, portada={"texto": port_texto, "destacado": port_dest, "sub": port_sub},
+                         escenas=[e for e in nuevas if e["voz"].strip()], caption=caption,
                          hashtags=hashtags.split(), avisos=[])
                 if p["estado"] == "nuevo":
                     p["estado"] = "guion"

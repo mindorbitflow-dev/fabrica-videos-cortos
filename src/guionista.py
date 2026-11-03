@@ -21,15 +21,26 @@ Tema: {tema}
 Reglas:
 - Español latino neutro. Frases cortas y concretas, pensadas para leerse en voz alta.
 - Entre {emin} y {emax} escenas, y entre {pmin} y {pmax} palabras de narración en total.
-- Escena 1 = gancho: pregunta o afirmación sorprendente sobre algo concreto, máximo 22 palabras.
+- Escena 1 = gancho: arranca directo con el dato que contradice lo que la gente cree, en la primera frase
+  (nada de "hoy te voy a contar"). Máximo 22 palabras.
 - Cada escena explica UNA sola idea que se pueda dibujar como un diagrama simple.
 - Solo hechos ampliamente aceptados. No inventes cifras, fechas, estudios ni récords; si dudas de un dato, no lo uses.
 - Nada de clickbait falso ("no vas a creer", "nadie habla de esto").
 - La última escena cierra con un dato útil y termina exactamente con: "{cta}"
 - "visual": 1-2 frases que digan qué dibujar (formas, flechas, etiquetas de 1 a 3 palabras). Sin fotos ni personas realistas.
+
+PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide si alguien mira el video):
+- "texto": 2 a 5 palabras, máximo 24 letras, que choquen con lo que la gente cree. Fórmulas que funcionan:
+  "NO X: Y" · "SIN X Y SIGUE" · "TU X HACE Y" · "LA MISMA X" · "X NO ES Y" · "NACE X, SE VUELVE Y".
+  Ejemplos de estilo (otros temas): "NO DUERME: APAGA MEDIO CEREBRO" · "TU CEREBRO NO SIENTE DOLOR" ·
+  "NACEN GRISES" · "TRES CORAZONES".
+- "destacado": la palabra (o dos) del texto que se pinta en color: la del giro.
+- "sub": 4 a 9 palabras en minúsculas que explican el giro, ej. "el flamenco se pinta con lo que come".
+- Debe ser VERDAD: un gancho exagerado o falso destruye la confianza del público.
 {extra}
 Responde SOLO con este JSON:
 {{"titulo": "título para YouTube, máximo 70 caracteres",
+  "portada": {{"texto": "...", "destacado": "...", "sub": "..."}},
   "escenas": [{{"voz": "narración de la escena", "visual": "qué se dibuja"}}],
   "caption": "descripción de 1 o 2 frases",
   "hashtags": ["#ejemplo", "... entre 5 y 8"]}}"""
@@ -89,6 +100,14 @@ def problemas_guion(g: dict) -> list[str]:
         errores.append("el gancho (escena 1) es demasiado largo")
     if not str(g.get("titulo", "")).strip():
         errores.append("falta el título")
+    portada = g.get("portada") or {}
+    texto = str(portada.get("texto", "")).strip()
+    if not texto:
+        errores.append("falta la portada")
+    elif len(texto.split()) > 6 or len(texto) > 32:
+        errores.append(f"la portada \"{texto}\" es muy larga (máximo 5 palabras)")
+    elif str(portada.get("destacado", "")).strip().lower() not in texto.lower():
+        errores.append("el 'destacado' de la portada no es una palabra del texto")
     return errores
 
 
@@ -114,6 +133,7 @@ def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
         raise RuntimeError("La IA no devolvió un guion válido.")
     return {
         "titulo": str(ultimo.get("titulo", tema)).strip()[:100],
+        "portada": {k: str((ultimo.get("portada") or {}).get(k, "")).strip() for k in ("texto", "destacado", "sub")},
         "escenas": [{"voz": str(e.get("voz", "")).strip(), "visual": str(e.get("visual", "")).strip(), "html": ""}
                     for e in ultimo.get("escenas", [])],
         "caption": str(ultimo.get("caption", "")).strip(),

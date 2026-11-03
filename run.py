@@ -20,6 +20,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 RAIZ = os.path.dirname(os.path.abspath(__file__))
+LIMITE_AUTO_MIN = 35  # el job de GitHub se corta a los 45
 os.chdir(RAIZ)  # .env, config y proyectos se resuelven desde aquí
 sys.path.insert(0, RAIZ)
 
@@ -54,12 +55,19 @@ def check() -> None:
 
 def auto(nicho: str | None, musica: str) -> None:
     """Un video de principio a fin y por correo. Si falla, avisa por correo y sale con error."""
+    import signal
     import traceback
     from src import correo, fabrica
     from src.llm import LLMRouter
     enlace = ""
     if os.getenv("GITHUB_RUN_ID"):
         enlace = f"{os.getenv('GITHUB_SERVER_URL')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
+    def limite(*_):
+        raise TimeoutError(f"el video tardó más de {LIMITE_AUTO_MIN} minutos")
+
+    if hasattr(signal, "SIGALRM"):  # Linux (GitHub Actions): avisar por correo antes de que GitHub cancele
+        signal.signal(signal.SIGALRM, limite)
+        signal.alarm(LIMITE_AUTO_MIN * 60)
     try:
         if not correo.configurado():
             raise RuntimeError("Faltan GMAIL_USUARIO y GMAIL_CLAVE_APP: no tendría a dónde enviar el video.")
@@ -80,7 +88,11 @@ def auto(nicho: str | None, musica: str) -> None:
                 correo.enviar_error(detalle, enlace)
             except Exception as error_correo:
                 print(f"Tampoco se pudo enviar el aviso por correo: {error_correo}")
-        sys.exit(1)
+        sys.stdout.flush()
+        os._exit(1)  # sin esperar hilos colgados (una llamada de red atascada impediría terminar)
+    finally:
+        if hasattr(signal, "SIGALRM"):
+            signal.alarm(0)
 
 
 def main() -> None:

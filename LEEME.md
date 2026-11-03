@@ -21,6 +21,12 @@ Cada escena se puede **🔁 rehacer** sola. Si cambias "Qué se dibuja", esa esc
 **🏭 Lote**: varios videos seguidos (temas de la IA o tu lista).
 **🧭 Nichos**: tono, voz, frase de cierre, paleta de colores y banco de ideas (`config/nichos.yaml`).
 
+## Portada y ganchos virales
+Cada guion trae una **portada**: 2-5 palabras gigantes que chocan con lo que la gente cree, con la palabra del
+giro en color y una línea pequeña que lo explica (fórmulas "NO X: Y", "SIN X Y SIGUE", "TU X HACE Y"...).
+Se ve en el primer segundo y sale como `portada.jpg` (adjunta en el correo) para usarla de miniatura.
+Nicho **🧬 Biología** y **🫀 Cuerpo** usan el estilo `ilustracion` (fondo cálido con grano, sin cuadrícula).
+
 ## Voces
 | Voz | Motor | Nota |
 |---|---|---|
@@ -48,8 +54,8 @@ src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter �
 - Falta Chromium → `python -m playwright install chromium`
 - Música: pon tus .mp3 sin copyright en `assets/musica/`
 
-## 🤖 Automático en GitHub Actions (un video cada 6 horas, por correo)
-`.github/workflows/fabrica.yml` corre a las 0:17, 6:17, 12:17 y 18:17 (hora de Colombia). Rota el nicho
+## 🤖 Automático en GitHub Actions (un video cada 3 horas, por correo)
+`.github/workflows/fabrica.yml` corre cada 3 horas (21:17, 0:17, 3:17 … 18:17, hora de Colombia): 8 videos al día. Rota el nicho
 (el que lleva más tiempo sin video), fabrica un video con tema nuevo y te lo envía a Gmail con el texto
 para publicar. Si falla, te llega un correo con el error. El video también queda 7 días en Actions.
 

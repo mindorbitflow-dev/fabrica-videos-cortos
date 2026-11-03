@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800;900&display=block');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800;900&family=Anton&family=Space+Mono&display=block');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background: #05080f; overflow: hidden; }
@@ -28,6 +28,35 @@ html, body { background: #05080f; overflow: hidden; }
   color: var(--acento); text-shadow: 0 8px 0 rgba(0,0,0,.45);
 }
 .etiqueta { font-family: 'Montserrat', sans-serif; font-weight: 900; fill: #fff; }
+
+/* ---- Estilo "ilustración" (body.estilo-ilustracion): sin cuadrícula, fondo cálido, grano y viñeta ---- */
+.estilo-ilustracion #lienzo {
+  background: radial-gradient(ellipse at 50% 40%, var(--fondo-a) 0%, var(--fondo-b) 55%, var(--fondo-c) 100%);
+}
+.estilo-ilustracion #lienzo::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background:
+    radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .35 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
+  mix-blend-mode: overlay; opacity: .55;
+}
+
+/* ---- Portada: gancho gigante del primer segundo (también es la miniatura del reel) ---- */
+.portada {
+  position: absolute; left: 40px; right: 40px; top: 1060px; z-index: 6; text-align: center;
+  padding: 30px 0 10px; font-family: 'Anton', 'Montserrat', sans-serif; text-transform: uppercase;
+}
+.portada::before {
+  content: ""; position: absolute; left: -40px; right: -40px; top: -160px; bottom: -600px; z-index: -1;
+  background: linear-gradient(transparent, rgba(0,0,0,.75) 25%, rgba(0,0,0,.85));
+}
+/* En la escena de portada el gancho es el único texto: se ocultan títulos y etiquetas que dibuje la IA */
+.escena:has(.portada) .titulo, .escena:has(.portada) svg text { display: none; }
+.portada .linea { font-size: 132px; line-height: 1.02; color: #fff; letter-spacing: 1px;
+  text-shadow: 0 6px 0 rgba(0,0,0,.5); }
+.portada .destacado { color: var(--acento); }
+.portada .sub { margin-top: 18px; font-family: 'Space Mono', monospace; font-size: 40px;
+  text-transform: none; color: #e9e2d8; letter-spacing: 1px; }
 
 /* Subtítulos palabra por palabra (los genera motor.js) */
 #subtitulo {

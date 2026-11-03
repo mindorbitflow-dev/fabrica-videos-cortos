@@ -132,10 +132,14 @@ def miniatura(p: dict) -> Path:
     return carpeta(p) / "miniatura.jpg"
 
 
+def portada_jpg(p: dict) -> Path:
+    return carpeta(p) / "portada.jpg"
+
+
 # ---------- pasos ----------
 def escribir_guion(p: dict, router: LLMRouter) -> dict:
     g = guionista.escribir_guion(router, cargar_nichos()[p["nicho"]], p["tema"])
-    p.update({k: g[k] for k in ("titulo", "escenas", "caption", "hashtags", "avisos")})
+    p.update({k: g[k] for k in ("titulo", "portada", "escenas", "caption", "hashtags", "avisos")})
     p["estado"] = "guion"
     return guardar(p)
 
@@ -149,7 +153,8 @@ def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, prog
     if progreso:
         progreso(0, f"Animando {len(indices)} escenas...")
     with ThreadPoolExecutor(max_workers=3) as pool:
-        tareas = {pool.submit(animador.animar_escena, router, p, i, paleta_dibujo): i for i in indices}
+        estilo = cargar_nichos()[p["nicho"]].get("estilo", "plano")
+        tareas = {pool.submit(animador.animar_escena, router, p, i, paleta_dibujo, estilo): i for i in indices}
         for n, tarea in enumerate(as_completed(tareas), 1):
             i = tareas[tarea]
             p["escenas"][i]["html"], p["escenas"][i]["origen"] = tarea.result()
@@ -160,22 +165,39 @@ def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, prog
     return guardar(p)
 
 
+def html_portada(portada: Optional[dict]) -> str:
+    """Gancho gigante sobre la escena 1: texto con la(s) palabra(s) destacada(s) en color y una línea pequeña."""
+    if not portada or not str(portada.get("texto", "")).strip():
+        return ""
+    texto = htmlmod.escape(portada["texto"].strip().upper())
+    destacado = htmlmod.escape(str(portada.get("destacado", "")).strip().upper())
+    if destacado and destacado in texto:
+        i = texto.index(destacado)
+        texto = f'{texto[:i]}<span class="destacado">{destacado}</span>{texto[i + len(destacado):]}'
+    sub = htmlmod.escape(str(portada.get("sub", "")).strip())
+    return f'<div class="portada"><div class="linea">{texto}</div>' + (f'<div class="sub">{sub}</div>' if sub else "") + "</div>"
+
+
 def componer_html(p: dict) -> str:
     """Documento autocontenido (CSS y motor en línea): sirve para la vista previa y para el render."""
-    pal = cargar_nichos()[p["nicho"]]["paleta"]
+    nicho = cargar_nichos()[p["nicho"]]
+    pal = nicho["paleta"]
+    estilo = nicho.get("estilo", "plano")
+    portada = html_portada(p.get("portada"))
     fa, fb, fc = pal["fondo"]
     r, g, b = (int(pal["principal"][i:i + 2], 16) for i in (1, 3, 5))
     css = (PLANTILLA / "base.css").read_text(encoding="utf-8")
     js = (PLANTILLA / "motor.js").read_text(encoding="utf-8")
     iconos = (PLANTILLA / "iconos.svg").read_text(encoding="utf-8")
     secciones = "\n".join(
-        f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{e.get("html") or ""}\n</section>'
-        for e in p["escenas"])
+        f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{e.get("html") or ""}\n'
+        f'{portada if i == 0 else ""}</section>'
+        for i, e in enumerate(p["escenas"]))
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><title>{htmlmod.escape(p['titulo'])}</title>
 <style>{css}
 :root {{ --fondo-a:{fa}; --fondo-b:{fb}; --fondo-c:{fc}; --acento:{pal['acento']}; --rejilla:rgba({r},{g},{b},.07); }}</style>
-</head><body><div id="lienzo">
+</head><body class="estilo-{estilo}"><div id="lienzo">
 {iconos}
 {secciones}
 </div><script>{js}</script></body></html>"""
@@ -202,6 +224,7 @@ def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, m
     duracion, p["voz_usada"] = render.renderizar(html, mp4(p), p["voz"], velocidad, elegir_musica(musica), progreso)
     p["duracion"] = round(duracion, 1)
     render.miniatura(mp4(p), miniatura(p), min(2.0, p["duracion"] / 2))
+    render.miniatura(mp4(p), portada_jpg(p), 0.5, ancho=1080)  # miniatura para subir al reel
     shutil.rmtree(carpeta(p) / "tmp_audio", ignore_errors=True)
     p["estado"] = "listo"
     guardar(p)
