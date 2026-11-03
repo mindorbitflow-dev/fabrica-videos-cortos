@@ -52,6 +52,11 @@ def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
     respaldos = [str(i + 1) for i, e in enumerate(p["escenas"]) if e.get("origen") == "respaldo"]
     if respaldos:
         avisos.append(f"Escenas con texto animado en lugar de dibujo: {', '.join(respaldos)}.")
+    # Lo que el revisor midió y no logró corregir, y lo que falló al verificar el MP4: hay que mirarlo antes de subir.
+    for i, e in enumerate(p["escenas"]):
+        for problema in e.get("revision") or []:
+            avisos.append(f"Escena {i + 1}: {problema}.")
+    avisos += [f"MP4: {problema}." for problema in p.get("verificacion") or []]
     adjunto = None
     if video.stat().st_size <= MAX_ADJUNTO:
         adjunto = (video.read_bytes(), f"{p['id']}.mp4")

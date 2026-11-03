@@ -30,7 +30,6 @@ jobs:
       PYTHONUNBUFFERED: "1"   # ver el avance en vivo en el registro
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}   # clips reales (nichos con estilo video)
       CUSTOM_LLM_BASE_URL: ${{ secrets.CUSTOM_LLM_BASE_URL }}
       CUSTOM_LLM_API_KEY: ${{ secrets.CUSTOM_LLM_API_KEY }}
       GMAIL_USUARIO: ${{ secrets.GMAIL_USUARIO }}

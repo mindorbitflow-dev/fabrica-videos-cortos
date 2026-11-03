@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import json
 import math
 import subprocess
 from pathlib import Path
@@ -16,10 +17,62 @@ from src import voces
 FPS = 30
 
 Progreso = Optional[Callable[[float, str], None]]
+LUFS = -14            # volumen de referencia de TikTok, Reels y Shorts
+MAX_MB_CORREO = 20    # Gmail: 25 MB contando la codificación del adjunto
 
 
-async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: Optional[Path], progreso: Progreso,
-                      fondos: Optional[list[tuple[Path, bool]]] = None) -> tuple[float, str]:
+def _medir_volumen(wav: Path, total: float) -> dict:
+    """Primera pasada de loudnorm: mide la voz (con su silencio final) para aplicar luego una ganancia fija."""
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(wav), "-af",
+                        f"apad=whole_dur={total:.3f},loudnorm=I={LUFS}:TP=-1.5:LRA=11:print_format=json",
+                        "-f", "null", "-"], capture_output=True, text=True, check=True)
+    return json.loads(r.stderr[r.stderr.rindex("{"):r.stderr.rindex("}") + 1])
+
+
+def _probe(mp4: Path) -> dict:
+    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                        "stream=codec_type,codec_name,width,height,r_frame_rate,pix_fmt,sample_rate:format=duration,size",
+                        "-of", "json", str(mp4)], capture_output=True, text=True, check=True)
+    return json.loads(r.stdout)
+
+
+def _rms_final(mp4: Path, duracion: float, segundos: float = 0.3) -> float:
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-ss", f"{max(0, duracion - segundos):.3f}", "-i", str(mp4),
+                        "-vn", "-af", "astats", "-f", "null", "-"], capture_output=True, text=True)
+    valores = [l.rsplit(":", 1)[1].strip() for l in r.stderr.splitlines() if "RMS level dB" in l]
+    try:
+        return float(valores[-1])
+    except (IndexError, ValueError):
+        return float("-inf")
+
+
+def verificar_mp4(mp4: Path) -> list[str]:
+    """Comprueba que el archivo cumple lo que esperan TikTok, Reels y Shorts y que cabe en el correo."""
+    info = _probe(mp4)
+    video = next((s for s in info["streams"] if s["codec_type"] == "video"), {})
+    audio = next((s for s in info["streams"] if s["codec_type"] == "audio"), {})
+    dur, mb = float(info["format"]["duration"]), int(info["format"]["size"]) / 1048576
+    problemas = []
+    if (video.get("width"), video.get("height")) != (1080, 1920):
+        problemas.append(f"resolución {video.get('width')}x{video.get('height')} (debe ser 1080x1920, 9:16)")
+    if video.get("r_frame_rate") != f"{FPS}/1":
+        problemas.append(f"cuadros por segundo {video.get('r_frame_rate')} (debe ser {FPS})")
+    if video.get("codec_name") != "h264" or video.get("pix_fmt") != "yuv420p":
+        problemas.append(f"video {video.get('codec_name')}/{video.get('pix_fmt')} (debe ser h264/yuv420p)")
+    if audio.get("codec_name") != "aac" or audio.get("sample_rate") != "48000":
+        problemas.append(f"audio {audio.get('codec_name')} {audio.get('sample_rate')} Hz (debe ser AAC 48 kHz)")
+    if not 10 <= dur <= 90:
+        problemas.append(f"dura {dur:.0f} s (lo recomendable es 15-90 s)")
+    if mb > MAX_MB_CORREO:
+        problemas.append(f"pesa {mb:.1f} MB y no cabe en el correo")
+    final = _rms_final(mp4, dur)
+    if final > -60:
+        problemas.append(f"el final no queda en silencio ({final:.0f} dB): puede oírse ruido")
+    return problemas
+
+
+async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: Optional[Path],
+                      progreso: Progreso) -> tuple[float, str]:
     avisar = progreso or (lambda f, m: print(f"[{f:4.0%}] {m}"))
     tmp = mp4.parent / "tmp_audio"
     tmp.mkdir(parents=True, exist_ok=True)
@@ -41,38 +94,27 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
                 avisar(0.1, m)
             total = await pag.evaluate("p => __preparar(p)", plan)
 
+            # Normalización a -14 LUFS en DOS pasadas y lineal: el modo dinámico de loudnorm subía el volumen
+            # de los silencios y la cola del video sonaba a estática. Además, la salida se desvanece al final.
+            medida = await asyncio.to_thread(_medir_volumen, voz_wav, total)
             cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "image2pipe", "-framerate", str(FPS), "-i", "-",
                    "-i", str(voz_wav)]
-            filtros = [f"[1:a]apad=whole_dur={total:.3f}[voz]"]
-            video = "0:v"
-            if fondos:
-                # Estilo "video": un clip real por escena (con zoom lento y algo oscurecido para que el texto
-                # se lea) y encima la capa HTML transparente con portada, subtítulos y rótulos.
-                for i, ((clip, desenfocar), escena) in enumerate(zip(fondos, plan)):
-                    d = escena["dur"]
-                    # Escenas "diagrama": el clip queda de ambiente (desenfocado y oscuro) y el esquema manda.
-                    tono = "boxblur=12:2,eq=brightness=-0.12:saturation=0.95" if desenfocar else "eq=brightness=-0.06:saturation=1.08"
-                    cmd += ["-stream_loop", "-1", "-t", f"{d + 0.5:.3f}", "-i", str(clip)]
-                    filtros.append(
-                        f"[{2 + i}:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps={FPS},"
-                        f"zoompan=z='1+0.08*on/({d:.3f}*{FPS})':d=1:x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':s=1080x1920:fps={FPS},"
-                        f"trim=duration={d:.3f},setpts=PTS-STARTPTS,{tono}[f{i}]")
-                filtros.append("".join(f"[f{i}]" for i in range(len(fondos))) + f"concat=n={len(fondos)}:v=1:a=0[fondo]")
-                filtros.append("[fondo][0:v]overlay=format=auto,format=yuv420p[v]")
-                video = "[v]"
+            # Los cuadros llegan como JPEG (rango de color completo, "yuvj420p"); las plataformas esperan
+            # yuv420p de rango TV: sin esta conversión el verificador lo marcó y los colores pueden verse lavados.
+            filtros = ["[0:v]scale=in_range=pc:out_range=tv,format=yuv420p[v]",
+                       f"[1:a]apad=whole_dur={total:.3f}[voz]"]
             mezcla = "[voz]"
             if musica:
-                n = 2 + len(fondos or [])
                 cmd += ["-stream_loop", "-1", "-i", str(musica)]
-                filtros.append(f"[{n}:a]volume=0.10,afade=t=out:st={max(0, total - 1.5):.2f}:d=1.5[m];"
+                filtros.append(f"[2:a]volume=0.10,afade=t=out:st={max(0, total - 1.5):.2f}:d=1.5[m];"
                                "[voz][m]amix=inputs=2:duration=first:normalize=0[mez]")
                 mezcla = "[mez]"
-            filtros.append(f"{mezcla}loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]")
-            # Con clips reales el peso se dispara (demo: 35 MB en 35 s); se limita para que quepa en el correo
-            # (Gmail: 25 MB). 2,5 Mbps ≈ 19 MB por minuto; los dibujos planos casi nunca llegan a ese tope.
-            calidad = ["-crf", "21", "-maxrate", "2500k", "-bufsize", "5000k"] if fondos else ["-crf", "20"]
-            cmd += ["-filter_complex", ";".join(filtros), "-map", video, "-map", "[a]",
-                    "-c:v", "libx264", "-preset", "veryfast", *calidad, "-pix_fmt", "yuv420p",
+            filtros.append(f"{mezcla}loudnorm=I={LUFS}:TP=-1.5:LRA=11:measured_I={medida['input_i']}"
+                           f":measured_TP={medida['input_tp']}:measured_LRA={medida['input_lra']}"
+                           f":measured_thresh={medida['input_thresh']}:offset={medida['target_offset']}:linear=true,"
+                           f"afade=t=out:st={max(0, total - 0.4):.3f}:d=0.4,aresample=48000[a]")
+            cmd += ["-filter_complex", ";".join(filtros), "-map", "[v]", "-map", "[a]",
+                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-color_range", "tv",
                     "-c:a", "aac", "-b:a", "192k", "-t", f"{total:.3f}", "-movflags", "+faststart", str(mp4)]
             ff = subprocess.Popen(cmd, stdin=subprocess.PIPE)
             try:
@@ -80,9 +122,6 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
                 # Captura directa por CDP: ~22 % más rápida que page.screenshot (medido: 125 vs 160 ms/cuadro).
                 cdp = await pag.context.new_cdp_session(pag)
                 formato = {"format": "jpeg", "quality": 92}
-                if fondos:  # PNG con transparencia para superponerlo a los clips
-                    await cdp.send("Emulation.setDefaultBackgroundColorOverride", {"color": {"r": 0, "g": 0, "b": 0, "a": 0}})
-                    formato = {"format": "png"}
                 for f in range(cuadros):
                     await pag.evaluate("t => __seek(t)", f / FPS)
                     foto = await cdp.send("Page.captureScreenshot", {**formato, "optimizeForSpeed": True})
@@ -101,10 +140,9 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
 
 
 def renderizar(html: Path, mp4: Path, voz: str, velocidad: str = "+8%", musica: Optional[Path] = None,
-               progreso: Progreso = None, fondos: Optional[list[tuple[Path, bool]]] = None) -> tuple[float, str]:
-    """Genera el MP4 y devuelve (duración en segundos, voz realmente usada).
-    `fondos`: por escena, (clip, desenfocar) — desenfocado cuando lleva un diagrama encima."""
-    return asyncio.run(_renderizar(Path(html), Path(mp4), voz, velocidad, musica, progreso, fondos))
+               progreso: Progreso = None) -> tuple[float, str]:
+    """Genera el MP4 y devuelve (duración en segundos, voz realmente usada)."""
+    return asyncio.run(_renderizar(Path(html), Path(mp4), voz, velocidad, musica, progreso))
 
 
 def miniatura(mp4: Path, destino: Path, segundo: float = 2.0, ancho: int = 360) -> None:

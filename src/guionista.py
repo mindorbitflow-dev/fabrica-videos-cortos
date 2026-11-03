@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import random
 import re
+import unicodedata
 
 from src.llm import LLMRouter
 
@@ -25,17 +26,11 @@ Reglas:
   (nada de "hoy te voy a contar"). Máximo 22 palabras.
 - Cada escena explica UNA sola idea que se pueda dibujar como un diagrama simple.
 - Solo hechos ampliamente aceptados. No inventes cifras, fechas, estudios ni récords; si dudas de un dato, no lo uses.
-- Nada de clickbait falso ("no vas a creer", "nadie habla de esto").
-- La última escena cierra con un dato útil y termina exactamente con: "{cta}"
+- La última escena cierra con una consecuencia concreta o un dato práctico. NO pidas que te sigan, comenten
+  o den like, y no termines con preguntas al público.
+- Escribe como alguien que sabe del tema y lo cuenta directo, con datos concretos (cifras, nombres de partes,
+  causas). PROHIBIDO usar estas muletillas que hacen sonar genérico el video: {prohibidas}.
 - "visual": 1-2 frases que digan qué dibujar (formas, flechas, etiquetas de 1 a 3 palabras). Sin fotos ni personas realistas.
-- "clip": 2-4 palabras EN INGLÉS para buscar en un banco de videos REALES grabados con cámara: personas, animales,
-  objetos, lugares, naturaleza. Si la idea es abstracta (el cerebro, una hormona), busca lo que se VE en la vida
-  real: "woman blinking close up", "man yawning", "giraffe drinking water", "coffee pouring cup".
-  PROHIBIDO: animation, diagram, graphic, illustration, icon, button, concept, 3d, cartoon. Sin nombres propios.
-- "modo": "clip" si lo que dice la escena SE PUEDE VER en la vida real (un animal bebiendo, alguien que bosteza);
-  "diagrama" si es algo INVISIBLE que hay que explicar con un esquema (dentro del cuerpo, moléculas, un proceso,
-  una comparación). La primera y la última escena son SIEMPRE "clip". Entre 1 y 3 escenas "diagrama" en
-  total (las más difíciles de imaginar), nunca más de 2 seguidas: el video debe sentirse como video real.
 
 PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide si alguien mira el video):
 - "texto": 2 a 5 palabras, máximo 24 letras, que choquen con lo que la gente cree. Fórmulas que funcionan:
@@ -49,9 +44,9 @@ PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide s
 Responde SOLO con este JSON:
 {{"titulo": "título para YouTube, máximo 70 caracteres",
   "portada": {{"texto": "...", "destacado": "...", "sub": "..."}},
-  "escenas": [{{"voz": "narración de la escena", "visual": "qué se dibuja", "clip": "stock video search", "modo": "clip|diagrama"}}],
-  "caption": "descripción de 1 o 2 frases",
-  "hashtags": ["#ejemplo", "... entre 5 y 8"]}}"""
+  "escenas": [{{"voz": "narración de la escena", "visual": "qué se dibuja"}}],
+  "caption": "descripción de 1 o 2 frases con el dato central (sin muletillas)",
+  "hashtags": ["#ejemplo", "... entre 3 y 5, específicos del tema (nada de #viral, #fyp, #parati, #curiosidades)"]}}"""
 
 PROMPT_TEMA = """Propón UN tema nuevo para un video corto explicativo.
 Nicho: {nombre}. {descripcion}
@@ -62,11 +57,7 @@ NO repitas ni parafrasees ninguno de estos temas ya usados: {usados}
 Responde SOLO JSON: {{"tema": "..."}}"""
 
 
-# En estilo video cada escena es un clip real: un tema abstracto termina con clips genéricos (pasó con el
-# hueso hioides: tazas y boxeadores). Por eso se piden temas que se puedan filmar.
 VISUAL_TEMA = {
-    "video": "Debe poder mostrarse con VIDEOS REALES (animales, partes visibles del cuerpo, objetos, lugares, "
-             "situaciones cotidianas), no con conceptos invisibles o fósiles.",
     "plano": "Debe poder explicarse con diagramas simples (flechas, procesos, comparaciones, gráficas).",
 }
 
@@ -77,6 +68,11 @@ def leer_json(texto: str) -> dict:
     if inicio < 0 or fin < 0:
         raise ValueError("la IA no devolvió JSON")
     return json.loads(texto[inicio:fin + 1])
+
+
+def _norm(t: str) -> str:
+    """Minúsculas y sin tildes, para comparar muletillas y hashtags ("Sígueme" = "sigueme")."""
+    return unicodedata.normalize("NFKD", t.lower()).encode("ascii", "ignore").decode()
 
 
 def _normalizar(t: str) -> str:
@@ -104,22 +100,20 @@ def proponer_tema(router: LLMRouter, nicho: dict, usados: list[str]) -> str:
     return random.choice(libres)
 
 
-MAX_DIAGRAMAS = 3
+# Muletillas que delatan contenido genérico hecho en serie (se piden evitar y se comprueban en el guion).
+MULETILLAS = ["sabías que", "no vas a creer", "increíble", "secreto", "descubre", "impactante", "sorprendente",
+              "fascinante", "alucinante", "misterio", "te explico", "en este video", "hoy te", "sígueme",
+              "dale like", "comenta", "suscríbete", "quédate hasta el final", "nadie te contó", "lo que nadie",
+              "te sorprenderá", "la próxima vez que", "brutal", "épico", "asombroso", "atención"]
+HASHTAGS_GENERICOS = {"viral", "fyp", "parati", "foryou", "foryoupage", "curiosidades", "datoscuriosos",
+                      "sabiasque", "shorts", "reels", "tiktok", "trending", "explore"}
 
 
-def modos_escenas(escenas: list[dict]) -> list[str]:
-    """clip/diagrama por escena con las reglas aplicadas en código (la IA no siempre las cumple: en una prueba
-    puso 5 diagramas de 7, y el "sígueme" final como diagrama): primera y última siempre clip, máximo 3."""
-    modos, diagramas = [], 0
-    for i, e in enumerate(escenas):
-        quiere = str(e.get("modo", "")).strip().lower() == "diagrama"
-        dos_seguidos = modos[-2:] == ["diagrama", "diagrama"]
-        if quiere and 0 < i < len(escenas) - 1 and diagramas < MAX_DIAGRAMAS and not dos_seguidos:
-            modos.append("diagrama")
-            diagramas += 1
-        else:
-            modos.append("clip")
-    return modos
+def muletillas_en(g: dict) -> list[str]:
+    portada = g.get("portada") or {}
+    texto = _norm(" ".join([str(g.get("titulo", "")), str(g.get("caption", "")), str(portada.get("texto", "")),
+                            str(portada.get("sub", ""))] + [str(e.get("voz", "")) for e in g.get("escenas", [])]))
+    return [m for m in MULETILLAS if re.search(rf"\b{re.escape(_norm(m))}\b", texto)]
 
 
 def problemas_guion(g: dict) -> list[str]:
@@ -137,6 +131,9 @@ def problemas_guion(g: dict) -> list[str]:
         errores.append("el gancho (escena 1) es demasiado largo")
     if not str(g.get("titulo", "")).strip():
         errores.append("falta el título")
+    usadas = muletillas_en(g)
+    if usadas:
+        errores.append("usa muletillas prohibidas: " + ", ".join(f'"{m}"' for m in usadas))
     portada = g.get("portada") or {}
     texto = str(portada.get("texto", "")).strip()
     if not texto:
@@ -182,7 +179,7 @@ def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
         texto, proveedor = router.complete_any(PROMPT_GUION.format(
             nombre=nicho["nombre"], descripcion=nicho["descripcion"], tono=nicho["tono"], tema=tema,
             emin=ESCENAS_MIN, emax=ESCENAS_MAX, pmin=PALABRAS_MIN, pmax=PALABRAS_MAX,
-            cta=nicho["cta"], extra=extra), max_tokens=3000)
+            prohibidas=", ".join(f'"{m}"' for m in MULETILLAS), extra=extra), max_tokens=3000)
         try:
             g = leer_json(texto)
         except Exception as error:
@@ -209,12 +206,11 @@ def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
     return {
         "titulo": str(ultimo.get("titulo", tema)).strip()[:100],
         "portada": {k: str((ultimo.get("portada") or {}).get(k, "")).strip() for k in ("texto", "destacado", "sub")},
-        "escenas": [{"voz": str(e.get("voz", "")).strip(), "visual": str(e.get("visual", "")).strip(),
-                     "clip": str(e.get("clip", "")).strip(), "html": "",
-                     "modo": modo}
-                    for e, modo in zip(ultimo.get("escenas", []), modos_escenas(ultimo.get("escenas", [])))],
+        "escenas": [{"voz": str(e.get("voz", "")).strip(), "visual": str(e.get("visual", "")).strip(), "html": ""}
+                    for e in ultimo.get("escenas", [])],
         "caption": str(ultimo.get("caption", "")).strip(),
-        "hashtags": [str(h).strip() for h in ultimo.get("hashtags", []) if str(h).strip()][:8],
+        "hashtags": [h for h in (str(x).strip() for x in ultimo.get("hashtags", []))
+                     if h and _norm(h.lstrip("#")) not in HASHTAGS_GENERICOS][:5],
         "avisos": errores + [f"tiene un dato dudoso: \"{d['frase']}\" ({d.get('problema', '')})"
                                              for d in dudosos],
         "proveedor": proveedor,

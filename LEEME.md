@@ -1,7 +1,7 @@
 # 🎬 Fábrica de Videos Cortos Explicativos
 
-Videos verticales (1080×1920) que explican un tema con **clips reales de Pexels** o **diagramas animados en HTML/SVG**,
-voz neuronal gratis, subtítulos palabra por palabra y música opcional. Todo gratis.
+Videos verticales (1080×1920) que explican un tema con **diagramas animados en HTML/SVG**, voz neuronal
+gratis y subtítulos palabra por palabra. Todo gratis.
 
 ## Uso
 ```bash
@@ -21,15 +21,26 @@ Cada escena se puede **🔁 rehacer** sola. Si cambias "Qué se dibuja", esa esc
 **🏭 Lote**: varios videos seguidos (temas de la IA o tu lista).
 **🧭 Nichos**: tono, voz, frase de cierre, paleta de colores y banco de ideas (`config/nichos.yaml`).
 
-## Estilos (modo mixto)
-| Nichos | Estilo | Cómo se ve |
-|---|---|---|
-| Biología, Cuerpo, Ciencia, Cotidiano, Mente | `video` | Clips reales de Pexels (zoom lento) + portada y subtítulos; las escenas de algo invisible llevan un **diagrama animado** sobre el clip anterior desenfocado (1-3 por video, nunca la primera ni la última) |
-| Tecnología, Dinero | `plano` | Diagramas animados que dibuja la IA (flechas, procesos, gráficas) |
+## Zona segura (TikTok, Reels y Shorts)
+Todo se diseña dentro de la zona que no tapa la interfaz de ninguna de las tres apps (lienzo 1080×1920):
+libres ~250 px arriba, ~420 px abajo, ~140 px a la derecha (botones) y 70 px a la izquierda.
+Título 260-430 · diagrama 430-1190 (SVG de 870×760) · subtítulos 1210-1440 · portada 860-1240.
 
-Se cambia con `estilo:` en `config/nichos.yaml` (también hay `ilustracion` y `tipografia`). En 🎬 Crear, cada
-escena con clip muestra su video, su búsqueda (en inglés, editable) y el botón **🔁 Otro clip**.
-Los videos con clips se comprimen a ~2,5 Mbps para que quepan en el correo (Gmail: 25 MB).
+## Revisión automática (la fábrica verifica su propio resultado)
+1. **Escenas** (`src/revisor.py`): cada escena se abre en un navegador y se mide dónde quedó cada elemento.
+   Detecta: elementos que se salen de la zona segura, textos encimados o montados sobre el borde de una
+   figura, íconos encimados, título que choca con el dibujo, dibujo tapado por la portada, escenas casi
+   vacías y elementos que aparecen demasiado tarde. Los problemas se le devuelven a la IA para que rehaga la
+   escena (hasta 2 veces, quedándose con la mejor versión). Lo que no se pudo corregir sale como ⚠️.
+2. **MP4** (`render.verificar_mp4`): 1080×1920, 30 fps, H.264 yuv420p, AAC 48 kHz, 10-90 s, final en
+   silencio y peso que quepa en el correo.
+
+## Estilos
+`plano` (diagramas sobre cuadrícula) e `ilustracion` (diagramas sobre fondo cálido con grano: Biología y Cuerpo).
+
+## Sin clichés
+El guion no puede usar muletillas como "sabías que", "increíble", "secreto", "descubre" ni pedir que te sigan
+(se comprueba en código); los hashtags genéricos (#viral, #fyp, #curiosidades…) se eliminan.
 
 ## Verificación de datos
 Después de escribir el guion, otra consulta a la IA busca mitos y exageraciones; si los hay, se reescribe
@@ -57,7 +68,8 @@ plantilla/motor.js     reloj de escenas y subtítulos (la vista previa y el MP4 
 src/guionista.py       temas sin repetir + guion con contrato (5-8 escenas, 100-160 palabras, gancho corto)
 src/animador.py        escena → SVG animado con IA (limpia scripts/enlaces; respaldo de texto animado)
 src/voces.py           Gemini TTS / Edge-TTS + alineación de palabras con Whisper
-src/render.py          Chromium (Playwright) cuadro a cuadro + ffmpeg (-14 LUFS)
+src/render.py          Chromium (Playwright) cuadro a cuadro + ffmpeg (-14 LUFS lineal) + verificación del MP4
+src/revisor.py         mide cada escena en el navegador y lista los problemas de composición
 src/fabrica.py         proyectos en proyectos/<id>/ (proyecto.json, video.html, video.mp4, miniatura.jpg)
 src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter → Gemini → Groq)
 ```
@@ -65,7 +77,7 @@ src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter �
 ## Problemas comunes
 - Voz con error 403 → `pip install -U edge-tts`
 - Falta Chromium → `python -m playwright install chromium`
-- Música: pon tus .mp3 sin copyright en `assets/musica/`
+- Música: desactivada por defecto; para usarla, pon .mp3 sin copyright en `assets/musica/` y elígela en la app
 
 ## 🤖 Automático en GitHub Actions (un video cada 3 horas, por correo)
 `.github/workflows/fabrica.yml` corre cada 3 horas (21:17, 0:17, 3:17 … 18:17, hora de Colombia): 8 videos al día. Rota el nicho
@@ -73,7 +85,7 @@ src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter �
 para publicar. Si falla, te llega un correo con el error. El video también queda 7 días en Actions.
 
 Secrets necesarios (Settings → Secrets and variables → Actions):
-`GEMINI_API_KEY`, `GROQ_API_KEY`, `PEXELS_API_KEY`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY`,
+`GEMINI_API_KEY`, `GROQ_API_KEY`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY`,
 `GMAIL_USUARIO`, `GMAIL_CLAVE_APP` (contraseña de aplicación: myaccount.google.com/apppasswords), `CORREO_DESTINO` (opcional).
 
 - Lanzarlo a mano: pestaña **Actions → Fábrica de videos → Run workflow** (puedes elegir el nicho).

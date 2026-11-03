@@ -1,7 +1,6 @@
 # Nichos de la fábrica. Voces: gemini:Puck, gemini:Fenrir, gemini:Achird, en-US-BrianMultilingualNeural
 # (o cualquier voz de Edge-TTS). Puedes editarlos aquí o en la pestaña 🧭 Nichos.
-# estilo: video (clips reales de Pexels + portada y subtítulos), plano (diagramas animados),
-#         ilustracion (diagramas con fondo cálido y grano) o tipografia (texto grande + ícono).
+# estilo: plano (diagramas sobre cuadrícula) o ilustracion (diagramas sobre fondo cálido con grano).
 # paleta: colores del fondo (centro, medio, borde), acento (títulos y palabra resaltada)
 #         y colores que la IA usa para dibujar (principal, secundario, peligro, ok).
 
@@ -10,8 +9,7 @@ biologia:
   descripcion: Datos reales del cuerpo y los animales que contradicen lo que la gente cree, con giro sorprendente.
   tono: Directo y sorprendente desde la primera frase, frases cortas, revela el giro rápido y lo explica simple.
   voz: "gemini:Fenrir"
-  estilo: video
-  cta: Sígueme para más biología que no te contaron.
+  estilo: ilustracion
   paleta: {fondo: ["#3b2a24", "#221713", "#0d0907"], acento: "#5BE37D", principal: "#E8B18F", secundario: "#B5654B", peligro: "#D64545", ok: "#5BE37D"}
   ideas:
     - Por qué los flamencos son rosados si nacen grises
@@ -30,8 +28,7 @@ cotidiano:
   descripcion: Objetos y detalles cotidianos que todos ven y nadie sabe para qué sirven.
   tono: Curioso, cercano, con sorpresa en el gancho y explicación clara paso a paso.
   voz: "gemini:Puck"
-  estilo: video
-  cta: Sígueme para más cosas que ves todos los días y nadie te explica.
+  estilo: plano
   paleta: {fondo: ["#12305a", "#0a1628", "#05080f"], acento: "#FFD23F", principal: "#7FD1FF", secundario: "#3BA7FF", peligro: "#e63946", ok: "#2ecc71"}
   ideas:
     - El agujero en la tapa de los bolígrafos
@@ -48,8 +45,7 @@ ciencia:
   descripcion: Fenómenos de física, química y naturaleza explicados con diagramas simples.
   tono: Asombrado pero preciso, usa comparaciones fáciles.
   voz: "gemini:Fenrir"
-  estilo: video
-  cta: Sígueme para entender el mundo en un minuto.
+  estilo: plano
   paleta: {fondo: ["#1f1147", "#120a2e", "#07040f"], acento: "#00E5FF", principal: "#B388FF", secundario: "#00E5FF", peligro: "#FF4D6D", ok: "#69F0AE"}
   ideas:
     - Por qué el cielo es azul
@@ -66,8 +62,7 @@ cuerpo:
   descripcion: Cómo funciona el cuerpo humano, con diagramas de órganos y procesos.
   tono: Cercano y sorprendente, sin dar consejos médicos.
   voz: "gemini:Achird"
-  estilo: video
-  cta: Sígueme para conocer tu cuerpo por dentro.
+  estilo: ilustracion
   paleta: {fondo: ["#4a1020", "#2a0812", "#120307"], acento: "#FFB703", principal: "#FF8FA3", secundario: "#FFC2D1", peligro: "#ff3b3b", ok: "#80ED99"}
   ideas:
     - Por qué bostezamos
@@ -84,7 +79,6 @@ tecnologia:
   tono: Didáctico y dinámico, como un ingeniero que explica a un amigo.
   voz: "en-US-BrianMultilingualNeural"
   estilo: plano
-  cta: Sígueme para saber cómo funcionan las cosas.
   paleta: {fondo: ["#0f3d3e", "#08201f", "#030b0b"], acento: "#F9C74F", principal: "#4CC9F0", secundario: "#90E0EF", peligro: "#F94144", ok: "#43AA8B"}
   ideas:
     - Cómo funciona un microondas
@@ -101,7 +95,6 @@ dinero:
   tono: Práctico y directo, ejemplos con cifras redondas y claras.
   voz: "gemini:Achird"
   estilo: plano
-  cta: Sígueme para entender el dinero sin enredos.
   paleta: {fondo: ["#0b3d20", "#06200f", "#020a05"], acento: "#FFD60A", principal: "#52B788", secundario: "#B7E4C7", peligro: "#E63946", ok: "#38B000"}
   ideas:
     - Qué es la inflación con un ejemplo de pan
@@ -116,8 +109,7 @@ mente:
   descripcion: Sesgos y efectos psicológicos conocidos, explicados con situaciones diarias.
   tono: Intrigante y reflexivo, ejemplos con los que el espectador se identifica.
   voz: "gemini:Fenrir"
-  estilo: video
-  cta: Sígueme para entender cómo piensa tu cerebro.
+  estilo: plano
   paleta: {fondo: ["#2b2d42", "#191a28", "#08080d"], acento: "#EF233C", principal: "#8D99AE", secundario: "#EDF2F4", peligro: "#EF233C", ok: "#06D6A0"}
   ideas:
     - Por qué los precios terminan en 99
