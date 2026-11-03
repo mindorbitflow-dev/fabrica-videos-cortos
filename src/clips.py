@@ -15,6 +15,15 @@ API = "https://api.pexels.com/videos/search"
 TIMEOUT = 30
 
 
+# Estas palabras devuelven gráficos de stock (tablets con diagramas, botones 3D) en vez de escenas reales.
+PALABRAS_GRAFICAS = {"animation", "animated", "diagram", "graphic", "graphics", "illustration", "icon", "button",
+                     "concept", "conceptual", "3d", "cartoon", "infographic", "render", "cgi", "abstract"}
+
+
+def limpiar_consulta(consulta: str) -> str:
+    return " ".join(w for w in consulta.split() if w.lower().strip(",.") not in PALABRAS_GRAFICAS)
+
+
 def disponible() -> bool:
     return bool(os.getenv("PEXELS_API_KEY", "").strip())
 

@@ -1,7 +1,7 @@
 # 🎬 Fábrica de Videos Cortos Explicativos
 
-Videos verticales (1080×1920) que explican un tema con **gráficos animados en HTML/SVG**, voz neuronal gratis
-(Edge-TTS), subtítulos palabra por palabra y música opcional. Todo gratis.
+Videos verticales (1080×1920) que explican un tema con **clips reales de Pexels** o **diagramas animados en HTML/SVG**,
+voz neuronal gratis, subtítulos palabra por palabra y música opcional. Todo gratis.
 
 ## Uso
 ```bash
@@ -21,11 +21,24 @@ Cada escena se puede **🔁 rehacer** sola. Si cambias "Qué se dibuja", esa esc
 **🏭 Lote**: varios videos seguidos (temas de la IA o tu lista).
 **🧭 Nichos**: tono, voz, frase de cierre, paleta de colores y banco de ideas (`config/nichos.yaml`).
 
+## Estilos (modo mixto)
+| Nichos | Estilo | Cómo se ve |
+|---|---|---|
+| Biología, Cuerpo, Ciencia, Cotidiano, Mente | `video` | Un clip real de Pexels por escena (zoom lento) + portada y subtítulos encima |
+| Tecnología, Dinero | `plano` | Diagramas animados que dibuja la IA (flechas, procesos, gráficas) |
+
+Se cambia con `estilo:` en `config/nichos.yaml` (también hay `ilustracion` y `tipografia`). En 🎬 Crear, cada
+escena con clip muestra su video, su búsqueda (en inglés, editable) y el botón **🔁 Otro clip**.
+Los videos con clips se comprimen a ~2,5 Mbps para que quepan en el correo (Gmail: 25 MB).
+
+## Verificación de datos
+Después de escribir el guion, otra consulta a la IA busca mitos y exageraciones; si los hay, se reescribe
+(hasta 3 intentos y se queda con el mejor). Lo que no se pudo corregir llega como ⚠️ en la app y en el correo.
+
 ## Portada y ganchos virales
 Cada guion trae una **portada**: 2-5 palabras gigantes que chocan con lo que la gente cree, con la palabra del
 giro en color y una línea pequeña que lo explica (fórmulas "NO X: Y", "SIN X Y SIGUE", "TU X HACE Y"...).
 Se ve en el primer segundo y sale como `portada.jpg` (adjunta en el correo) para usarla de miniatura.
-Nicho **🧬 Biología** y **🫀 Cuerpo** usan el estilo `ilustracion` (fondo cálido con grano, sin cuadrícula).
 
 ## Voces
 | Voz | Motor | Nota |
@@ -60,7 +73,7 @@ src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter �
 para publicar. Si falla, te llega un correo con el error. El video también queda 7 días en Actions.
 
 Secrets necesarios (Settings → Secrets and variables → Actions):
-`GEMINI_API_KEY`, `GROQ_API_KEY`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY`,
+`GEMINI_API_KEY`, `GROQ_API_KEY`, `PEXELS_API_KEY`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY`,
 `GMAIL_USUARIO`, `GMAIL_CLAVE_APP` (contraseña de aplicación: myaccount.google.com/apppasswords), `CORREO_DESTINO` (opcional).
 
 - Lanzarlo a mano: pestaña **Actions → Fábrica de videos → Run workflow** (puedes elegir el nicho).

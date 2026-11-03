@@ -149,31 +149,41 @@ def estilo_de(p: dict) -> str:
     return p.get("estilo") or cargar_nichos()[p["nicho"]].get("estilo", "plano")
 
 
-def clip_escena(p: dict, i: int) -> Path:
-    return carpeta(p) / "clips" / f"escena_{i}.mp4"
+def clip_escena(p: dict, i: int) -> Optional[Path]:
+    """Archivo del clip de la escena. Se nombra por id de Pexels (no por posición) para que quitar o
+    reordenar escenas en la app no deje clips corridos."""
+    cid = p["escenas"][i].get("clip_id")
+    return carpeta(p) / "clips" / f"{cid}.mp4" if cid else None
 
 
 def escena_lista(p: dict, i: int) -> bool:
-    return clip_escena(p, i).exists() if estilo_de(p) == "video" else bool(p["escenas"][i].get("html"))
+    if estilo_de(p) == "video":
+        clip = clip_escena(p, i)
+        return bool(clip and clip.exists())
+    return bool(p["escenas"][i].get("html"))
 
 
 def _buscar_clips(p: dict, indices: list[int], progreso=None) -> dict:
-    """Estilo video: un clip real por escena (sin repetir). Si no hay resultados, usa el de la escena anterior."""
+    """Estilo video: un clip real por escena (sin repetir; rehacer una escena trae otro distinto).
+    Si Pexels no tiene nada, se reutiliza el clip de la escena anterior."""
     usados = {e["clip_id"] for e in p["escenas"] if e.get("clip_id")}
+    descarga = carpeta(p) / "clips" / "descarga.mp4"
     for n, i in enumerate(indices):
         e = p["escenas"][i]
-        consulta = e.get("clip") or p["tema"]
+        # Sin búsqueda propia (o solo con palabras de gráficos) se usa la de la escena anterior: mismo tema visual.
+        consulta = clips.limpiar_consulta(e.get("clip", "")) or (
+            clips.limpiar_consulta(p["escenas"][i - 1].get("clip", "")) if i else "") or p["tema"]
         if progreso:
             progreso(n / max(1, len(indices)), f"Buscando clip para la escena {i + 1}: {consulta}")
-        vid = clips.buscar(consulta, clip_escena(p, i), animador.duracion_estimada(e["voz"]), usados)
-        if vid is None and i > 0 and clip_escena(p, i - 1).exists():
-            shutil.copyfile(clip_escena(p, i - 1), clip_escena(p, i))
-            e["origen"] = "clip repetido"
-        elif vid is None:
-            raise RuntimeError(f"Pexels no encontró ningún clip para \"{consulta}\"")
-        else:
+        vid = clips.buscar(consulta, descarga, animador.duracion_estimada(e["voz"]), usados)
+        if vid is not None:
+            descarga.replace(descarga.with_name(f"{vid}.mp4"))
             usados.add(vid)
             e.update(clip_id=vid, origen="clip")
+        elif i > 0 and escena_lista(p, i - 1):
+            e.update(clip_id=p["escenas"][i - 1]["clip_id"], origen="clip repetido")
+        else:
+            raise RuntimeError(f"Pexels no encontró ningún clip para \"{consulta}\"")
         e["html"] = ""
         guardar(p)
     p["estado"] = "animado"

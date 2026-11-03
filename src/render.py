@@ -66,8 +66,11 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
                                "[voz][m]amix=inputs=2:duration=first:normalize=0[mez]")
                 mezcla = "[mez]"
             filtros.append(f"{mezcla}loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]")
+            # Con clips reales el peso se dispara (demo: 35 MB en 35 s); se limita para que quepa en el correo
+            # (Gmail: 25 MB). 2,5 Mbps ≈ 19 MB por minuto; los dibujos planos casi nunca llegan a ese tope.
+            calidad = ["-crf", "21", "-maxrate", "2500k", "-bufsize", "5000k"] if fondos else ["-crf", "20"]
             cmd += ["-filter_complex", ";".join(filtros), "-map", video, "-map", "[a]",
-                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
+                    "-c:v", "libx264", "-preset", "veryfast", *calidad, "-pix_fmt", "yuv420p",
                     "-c:a", "aac", "-b:a", "192k", "-t", f"{total:.3f}", "-movflags", "+faststart", str(mp4)]
             ff = subprocess.Popen(cmd, stdin=subprocess.PIPE)
             try:

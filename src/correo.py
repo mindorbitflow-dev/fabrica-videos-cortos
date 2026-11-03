@@ -44,7 +44,9 @@ def _enviar(asunto: str, cuerpo: str, adjunto: tuple[bytes, str] | None = None,
 
 def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
     video = fabrica.mp4(p)
-    avisos = []
+    # Los avisos del guion (datos dudosos según el verificador, contrato incumplido) van primero: hay que
+    # leerlos antes de publicar.
+    avisos = [f"El guion {a}" for a in p.get("avisos", [])]
     if p.get("voz_usada") and p["voz_usada"] != p.get("voz"):
         avisos.append(f"Gemini no estuvo disponible: salió con la voz {voces.nombre_voz(p['voz_usada'])}.")
     respaldos = [str(i + 1) for i, e in enumerate(p["escenas"]) if e.get("origen") == "respaldo"]

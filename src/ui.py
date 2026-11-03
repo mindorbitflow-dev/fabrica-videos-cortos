@@ -136,23 +136,37 @@ with tab_crear:
                 port_dest = pc[1].text_input("Palabra en color", portada.get("destacado", ""), key=f"{pid}_pd")
                 port_sub = st.text_input("Línea pequeña", portada.get("sub", ""), key=f"{pid}_ps")
             nuevas = []
+            con_clips = fabrica.estilo_de(p) == "video"
             for i, e in enumerate(p["escenas"]):
                 with st.container(border=True):
-                    origen = {"ia": "🎨 IA", "respaldo": "🔤 texto", "manual": "✋ manual"}.get(e.get("origen"), "⏳ sin animar")
-                    st.markdown(f"**Escena {i + 1}** {'(gancho)' if i == 0 else ''} · {origen if e.get('html') else '⏳ sin animar'}")
+                    origen = {"ia": "🎨 IA", "respaldo": "🔤 texto", "manual": "✋ manual", "clip": "🎬 clip",
+                              "clip repetido": "🎬 clip repetido"}.get(e.get("origen"), "")
+                    estado = origen if fabrica.escena_lista(p, i) else ("⏳ sin clip" if con_clips else "⏳ sin animar")
+                    st.markdown(f"**Escena {i + 1}** {'(gancho)' if i == 0 else ''} · {estado}")
                     voz = st.text_area("Narración", e["voz"], key=f"{pid}_voz_{i}", height=80)
-                    visual = st.text_input("Qué se dibuja", e.get("visual", ""), key=f"{pid}_vis_{i}")
+                    if con_clips:
+                        visual = e.get("visual", "")
+                        busqueda = st.text_input("Búsqueda del clip en Pexels (en inglés)", e.get("clip", ""),
+                                                 key=f"{pid}_clip_{i}")
+                        if fabrica.escena_lista(p, i):
+                            st.video(str(fabrica.clip_escena(p, i)), muted=True)
+                    else:
+                        busqueda = e.get("clip", "")
+                        visual = st.text_input("Qué se dibuja", e.get("visual", ""), key=f"{pid}_vis_{i}")
                     cc = st.columns(3)
                     borrar = cc[0].checkbox("Quitar escena", key=f"{pid}_del_{i}")
-                    if cc[1].button("🔁 Rehacer animación", key=f"{pid}_re_{i}", disabled=not voz.strip()):
-                        p["escenas"][i].update(voz=voz, visual=visual)
-                        with st.spinner(f"Animando escena {i + 1}..."):
+                    if cc[1].button("🔁 Otro clip" if con_clips else "🔁 Rehacer animación", key=f"{pid}_re_{i}",
+                                    disabled=not voz.strip()):
+                        p["escenas"][i].update(voz=voz, visual=visual, clip=busqueda)
+                        with st.spinner(f"Escena {i + 1}..."):
                             fabrica.animar(p, router, indices=[i])
                         st.rerun()
                     if not borrar:
-                        # Si cambia lo que se dibuja, la animación anterior ya no sirve: queda pendiente.
-                        html = "" if visual != e.get("visual", "") else e.get("html", "")
-                        nuevas.append({**e, "voz": voz, "visual": visual, "html": html})
+                        # Si cambia lo que se dibuja o lo que se busca, lo anterior ya no sirve: queda pendiente.
+                        cambio = visual != e.get("visual", "") or busqueda != e.get("clip", "")
+                        nuevas.append({**e, "voz": voz, "visual": visual, "clip": busqueda,
+                                       "html": "" if cambio else e.get("html", ""),
+                                       "clip_id": None if cambio else e.get("clip_id")})
             caption = st.text_area("Descripción", p.get("caption", ""), key=f"{pid}_cap")
             hashtags = st.text_input("Hashtags", " ".join(p.get("hashtags", [])), key=f"{pid}_hash")
             g1, g2 = st.columns(2)
@@ -172,15 +186,18 @@ with tab_crear:
 
         with der:
             st.markdown("#### 2. Animación")
-            faltan = [i for i, e in enumerate(p["escenas"]) if not e.get("html")]
-            if p["escenas"] and st.button(f"🎨 Animar {'escenas pendientes (' + str(len(faltan)) + ')' if faltan else 'todo de nuevo'}",
+            faltan = [i for i in range(len(p["escenas"])) if not fabrica.escena_lista(p, i)]
+            accion = "🎬 Buscar clips" if con_clips else "🎨 Animar"
+            if p["escenas"] and st.button(f"{accion} {'pendientes (' + str(len(faltan)) + ')' if faltan else '(todo de nuevo)'}",
                                           type="primary", width="stretch"):
                 fabrica.animar(p, router, indices=faltan or list(range(len(p["escenas"]))),
-                               progreso=barra("Animando..."))
+                               progreso=barra("Trabajando..."))
                 st.rerun()
-            if p["escenas"] and not faltan:
+            if p["escenas"] and not faltan and not con_clips:
                 st.caption("Vista previa (tiempos aproximados; el MP4 se sincroniza con la voz real). Clic = reiniciar.")
                 components.html(fabrica.componer_html(p), height=640)
+            elif con_clips and not faltan:
+                st.caption("Estilo video: revisa cada clip en su escena; la portada y los subtítulos se ven en el MP4.")
 
             st.markdown("#### 3. Video")
             voz_actual = p.get("voz") or nichos[p["nicho"]]["voz"]

@@ -28,8 +28,10 @@ Reglas:
 - Nada de clickbait falso ("no vas a creer", "nadie habla de esto").
 - La última escena cierra con un dato útil y termina exactamente con: "{cta}"
 - "visual": 1-2 frases que digan qué dibujar (formas, flechas, etiquetas de 1 a 3 palabras). Sin fotos ni personas realistas.
-- "clip": 2-4 palabras EN INGLÉS para buscar un video real de stock que muestre esa escena (algo filmable y
-  concreto: "giraffe drinking water", "close up skin hair", "heart beating animation"). Sin nombres propios.
+- "clip": 2-4 palabras EN INGLÉS para buscar en un banco de videos REALES grabados con cámara: personas, animales,
+  objetos, lugares, naturaleza. Si la idea es abstracta (el cerebro, una hormona), busca lo que se VE en la vida
+  real: "woman blinking close up", "man yawning", "giraffe drinking water", "coffee pouring cup".
+  PROHIBIDO: animation, diagram, graphic, illustration, icon, button, concept, 3d, cartoon. Sin nombres propios.
 
 PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide si alguien mira el video):
 - "texto": 2 a 5 palabras, máximo 24 letras, que choquen con lo que la gente cree. Fórmulas que funcionan:
@@ -47,12 +49,22 @@ Responde SOLO con este JSON:
   "caption": "descripción de 1 o 2 frases",
   "hashtags": ["#ejemplo", "... entre 5 y 8"]}}"""
 
-PROMPT_TEMA = """Propón UN tema nuevo para un video corto explicativo con gráficos animados.
+PROMPT_TEMA = """Propón UN tema nuevo para un video corto explicativo.
 Nicho: {nombre}. {descripcion}
-Debe ser algo concreto que la gente se pregunta, explicable en 45 segundos con diagramas simples,
-y basado en hechos comprobables. Ejemplos del estilo: {ejemplos}
+Debe ser algo concreto que la gente se pregunta, explicable en 45 segundos, y basado en hechos comprobables y
+aceptados por la ciencia: NADA de temas que los expertos todavía debaten. {visual}
+Ejemplos del estilo: {ejemplos}
 NO repitas ni parafrasees ninguno de estos temas ya usados: {usados}
 Responde SOLO JSON: {{"tema": "..."}}"""
+
+
+# En estilo video cada escena es un clip real: un tema abstracto termina con clips genéricos (pasó con el
+# hueso hioides: tazas y boxeadores). Por eso se piden temas que se puedan filmar.
+VISUAL_TEMA = {
+    "video": "Debe poder mostrarse con VIDEOS REALES (animales, partes visibles del cuerpo, objetos, lugares, "
+             "situaciones cotidianas), no con conceptos invisibles o fósiles.",
+    "plano": "Debe poder explicarse con diagramas simples (flechas, procesos, comparaciones, gráficas).",
+}
 
 
 def leer_json(texto: str) -> dict:
@@ -75,6 +87,7 @@ def proponer_tema(router: LLMRouter, nicho: dict, usados: list[str]) -> str:
         try:
             texto, _ = router.complete_any(PROMPT_TEMA.format(
                 nombre=nicho["nombre"], descripcion=nicho["descripcion"],
+                visual=VISUAL_TEMA.get(nicho.get("estilo", "plano"), VISUAL_TEMA["plano"]),
                 ejemplos="; ".join(nicho.get("ideas", [])[:4]),
                 usados="; ".join(usados[-60:]) or "ninguno"), max_tokens=300, temperature=0.95)
             tema = str(leer_json(texto).get("tema", "")).strip()
@@ -113,10 +126,35 @@ def problemas_guion(g: dict) -> list[str]:
     return errores
 
 
+PROMPT_VERIFICAR = """Eres verificador de datos científicos para videos de divulgación. Revisa este guion (portada incluida)
+y señala SOLO afirmaciones falsas, mitos populares presentados como ciertos, o exageraciones que engañen.
+No señales simplificaciones razonables ni cuestiones de estilo.
+
+{guion}
+
+Responde SOLO JSON: {{"errores": [{{"frase": "...", "problema": "por qué es falso", "correccion": "dato correcto"}}]}}
+(lista vacía si todo es correcto)."""
+
+
+def verificar_datos(router: LLMRouter, g: dict) -> list[dict]:
+    """Segunda opinión de la IA sobre los hechos del guion. Si el verificador falla, no bloquea (lista vacía)."""
+    portada = g.get("portada") or {}
+    texto = f"PORTADA: {portada.get('texto', '')} ({portada.get('sub', '')})\n" + "\n".join(
+        f"{i + 1}. {e.get('voz', '')}" for i, e in enumerate(g.get("escenas", [])))
+    try:
+        respuesta, _ = router.complete_any(PROMPT_VERIFICAR.format(guion=texto), max_tokens=1200, temperature=0.1)
+        return [e for e in leer_json(respuesta).get("errores", []) if isinstance(e, dict) and e.get("frase")]
+    except Exception as error:
+        print(f"[Guionista] no se pudo verificar: {error}")
+        return []
+
+
 def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
-    """Guion validado. Reintenta una vez explicando a la IA qué corregir."""
-    extra, ultimo = "", None
-    for _ in range(2):
+    """Guion validado (contrato + verificación de datos). Reintenta explicando a la IA qué corregir."""
+    # Cada intento se guarda: corregir un error a veces rompe otra cosa (pasó: al quitar un dato dudoso el
+    # guion quedó en 78 palabras), así que al final se elige el MEJOR intento, no el último.
+    extra, intentos, proveedor = "", [], ""
+    for _ in range(3):
         texto, proveedor = router.complete_any(PROMPT_GUION.format(
             nombre=nicho["nombre"], descripcion=nicho["descripcion"], tono=nicho["tono"], tema=tema,
             emin=ESCENAS_MIN, emax=ESCENAS_MAX, pmin=PALABRAS_MIN, pmax=PALABRAS_MAX,
@@ -124,15 +162,26 @@ def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
         try:
             g = leer_json(texto)
         except Exception as error:
-            extra, ultimo = f"\nTu respuesta anterior no era JSON válido ({error}).", None
+            extra = f"\nTu respuesta anterior no era JSON válido ({error})."
             continue
         errores = problemas_guion(g)
-        ultimo = g
-        if not errores:
+        if errores:
+            intentos.append((g, errores, None))
+            extra = "\nCORRIGE: tu versión anterior " + "; ".join(errores) + "."
+            continue
+        # Pasó en la demo del microondas: el guion presentaba un mito ("calienta de adentro hacia afuera").
+        dudosos = verificar_datos(router, g)
+        intentos.append((g, [], dudosos))
+        if not dudosos:
             break
-        extra = "\nCORRIGE: tu versión anterior " + "; ".join(errores) + "."
-    if ultimo is None:
+        extra = "\nCORRIGE ESTOS ERRORES DE DATOS de tu versión anterior (no los repitas, ni en la portada):\n" + "\n".join(
+            f"- \"{d['frase']}\": {d.get('problema', '')}. Correcto: {d.get('correccion', '')}" for d in dudosos)
+    if not intentos:
         raise RuntimeError("La IA no devolvió un guion válido.")
+    # Mejor = cumple el contrato, luego menos datos dudosos, luego menos incumplimientos.
+    ultimo, errores, dudosos = min(intentos, key=lambda x: (bool(x[1]), len(x[2] or []), len(x[1])))
+    if dudosos is None:  # ningún intento cumplió el contrato: igual se revisan los datos del elegido
+        dudosos = verificar_datos(router, ultimo)
     return {
         "titulo": str(ultimo.get("titulo", tema)).strip()[:100],
         "portada": {k: str((ultimo.get("portada") or {}).get(k, "")).strip() for k in ("texto", "destacado", "sub")},
@@ -141,6 +190,7 @@ def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
                     for e in ultimo.get("escenas", [])],
         "caption": str(ultimo.get("caption", "")).strip(),
         "hashtags": [str(h).strip() for h in ultimo.get("hashtags", []) if str(h).strip()][:8],
-        "avisos": problemas_guion(ultimo),
+        "avisos": errores + [f"tiene un dato dudoso: \"{d['frase']}\" ({d.get('problema', '')})"
+                                             for d in dudosos],
         "proveedor": proveedor,
     }
