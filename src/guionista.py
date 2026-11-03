@@ -150,6 +150,7 @@ def problemas_guion(g: dict) -> list[str]:
 
 PROMPT_VERIFICAR = """Eres verificador de datos científicos para videos de divulgación. Revisa este guion (portada incluida)
 y señala SOLO afirmaciones falsas, mitos populares presentados como ciertos, o exageraciones que engañen.
+Señala también errores de gramática u ortografía en la PORTADA (pasó: "ES TUS NERVIOS" en vez de "SON").
 No señales simplificaciones razonables ni cuestiones de estilo.
 
 {guion}
