@@ -1,8 +1,9 @@
-"""Revisión automática de las escenas: mide en un navegador real dónde quedó cada elemento.
+"""Revisión automática de las escenas procedurales: mide en un navegador real si el dibujo llena el cuadro.
 
-Sirve para que la fábrica corrija sola lo que antes llegaba al correo: diagramas que se salen del área
-segura, textos o íconos encimados, títulos que chocan con el dibujo, escenas casi vacías y elementos que
-aparecen cuando la escena ya terminó. Devuelve los problemas en palabras, para dárselos a la IA.
+Sirve para que la fábrica corrija sola lo que antes llegaba al correo: cuadros casi vacíos (la cámara se aleja o se
+acerca a la nada) y elementos que aparecen cuando la escena ya terminó. Devuelve los problemas en palabras, para
+dárselos a la IA. Las etiquetas, los números y la barra de escala se recortan solos a la zona segura
+(plantilla/primitivas.js), así que aquí no se miden.
 """
 
 from __future__ import annotations
@@ -14,127 +15,93 @@ from playwright.sync_api import sync_playwright
 
 from src import animador
 
-# Lo que mide cada escena en el navegador (en píxeles del lienzo 1080x1920, sin escalar: ?render=1).
-JS_MEDIR = """([i, dur]) => {
-  const esc = document.querySelectorAll('#lienzo > section.escena')[i];
-  const caja = r => ({x: r.left, y: r.top, w: r.width, h: r.height});
-  const opacidad = el => {
-    let o = 1;
-    for (let n = el; n && n !== esc; n = n.parentElement) {
-      const cs = getComputedStyle(n);
-      if (cs.display === 'none' || cs.visibility === 'hidden') return 0;
-      o *= parseFloat(cs.opacity);
+TEXTOS = {"etiqueta", "numero", "cita", "frase"}  # capas de pantalla que son solo texto: no cuentan como dibujo
+MARGEN_FINAL = 0.6        # s: lo que aparece después de dur − MARGEN_FINAL no alcanza a verse
+FRACCIONES = (0.3, 0.55, 0.8, 0.97)   # momentos de la escena en que se mide el cuadro
+VACIO_MINIMO = 0.2        # un cuadro con menos de esta fracción de bloques con dibujo está casi vacío (la demo de referencia: 0,38-0,49)
+VACIO_MEDIO = 0.3         # ...y el promedio de la escena entera debe pasar de esto
+# Protagonista: partículas dispersas, un campo de puntos tenues o una red diminuta bastaban para pasar el mínimo de arriba.
+# En el cuadro de la mitad de la escena, sin partículas y con un umbral de contraste alto (solo lo que se ve bien), el
+# dibujo debe cubrir al menos PRINCIPAL_MINIMO. Una "forma" que cubre más de FORMA_MAXIMA es un disco gigante.
+PROTAGONISTA_DEBIL = "no hay un protagonista grande"  # comienzo del aviso; fabrica lo busca para acercar la cámara en código
+PRINCIPAL_MINIMO = 0.22   # demo de referencia: 0,28; las escenas flojas de cuerpo: 0,10-0,21
+FORMA_MAXIMA = 0.65
+
+# Fracción de bloques de 24 px del cuadro con dibujo (≥3 % de sus píxeles distintos del fondo), con la misma cámara
+# y sin textos ni barra de escala.
+JS_COBERTURA = """([i, tiempos]) => {
+  const s = document.querySelectorAll('#lienzo > section.escena')[i].querySelector('script.prim');
+  if (!s) return null;
+  const escena = JSON.parse(s.textContent), textos = %s;
+  const con = {...escena, capas: escena.capas.filter(c => !textos.includes(c.tipo)), grano: 0, escala: false};
+  const sin = {...con, capas: []};
+  const lienzo = () => { const c = document.createElement('canvas'); c.width = 1080; c.height = 1920; return c; };
+  const a = lienzo().getContext('2d', {willReadFrequently: true}), b = lienzo().getContext('2d', {willReadFrequently: true});
+  const BLOQUE = 24, COLS = 45, FILAS = 80;
+  const bloques = (x, y, umbral = 14) => {
+    const cuenta = new Uint16Array(COLS * FILAS);
+    for (let py = 0; py < 1920; py++) for (let px = 0; px < 1080; px++) {
+      const k = (py * 1080 + px) * 4;
+      if (Math.max(Math.abs(x[k] - y[k]), Math.abs(x[k + 1] - y[k + 1]), Math.abs(x[k + 2] - y[k + 2])) > umbral)
+        cuenta[Math.floor(py / BLOQUE) * COLS + Math.floor(px / BLOQUE)]++;
     }
-    return o;
+    return cuenta.filter(n => n > BLOQUE * BLOQUE * 0.03).length / (COLS * FILAS);
   };
-  const elems = [];
-  esc.querySelectorAll('text, use, rect, circle, ellipse, polygon, path, line, .titulo').forEach(el => {
-    if (el.closest('defs, .portada')) return;
-    if (el.closest('.sube, .baja, .izquierda')) return;   // se mueven a propósito
-    if (opacidad(el) < 0.2) return;                       // ya desaparecieron (vacia) o no se ven
-    const r = el.getBoundingClientRect();
-    if (r.width < 3 && r.height < 3) return;
-    const esTexto = el.tagName.toLowerCase() === 'text' || el.classList.contains('titulo');
-    elems.push({tipo: el.classList.contains('titulo') ? 'titulo' : el.tagName.toLowerCase(),
-                texto: esTexto ? el.textContent.trim().slice(0, 40) : '', ...caja(r)});
+  const tm = tiempos[Math.floor(tiempos.length / 2)];
+  Primitivas.dibujar(b.canvas, sin, tm); const fondo = b.getImageData(0, 0, 1080, 1920).data;
+  const fuerteSinParticulas = {...con, capas: con.capas.filter(c => c.tipo !== 'particulas')};
+  Primitivas.dibujar(a.canvas, fuerteSinParticulas, tm);
+  const principal = bloques(a.getImageData(0, 0, 1080, 1920).data, fondo, 60);
+  const capas = escena.capas.filter(c => !textos.includes(c.tipo)).map(c => {
+    Primitivas.dibujar(a.canvas, {...con, capas: [c]}, tm);
+    const d = a.getImageData(0, 0, 1080, 1920).data;
+    return {tipo: c.tipo, cobertura: bloques(d, fondo), fuerte: bloques(d, fondo, 60)};
   });
-  const retrasos = esc.getAnimations({subtree: true}).map(a => a.effect.getTiming().delay / 1000);
-  const svg = esc.querySelector(':scope > svg');
-  const portada = esc.querySelector('.portada');
-  return {svg: svg ? caja(svg.getBoundingClientRect()) : null,
-          portada: portada ? caja(portada.getBoundingClientRect()) : null, elems, retrasos};
-}"""
-
-FIGURAS = {"rect", "circle", "ellipse", "use", "polygon"}
+  return {escena, capas, principal, cobertura: tiempos.map(t => {
+    Primitivas.dibujar(a.canvas, con, t); const x = a.getImageData(0, 0, 1080, 1920).data;
+    Primitivas.dibujar(b.canvas, sin, t); const y = b.getImageData(0, 0, 1080, 1920).data;
+    return bloques(x, y);
+  })};
+}""" % sorted(TEXTOS)
 
 
-def _area(a: dict) -> float:
-    return max(0.0, a["w"]) * max(0.0, a["h"])
-
-
-def _inter(a: dict, b: dict) -> float:
-    w = min(a["x"] + a["w"], b["x"] + b["w"]) - max(a["x"], b["x"])
-    h = min(a["y"] + a["h"], b["y"] + b["h"]) - max(a["y"], b["y"])
-    return max(0.0, w) * max(0.0, h)
-
-
-def _cobertura(elems: list[dict], svg: dict, celda: int = 20) -> float:
-    """Fracción del área de dibujo que toca algún elemento, en una cuadrícula de `celda` px."""
-    marcadas = set()
-    for e in elems:
-        x0, x1 = max(e["x"], svg["x"]) - svg["x"], min(e["x"] + e["w"], svg["x"] + svg["w"]) - svg["x"]
-        y0, y1 = max(e["y"], svg["y"]) - svg["y"], min(e["y"] + e["h"], svg["y"] + svg["h"]) - svg["y"]
-        if x1 <= x0 or y1 <= y0:
-            continue
-        marcadas.update((gx, gy) for gx in range(int(x0) // celda, int(x1) // celda + 1)
-                        for gy in range(int(y0) // celda, int(y1) // celda + 1))
-    total = (int(svg["w"]) // celda + 1) * (int(svg["h"]) // celda + 1)
-    return len(marcadas) / total
-
-
-def _nombre(e: dict) -> str:
-    return f"el texto «{e['texto']}»" if e["texto"] else {"use": "un ícono", "rect": "un rectángulo",
-                                                           "circle": "un círculo"}.get(e["tipo"], "una figura")
-
-
-def problemas_escena(m: dict, dur: float) -> list[str]:
-    """Reglas sobre las medidas de una escena. Lista vacía = la escena está bien."""
-    svg, elems = m["svg"], m["elems"]
-    if not svg:
-        return ["la escena no tiene dibujo SVG"]
+def problemas_escena(medida: dict | None, dur: float) -> list[str]:
+    """Reglas sobre lo medido en una escena. Lista vacía = la escena está bien."""
+    if not medida:
+        return ["la escena no tiene dibujo procedural"]
     problemas: list[str] = []
-    textos = [e for e in elems if e["tipo"] == "text"]
-    figuras = [e for e in elems if e["tipo"] in FIGURAS and _area(e) < 0.6 * _area(svg)]
-    dibujo = [e for e in elems if e["tipo"] != "titulo"]
-
-    for e in dibujo:  # el SVG ocupa justo la zona segura: lo que sale se corta o queda bajo los botones de la app
-        if (e["x"] < svg["x"] - 4 or e["y"] < svg["y"] - 4 or e["x"] + e["w"] > svg["x"] + svg["w"] + 4
-                or e["y"] + e["h"] > svg["y"] + svg["h"] + 4):
-            problemas.append(f"{_nombre(e)} se sale del área de dibujo (870x760) y se corta")
-    for i, a in enumerate(textos):
-        for b in textos[i + 1:]:
-            if _inter(a, b) > 0.2 * min(_area(a), _area(b)):
-                problemas.append(f"los textos «{a['texto']}» y «{b['texto']}» se enciman")
-    for t in textos:
-        for f in figuras:
-            parte = _inter(t, f) / max(1.0, _area(t))
-            if 0.15 < parte < 0.85:
-                problemas.append(f"el texto «{t['texto']}» queda montado sobre el borde de {_nombre(f)}")
-                break
-    iconos = [e for e in figuras if e["tipo"] == "use"]
-    for i, a in enumerate(iconos):
-        for b in iconos[i + 1:]:
-            parte = _inter(a, b) / max(1.0, min(_area(a), _area(b)))
-            if 0.15 < parte < 0.85:
-                problemas.append("dos íconos quedan encimados a medias")
-    for t in (e for e in elems if e["tipo"] == "titulo"):
-        if any(_inter(t, e) > 0.1 * max(1.0, _area(e)) for e in dibujo):
-            problemas.append(f"el título «{t['texto']}» choca con el dibujo (el título va solo arriba)")
-    if m["portada"]:
-        if any(_inter(m["portada"], e) > 0.3 * max(1.0, _area(e)) for e in figuras):
-            problemas.append("el dibujo queda tapado por el título gigante de la portada (dibuja solo en y 0-420)")
-    # Superficie realmente cubierta (no el rectángulo que lo encierra todo: dos objetos pequeños y separados
-    # parecían ocupar mucho). Calibrado con escenas que se veían vacías en el video: 16-25 %.
-    ocupado = _cobertura(dibujo, svg)
-    limite = 0.15 if m["portada"] else 0.30  # en la portada solo se dibuja la mitad de arriba
-    if len([e for e in dibujo if e["tipo"] != "text"]) < 3 or ocupado < limite:
-        problemas.append(f"la escena está casi vacía (el dibujo cubre {ocupado:.0%} del área): hazlo más grande y completo")
-    retrasos = sorted(m["retrasos"])
-    tarde = [d for d in retrasos if d > dur - 0.6]
+    cob = medida["cobertura"]
+    if min(cob) < VACIO_MINIMO or sum(cob) / len(cob) < VACIO_MEDIO:
+        momentos = ", ".join(f"{f * dur:.0f} s" for f, c in zip(FRACCIONES, cob) if c < VACIO_MINIMO)
+        problemas.append(
+            f"el cuadro queda casi vacío ({sum(cob) / len(cob):.0%} del cuadro tiene dibujo" + (f"; sobre todo hacia los {momentos}" if momentos else "") +
+            "): mantén el protagonista y el contexto cubriendo la pantalla durante todos los movimientos de cámara "
+            "(no te alejes ni te acerques a una zona sin dibujo; amplía los campos de células, estratos o vasos)")
+    capas_medidas = medida["capas"]
+    if medida["principal"] < PRINCIPAL_MINIMO:
+        problemas.append(f"{PROTAGONISTA_DEBIL} (lo que se ve bien cubre solo {medida['principal']:.0%} del cuadro): "
+                         "haz que UN protagonista llene el centro de la pantalla (más de la mitad del ancho visible) "
+                         "acercando la cámara o aumentando su tamaño; las partículas y los puntos tenues no cuentan")
+    if any(c["tipo"] == "forma" and c["cobertura"] > FORMA_MAXIMA for c in capas_medidas):
+        problemas.append("una capa 'forma' cubre casi todo el cuadro (se ve como un disco gigante y borroso): "
+                         "'forma' solo como acento pequeño (núcleo, roncha, gota), nunca como objeto principal")
+    capas = medida["escena"]["capas"]
+    tarde = [c for c in capas if c.get("desde", 0) > dur - MARGEN_FINAL]
     if tarde:
-        problemas.append(f"hay elementos que aparecen a los {max(tarde):.1f} s pero la escena dura ~{dur:.0f} s: "
+        problemas.append(f"hay capas que aparecen a los {max(c['desde'] for c in tarde):.1f} s pero la escena dura ~{dur:.0f} s: "
                          "no alcanzan a verse")
-    elif retrasos and retrasos[len(retrasos) // 2] > dur / 2:
-        problemas.append("la mayor parte del dibujo aparece después de la mitad de la escena: la pantalla queda vacía "
-                         "mucho tiempo (haz aparecer lo principal en los primeros segundos)")
-    return list(dict.fromkeys(problemas))[:8]
+    else:
+        inicios = sorted(c.get("desde", 0) for c in capas if c["tipo"] not in TEXTOS)
+        if inicios and inicios[len(inicios) // 2] > dur / 2:
+            problemas.append("la mayor parte del dibujo aparece después de la mitad de la escena: la pantalla queda vacía "
+                             "mucho tiempo (haz aparecer lo principal en los primeros segundos)")
+    return problemas
 
 
 def revisar(html: str, voces: list[str], indices: list[int]) -> dict[int, list[str]]:
-    """Mide las escenas `indices` del documento al final de cada una (con todo ya aparecido)."""
+    """Mide las escenas `indices` del documento en varios momentos de su duración."""
     durs = [animador.duracion_estimada(v) for v in voces]
-    inicios = [sum(durs[:i]) for i in range(len(durs))]
-    plan = [{"inicio": a, "dur": d, "palabras": []} for a, d in zip(inicios, durs)]
+    resultado = {}
     with tempfile.TemporaryDirectory() as tmp:
         doc = Path(tmp) / "revision.html"
         doc.write_text(html, encoding="utf-8")
@@ -144,11 +111,9 @@ def revisar(html: str, voces: list[str], indices: list[int]) -> dict[int, list[s
                 pag = nav.new_page(viewport={"width": 1080, "height": 1920})
                 pag.goto(doc.as_uri() + "?render=1")
                 pag.evaluate("document.fonts.ready")
-                pag.evaluate("p => __preparar(p)", plan)
-                resultado = {}
                 for i in indices:
-                    pag.evaluate("t => __seek(t)", inicios[i] + max(0.5, durs[i] - 0.15))
-                    resultado[i] = problemas_escena(pag.evaluate(JS_MEDIR, [i, durs[i]]), durs[i])
+                    medida = pag.evaluate(JS_COBERTURA, [i, [f * durs[i] for f in FRACCIONES]])
+                    resultado[i] = problemas_escena(medida, durs[i])
                 return resultado
             finally:
                 nav.close()

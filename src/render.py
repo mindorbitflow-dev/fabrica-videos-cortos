@@ -19,6 +19,8 @@ FPS = 30
 Progreso = Optional[Callable[[float, str], None]]
 LUFS = -14            # volumen de referencia de TikTok, Reels y Shorts
 MAX_MB_CORREO = 20    # Gmail: 25 MB contando la codificación del adjunto
+MAX_KBPS_VIDEO = 1800  # tope de tasa del video; el de videos largos baja según la duración
+MAX_SEGUNDOS = 120    # Reels, TikTok y Shorts admiten hasta 3 min; los videos largos con cámara continua duran 60-120 s
 
 
 def _medir_volumen(wav: Path, total: float) -> dict:
@@ -61,8 +63,8 @@ def verificar_mp4(mp4: Path) -> list[str]:
         problemas.append(f"video {video.get('codec_name')}/{video.get('pix_fmt')} (debe ser h264/yuv420p)")
     if audio.get("codec_name") != "aac" or audio.get("sample_rate") != "48000":
         problemas.append(f"audio {audio.get('codec_name')} {audio.get('sample_rate')} Hz (debe ser AAC 48 kHz)")
-    if not 10 <= dur <= 90:
-        problemas.append(f"dura {dur:.0f} s (lo recomendable es 15-90 s)")
+    if not 10 <= dur <= MAX_SEGUNDOS:
+        problemas.append(f"dura {dur:.0f} s (lo recomendable es 15-{MAX_SEGUNDOS} s)")
     if mb > MAX_MB_CORREO:
         problemas.append(f"pesa {mb:.1f} MB y no cabe en el correo")
     final = _rms_final(mp4, dur)
@@ -113,8 +115,12 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
                            f":measured_TP={medida['input_tp']}:measured_LRA={medida['input_lra']}"
                            f":measured_thresh={medida['input_thresh']}:offset={medida['target_offset']}:linear=true,"
                            f"afade=t=out:st={max(0, total - 0.4):.3f}:d=0.4,aresample=48000[a]")
+            # El movimiento continuo de la cámara hacía pesar 74 MB (9 Mbps): CRF con tope de tasa que depende de la
+            # duración, para que el MP4 quepa en el correo hasta con 120 s. Probado: 16,8 MB y a la vista igual.
+            kbps = int(max(400, min(MAX_KBPS_VIDEO, MAX_MB_CORREO * 0.9 * 8000 / total - 192)))
             cmd += ["-filter_complex", ";".join(filtros), "-map", "[v]", "-map", "[a]",
-                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-color_range", "tv",
+                    "-c:v", "libx264", "-preset", "medium", "-crf", "23", "-maxrate", f"{kbps}k", "-bufsize", f"{2 * kbps}k",
+                    "-pix_fmt", "yuv420p", "-color_range", "tv",
                     "-c:a", "aac", "-b:a", "192k", "-t", f"{total:.3f}", "-movflags", "+faststart", str(mp4)]
             ff = subprocess.Popen(cmd, stdin=subprocess.PIPE)
             try:

@@ -15,7 +15,7 @@ from typing import Optional
 
 import yaml
 
-from src import animador, guionista, render, revisor
+from src import animador, guionista, prim, render, revisor
 from src.llm import LLMRouter
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -138,9 +138,35 @@ def portada_jpg(p: dict) -> Path:
 
 
 # ---------- pasos ----------
+FIGURA_CIERRE = {"biologia": "celula", "cuerpo": "corazon", "ciencia": "planeta", "cotidiano": "gota",
+                 "tecnologia": "engranaje", "dinero": "moneda", "mente": "neurona"}
+
+
+def escena_cierre(nicho: str) -> Optional[dict]:
+    """Tarjeta final que pide seguir la página: la arma el código (no la IA) con la frase `cierre` del nicho."""
+    conf = cargar_nichos()[nicho]
+    frase = str(conf.get("cierre", "")).strip()
+    if not frase:
+        return None
+    color = conf["paleta"]["acento"]
+    escena, _ = prim.validar({
+        "fondo": {"tema": "oscuro"}, "escala": False,
+        "camara": [{"t": 0, "x": 0, "y": 0, "ancho": 1100}, {"t": 6, "x": 0, "y": 0, "ancho": 950}],
+        "capas": [
+            {"tipo": "particulas", "x": 0, "y": 80, "r": 480, "n": 160, "tam": 2.5, "color": color, "duracion": 4, "semilla": 3},
+            {"tipo": "figura", "modelo": FIGURA_CIERRE.get(nicho, "celula"), "x": 0, "y": 120, "tam": 360},
+            {"tipo": "frase", "texto": frase.rstrip(".")[:60], "resaltar": ["síguenos"], "color": color, "desde": .2},
+        ]})
+    return {"voz": frase, "visual": "tarjeta final para seguir la página", "html": "", "origen": "cierre",
+            "prim": escena, "cierre": True}
+
+
 def escribir_guion(p: dict, router: LLMRouter) -> dict:
     g = guionista.escribir_guion(router, cargar_nichos()[p["nicho"]], p["tema"])
     p.update({k: g[k] for k in ("titulo", "portada", "escenas", "caption", "hashtags", "avisos")})
+    cierre = escena_cierre(p["nicho"])
+    if cierre:
+        p["escenas"].append(cierre)
     p["estado"] = "guion"
     return guardar(p)
 
@@ -151,7 +177,7 @@ def estilo_de(p: dict) -> str:
 
 
 def escena_lista(p: dict, i: int) -> bool:
-    return bool(p["escenas"][i].get("html"))
+    return bool(p["escenas"][i].get("prim"))
 
 
 def _dibujar(p: dict, router: LLMRouter, indices: list[int], progreso=None,
@@ -166,7 +192,8 @@ def _dibujar(p: dict, router: LLMRouter, indices: list[int], progreso=None,
                               correcciones.get(i, [])): i for i in indices}
         for n, tarea in enumerate(as_completed(tareas), 1):
             i = tareas[tarea]
-            p["escenas"][i]["html"], p["escenas"][i]["origen"] = tarea.result()
+            e = p["escenas"][i]
+            e["html"], e["origen"], e["prim"] = tarea.result()
             guardar(p)  # se guarda escena por escena: si algo falla no se pierde lo hecho
             if progreso:
                 progreso(n / len(indices), f"Escena {i + 1} animada ({n} de {len(indices)})")
@@ -174,6 +201,28 @@ def _dibujar(p: dict, router: LLMRouter, indices: list[int], progreso=None,
 
 def revisar(p: dict, indices: list[int]) -> dict[int, list[str]]:
     return revisor.revisar(componer_html(p), [e["voz"] for e in p["escenas"]], indices)
+
+
+def _acercar_debiles(p: dict, revision: dict[int, list[str]]) -> None:
+    """Pasó (video de las ratas): la IA no agrandó el protagonista ni tras dos rondas de corrección. A esas escenas
+    se les acerca la cámara en código y se vuelve a medir; se queda la versión acercada solo si quita el aviso de
+    protagonista débil sin agregar otros problemas."""
+    debiles = [i for i, probs in revision.items() if any(x.startswith(revisor.PROTAGONISTA_DEBIL) for x in probs)]
+    antes = {}
+    for i in debiles:
+        cerca = prim.acercar(p["escenas"][i]["prim"], 1.6)
+        if cerca:
+            antes[i] = p["escenas"][i]["prim"]
+            p["escenas"][i]["prim"] = cerca
+    if not antes:
+        return
+    nueva = revisar(p, list(antes))
+    for i, original in antes.items():
+        sigue_debil = any(x.startswith(revisor.PROTAGONISTA_DEBIL) for x in nueva.get(i, []))
+        if sigue_debil or len(nueva.get(i, [])) >= len(revision[i]):
+            p["escenas"][i]["prim"] = original
+        else:
+            revision[i] = nueva.get(i, [])
 
 
 def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, progreso=None) -> dict:
@@ -191,14 +240,16 @@ def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, prog
             break
         if progreso:
             progreso(0, f"Revisión {ronda + 1}: corrigiendo escenas {', '.join(str(i + 1) for i in pendientes)}")
-        antes = {i: (p["escenas"][i]["html"], p["escenas"][i]["origen"]) for i in pendientes}
+        antes = {i: (p["escenas"][i]["html"], p["escenas"][i]["origen"], p["escenas"][i]["prim"]) for i in pendientes}
         _dibujar(p, router, pendientes, None, {i: revision[i] for i in pendientes})
         nueva = revisar(p, pendientes)
         for i in pendientes:
             if len(nueva.get(i, [])) <= len(revision[i]):
                 revision[i] = nueva.get(i, [])
             else:  # la corrección salió peor: se recupera la versión anterior
-                p["escenas"][i]["html"], p["escenas"][i]["origen"] = antes[i]
+                e = p["escenas"][i]
+                e["html"], e["origen"], e["prim"] = antes[i]
+    _acercar_debiles(p, revision)
     for i in indices:
         p["escenas"][i]["revision"] = revision.get(i, [])
     p["estado"] = "animado"
@@ -218,6 +269,15 @@ def html_portada(portada: Optional[dict]) -> str:
     return f'<div class="portada"><div class="linea">{texto}</div>' + (f'<div class="sub">{sub}</div>' if sub else "") + "</div>"
 
 
+def _json_prim(escena: dict) -> str:
+    """Escena procedural (plantilla/primitivas.js) incrustada como JSON; "</" se escapa para no cerrar el <script>."""
+    prim = escena.get("prim")
+    if not prim:
+        return ""
+    datos = json.dumps(prim, ensure_ascii=False).replace("</", "<\\/")
+    return f'<script type="application/json" class="prim">{datos}</script>\n'
+
+
 def componer_html(p: dict) -> str:
     """Documento autocontenido (CSS y motor en línea): sirve para la vista previa y para el render."""
     pal = cargar_nichos()[p["nicho"]]["paleta"]
@@ -226,10 +286,10 @@ def componer_html(p: dict) -> str:
     fa, fb, fc = pal["fondo"]
     r, g, b = (int(pal["principal"][i:i + 2], 16) for i in (1, 3, 5))
     css = (PLANTILLA / "base.css").read_text(encoding="utf-8")
-    js = (PLANTILLA / "motor.js").read_text(encoding="utf-8")
+    js = "\n".join((PLANTILLA / f).read_text(encoding="utf-8") for f in ("primitivas.js", "motor.js"))
     iconos = (PLANTILLA / "iconos.svg").read_text(encoding="utf-8")
     secciones = "\n".join(
-        f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{e.get("html") or ""}\n'
+        f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{_json_prim(e)}{e.get("html") or ""}\n'
         f'{portada if i == 0 else ""}</section>'
         for i, e in enumerate(p["escenas"]))
     return f"""<!DOCTYPE html>
@@ -253,7 +313,7 @@ def elegir_musica(opcion: str) -> Optional[Path]:
     return elegida if elegida in pistas else None
 
 
-def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, musica: str = "ninguna",
+def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, musica: str = "aleatoria",
                progreso=None) -> dict:
     if not p["escenas"] or not all(escena_lista(p, i) for i in range(len(p["escenas"]))):
         raise RuntimeError("Primero anima todas las escenas.")
@@ -276,7 +336,7 @@ def texto_publicacion(p: dict) -> str:
     return f"{p['titulo']}\n\n{p.get('caption', '')}\n\n{' '.join(p.get('hashtags', []))}".strip()
 
 
-def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "ninguna", progreso=None) -> dict:
+def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "aleatoria", progreso=None) -> dict:
     """Todo el proceso de un video: tema (o aleatorio) → guion → animación → MP4."""
     avisar = progreso or (lambda f, m: print(f"[{f:4.0%}] {m}"))
     if not router.has_any:

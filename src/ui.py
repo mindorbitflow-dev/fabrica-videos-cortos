@@ -60,7 +60,7 @@ with st.sidebar:
     musicas = ["ninguna", "aleatoria"] + sorted(f.name for f in fabrica.MUSICA.glob("*")
                                                 if f.suffix.lower() in (".mp3", ".wav", ".m4a", ".ogg"))
     musica = st.selectbox("🎵 Música de fondo", musicas,
-                          help="Agrega pistas sin copyright (Biblioteca de audio de YouTube) en assets/musica")
+                          index=1, help="Agrega pistas sin copyright (Biblioteca de audio de YouTube) en assets/musica")
     velocidad = st.select_slider("⏩ Velocidad de la voz", ["+0%", "+4%", "+8%", "+12%", "+16%", "+20%"], value="+8%")
     with st.expander("🔑 Claves de IA"):
         st.caption("Gratis: Gemini en aistudio.google.com · Groq en console.groq.com · OpenRouter en openrouter.ai")
@@ -138,9 +138,9 @@ with tab_crear:
             nuevas = []
             for i, e in enumerate(p["escenas"]):
                 with st.container(border=True):
-                    origen = {"ia": "🎨 IA", "respaldo": "🔤 texto", "manual": "✋ manual"}.get(e.get("origen"), "")
+                    origen = {"ia": "🎨 IA", "respaldo": "🧩 respaldo", "cierre": "👋 cierre", "manual": "✋ manual"}.get(e.get("origen"), "")
                     estado = origen if fabrica.escena_lista(p, i) else "⏳ sin animar"
-                    if e.get("html") and "revision" in e:
+                    if e.get("prim") and "revision" in e:
                         estado += " · ✅ revisada" if not e["revision"] else f" · ⚠️ {len(e['revision'])} problema(s)"
                     st.markdown(f"**Escena {i + 1}** {'(gancho)' if i == 0 else ''} · {estado}")
                     for problema in e.get("revision") or []:
@@ -156,8 +156,9 @@ with tab_crear:
                         st.rerun()
                     if not borrar:
                         # Si cambia lo que se dibuja, la animación anterior ya no sirve: queda pendiente.
-                        html = "" if visual != e.get("visual", "") else e.get("html", "")
-                        nuevas.append({**e, "voz": voz, "visual": visual, "html": html})
+                        cambio = visual != e.get("visual", "")
+                        nuevas.append({**e, "voz": voz, "visual": visual, "html": "" if cambio else e.get("html", ""),
+                                       "prim": None if cambio else e.get("prim")})
             caption = st.text_area("Descripción", p.get("caption", ""), key=f"{pid}_cap")
             hashtags = st.text_input("Hashtags", " ".join(p.get("hashtags", [])), key=f"{pid}_hash")
             g1, g2 = st.columns(2)
@@ -263,7 +264,7 @@ with tab_lote:
                 try:
                     p = fabrica.fabricar(nicho_lote, t, router, musica=musica, progreso=barra("Empezando..."))
                     respaldos = sum(e.get("origen") == "respaldo" for e in p["escenas"])
-                    estado.update(label=f"✅ {p['titulo']}" + (f" ({respaldos} escenas de texto)" if respaldos else ""),
+                    estado.update(label=f"✅ {p['titulo']}" + (f" ({respaldos} escenas de respaldo)" if respaldos else ""),
                                   state="complete", expanded=False)
                     resumen.append(p["titulo"])
                 except Exception as error:

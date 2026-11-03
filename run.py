@@ -100,7 +100,7 @@ def main() -> None:
     ap.add_argument("--nicho", help="Clave del nicho (config/nichos.yaml)")
     ap.add_argument("--tema", default="aleatorio", help='Tema del video o "aleatorio"')
     ap.add_argument("--lote", type=int, default=0, help="Fabricar N videos con temas nuevos")
-    ap.add_argument("--musica", default="ninguna", help='"ninguna", "aleatoria" o archivo de assets/musica')
+    ap.add_argument("--musica", default="aleatoria", help='"ninguna", "aleatoria" o archivo de assets/musica')
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--auto", action="store_true", help="Un video con nicho rotativo y envío por correo")
     ap.add_argument("--puerto", default="8502")

@@ -9,11 +9,11 @@ import unicodedata
 
 from src.llm import LLMRouter
 
-ESCENAS_MIN, ESCENAS_MAX = 5, 8
-PALABRAS_MIN, PALABRAS_MAX = 100, 160   # ≈ 35-60 s con la voz a +8 %
+ESCENAS_MIN, ESCENAS_MAX = 6, 12
+PALABRAS_MIN, PALABRAS_MAX = 170, 290   # ≈ 60-110 s con la voz a +8 % (más la tarjeta de cierre)
 
 PROMPT_GUION = """Eres guionista de videos cortos verticales (YouTube Shorts / TikTok) que explican un tema
-con gráficos animados sencillos (diagramas, flechas, formas, íconos), no con fotos.
+con animación científica hecha en código (células, partículas, redes, criaturas planas, zoom de cámara), no con fotos.
 
 Nicho: {nombre}. {descripcion}
 Tono: {tono}
@@ -24,13 +24,16 @@ Reglas:
 - Entre {emin} y {emax} escenas, y entre {pmin} y {pmax} palabras de narración en total.
 - Escena 1 = gancho: arranca directo con el dato que contradice lo que la gente cree, en la primera frase
   (nada de "hoy te voy a contar"). Máximo 22 palabras.
-- Cada escena explica UNA sola idea que se pueda dibujar como un diagrama simple.
+- Cada escena explica UNA sola idea que se pueda mostrar en movimiento.
+- Usa al menos una cifra concreta y verificable ("60 veces más larga", "26 horas"). Nombra un estudio (revista y año)
+  SOLO si es muy conocido y estás seguro de él; si no, no menciones ninguno.
 - Solo hechos ampliamente aceptados. No inventes cifras, fechas, estudios ni récords; si dudas de un dato, no lo uses.
 - La última escena cierra con una consecuencia concreta o un dato práctico. NO pidas que te sigan, comenten
-  o den like, y no termines con preguntas al público.
+  o den like (la tarjeta final para seguir la página la agrega el sistema), y no termines con preguntas al público.
 - Escribe como alguien que sabe del tema y lo cuenta directo, con datos concretos (cifras, nombres de partes,
   causas). PROHIBIDO usar estas muletillas que hacen sonar genérico el video: {prohibidas}.
-- "visual": 1-2 frases que digan qué dibujar (formas, flechas, etiquetas de 1 a 3 palabras). Sin fotos ni personas realistas.
+- "visual": 1-2 frases que digan qué se VE y qué se MUEVE: el protagonista, a qué escala (metros, mm, µm) y hacia dónde
+  va la cámara (acercarse, alejarse). Ej.: "corte de la piel; zoom hasta las células; glóbulos verdes salen del vaso".
 
 PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide si alguien mira el video):
 - "texto": 2 a 5 palabras, máximo 24 letras, que choquen con lo que la gente cree. Fórmulas que funcionan:
@@ -50,7 +53,7 @@ Responde SOLO con este JSON:
 
 PROMPT_TEMA = """Propón UN tema nuevo para un video corto explicativo.
 Nicho: {nombre}. {descripcion}
-Debe ser algo concreto que la gente se pregunta, explicable en 45 segundos, y basado en hechos comprobables y
+Debe ser algo concreto que la gente se pregunta, explicable en 60 a 90 segundos, y basado en hechos comprobables y
 aceptados por la ciencia: NADA de temas que los expertos todavía debaten. {visual}
 Ejemplos del estilo: {ejemplos}
 NO repitas ni parafrasees ninguno de estos temas ya usados: {usados}
@@ -147,13 +150,24 @@ def problemas_guion(g: dict) -> list[str]:
 
 PROMPT_VERIFICAR = """Eres verificador de datos científicos para videos de divulgación. Revisa este guion (portada incluida)
 y señala SOLO afirmaciones falsas, mitos populares presentados como ciertos, o exageraciones que engañen.
-Señala también errores de gramática u ortografía en la PORTADA (pasó: "ES TUS NERVIOS" en vez de "SON").
+Señala también errores de gramática u ortografía en la PORTADA (concordancia, tildes).
 No señales simplificaciones razonables ni cuestiones de estilo.
 
 {guion}
 
-Responde SOLO JSON: {{"errores": [{{"frase": "...", "problema": "por qué es falso", "correccion": "dato correcto"}}]}}
+Responde SOLO JSON: {{"errores": [{{"frase": "copia EXACTA de la frase del guion", "problema": "por qué es falso", "correccion": "dato correcto"}}]}}
 (lista vacía si todo es correcto)."""
+
+
+def _aviso_real(e, texto: str) -> bool:
+    """Descarta avisos inventados por el verificador: pasó que citó frases que no estaban en el guion (copiaba el
+    ejemplo del prompt) o que no explicó el problema. Cuenta si al menos el 70 % de las palabras de la frase
+    citada aparece en el guion."""
+    if not isinstance(e, dict) or not str(e.get("frase", "")).strip() or not str(e.get("problema", "")).strip():
+        return False
+    palabras = set(_normalizar(_norm(texto)).split())
+    citadas = _normalizar(_norm(str(e["frase"]))).split()
+    return bool(citadas) and sum(w in palabras for w in citadas) / len(citadas) >= 0.7
 
 
 def verificar_datos(router: LLMRouter, g: dict) -> list[dict]:
@@ -164,7 +178,7 @@ def verificar_datos(router: LLMRouter, g: dict) -> list[dict]:
     for intento in range(2):  # una respuesta mal formada (pasó) dejaba el guion sin verificar
         try:
             respuesta, _ = router.complete_any(PROMPT_VERIFICAR.format(guion=texto), max_tokens=1500, temperature=0.1)
-            return [e for e in leer_json(respuesta).get("errores", []) if isinstance(e, dict) and e.get("frase")]
+            return [e for e in leer_json(respuesta).get("errores", []) if _aviso_real(e, texto)]
         except Exception as error:
             print(f"[Guionista] no se pudo verificar (intento {intento + 1}): {error}")
     return []

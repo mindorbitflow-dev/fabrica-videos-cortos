@@ -1,0 +1,742 @@
+// Primitivas procedurales en canvas: todo es función pura de (escena, t) con semilla fija,
+// así la vista previa y el render cuadro a cuadro son idénticos.
+// Coordenadas del "mundo" en micrómetros (µm). La cámara define qué ancho del mundo cabe en 1080 px.
+(() => {
+  const W = 1080, H = 1920;
+  // Pantalla en tres franjas, todo centrado en el eje real (x=540):
+  //   textos grandes 260-560 · dibujo 560-1180 (centro de cámara) · subtítulos 1210-1440 sobre franja oscura.
+  const CX = 540, CY = 860;
+  const ZONA = { x0: 70, x1: 940, y0: 260, y1: 1190 };
+
+  // ---------- utilidades ----------
+  const rng = semilla => () => {        // mulberry32
+    semilla |= 0; semilla = semilla + 0x6D2B79F5 | 0;
+    let r = Math.imul(semilla ^ semilla >>> 15, 1 | semilla);
+    r = r + Math.imul(r ^ r >>> 7, 61 | r) ^ r;
+    return ((r ^ r >>> 14) >>> 0) / 4294967296;
+  };
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const suave = x => { x = clamp(x); return x * x * (3 - 2 * x); };
+  const mezcla = (a, b, k) => a + (b - a) * k;
+  const aparecer = (c, t) => {          // opacidad por desde/hasta con fundido de 0.5 s
+    const d = c.desde ?? 0, h = c.hasta ?? Infinity;
+    return suave((t - d) / 0.5) * (1 - suave((t - h) / 0.5));
+  };
+  const rgba = (hex, a) => {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
+  };
+  const cache = new WeakMap();
+  const memo = (obj, fn) => { if (!cache.has(obj)) cache.set(obj, fn()); return cache.get(obj); };
+
+  // ---------- cámara ----------
+  // camara: [{t, x, y, ancho}] — interpola con aceleración suave; el zoom va en escala logarítmica.
+  function camara(claves, t) {
+    if (!claves || !claves.length) return { x: 0, y: 0, ancho: 1000 };
+    if (t <= claves[0].t) return claves[0];
+    for (let i = 0; i < claves.length - 1; i++) {
+      const a = claves[i], b = claves[i + 1];
+      if (t < b.t) {
+        const k = suave((t - a.t) / (b.t - a.t));
+        return { x: mezcla(a.x, b.x, k), y: mezcla(a.y, b.y, k),
+                 ancho: Math.exp(mezcla(Math.log(a.ancho), Math.log(b.ancho), k)) };
+      }
+    }
+    return claves[claves.length - 1];
+  }
+  const vista = cam => {
+    const k = W / cam.ancho;
+    return { k, x: wx => CX + (wx - cam.x) * k, y: wy => CY + (wy - cam.y) * k,
+             dentro: (wx, wy, r) => { const sx = CX + (wx - cam.x) * k, sy = CY + (wy - cam.y) * k, rr = r * k;
+               return sx > -rr && sx < W + rr && sy > -rr && sy < H + rr; } };
+  };
+
+  // ---------- fondo, grano y viñeta ----------
+  const TEMAS = {
+    oscuro: ['#0f1a26', '#070b12'], mar: ['#0d2236', '#04080e'], piel: ['#a8705a', '#5a3428'],
+    tejido: ['#141b2b', '#080b14'], claro: ['#f2eee6', '#d9d3c7'],
+  };
+  function fondo(ctx, f) {
+    const [a, b] = TEMAS[f?.tema] || TEMAS.oscuro;
+    const g = ctx.createRadialGradient(CX, CY, 100, CX, CY, 1300);
+    g.addColorStop(0, a); g.addColorStop(1, b);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  let granoImg = null;
+  function grano(ctx, t, fuerza = 0.07) {
+    if (!granoImg) {
+      granoImg = document.createElement('canvas'); granoImg.width = granoImg.height = 256;
+      const g = granoImg.getContext('2d'), d = g.createImageData(256, 256), r = rng(7);
+      for (let i = 0; i < d.data.length; i += 4) { const v = r() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+      g.putImageData(d, 0, 0);
+    }
+    const f = Math.floor(t * 12);       // el grano "hierve" a 12 fps, determinista
+    ctx.save(); ctx.globalAlpha = fuerza; ctx.globalCompositeOperation = 'overlay';
+    ctx.fillStyle = ctx.createPattern(granoImg, 'repeat');
+    ctx.translate((f * 97) % 256, (f * 53) % 256); ctx.fillRect(-256, -256, W + 512, H + 512);
+    ctx.restore();
+    const v = ctx.createRadialGradient(CX, CY, 500, CX, CY, 1250);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.6)');
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  }
+
+  // Franja oscura difuminada detrás de los subtítulos (1210-1440): el dibujo sigue a sangre pero no compite con el texto.
+  function franjaSubtitulos(ctx) {
+    const g = ctx.createLinearGradient(0, 1150, 0, 1560);
+    g.addColorStop(0, 'rgba(4,6,10,0)'); g.addColorStop(.18, 'rgba(4,6,10,.82)');
+    g.addColorStop(.75, 'rgba(4,6,10,.82)'); g.addColorStop(1, 'rgba(4,6,10,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 1150, W, 410);
+  }
+
+  // ---------- barra de escala (abajo a la izquierda, dentro de la zona segura) ----------
+  // unidad: cuánto mide 1 unidad del mundo (µm por defecto; "m" o "km" para escenas grandes).
+  const UNIDADES = { 'µm': 1e-6, mm: 1e-3, m: 1, km: 1e3 };
+  function barraEscala(ctx, v, unidad = 'µm') {
+    const metros = UNIDADES[unidad] ?? 1e-6;
+    const objetivo = 140 / v.k * metros; let p = Math.pow(10, Math.floor(Math.log10(objetivo))), L = p;
+    for (const m of [1, 2, 5, 10]) if (m * p <= objetivo) L = m * p;
+    const px = L / metros * v.k, r = x => +x.toPrecision(3);
+    let txt = `${r(L * 1e9)} nm`;
+    if (L >= 1e3) txt = `${r(L / 1e3)} km`; else if (L >= 1) txt = `${r(L)} m`; else if (L >= 1e-2) txt = `${r(L * 100)} cm`;
+    else if (L >= 1e-3) txt = `${r(L * 1e3)} mm`; else if (L >= 1e-6) txt = `${r(L * 1e6)} µm`;
+    ctx.save(); ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.fillRect(ZONA.x0 + 10, 1172, px, 5);
+    ctx.font = '26px "Space Mono", monospace'; ctx.fillText(txt, ZONA.x0 + 10, 1160);
+    ctx.restore();
+  }
+
+  // ---------- primitivas del mundo ----------
+  const P = {};
+
+  // Campo de células: rejilla hexagonal con desorden. Opcional: aparicion "onda" desde el centro,
+  // y "muerte" {x, y, r, desde, dur}: las células dentro del radio se hinchan y revientan en fragmentos.
+  P.campoCelulas = (ctx, c, t, v) => {
+    const celulas = memo(c, () => {
+      const r = rng(c.semilla ?? 1), lista = [], paso = c.radio * 2.15, fila = paso * 0.87;
+      for (let y = c.y, j = 0; y < c.y + c.alto; y += fila, j++)
+        for (let x = c.x + (j % 2) * paso / 2; x < c.x + c.ancho; x += paso)
+          if (r() < (c.densidad ?? 1))
+            lista.push({ x: x + (r() - .5) * paso * .3, y: y + (r() - .5) * fila * .3, s: .8 + r() * .35, f: r() * 6.28, d: r() });
+      return lista;
+    });
+    const a = aparecer(c, t); if (a <= 0) return;
+    const cxm = c.x + c.ancho / 2, cym = c.y + c.alto / 2, diag = Math.hypot(c.ancho, c.alto) / 2;
+    const m = c.muerte;
+    ctx.save(); ctx.lineWidth = Math.max(1, c.radio * v.k * 0.08);
+    for (const e of celulas) {
+      let rad = c.radio * e.s * (1 + 0.04 * Math.sin(t * 1.6 + e.f));
+      if (!v.dentro(e.x, e.y, rad * 1.5)) continue;
+      let alfa = a;
+      if (c.aparicion === 'onda') alfa *= suave((t - (c.desde ?? 0) - Math.hypot(e.x - cxm, e.y - cym) / diag * 1.5) / 0.4);
+      let roto = 0;
+      if (m) {
+        const dist = Math.hypot(e.x - m.x, e.y - m.y);
+        if (dist < m.r) roto = clamp((t - m.desde - (dist / m.r) * (m.dur ?? 2) * 0.6 - e.d * 0.4) / 0.6);
+      }
+      if (alfa <= 0.01) continue;
+      const sx = v.x(e.x), sy = v.y(e.y), sr = rad * v.k * (1 + roto * 0.35);
+      if (roto >= 1) {                 // fragmentos que se dispersan y se apagan
+        const r2 = rng(Math.floor(e.x * 7 + e.y * 13));
+        ctx.fillStyle = rgba(c.color, alfa * 0.35);
+        for (let i = 0; i < 4; i++) { const ang = r2() * 6.28, dd = sr * (1 + r2());
+          ctx.beginPath(); ctx.arc(sx + Math.cos(ang) * dd, sy + Math.sin(ang) * dd, sr * 0.18, 0, 6.28); ctx.fill(); }
+        continue;
+      }
+      ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 6.28);
+      ctx.fillStyle = rgba(c.color, alfa * (0.16 + roto * 0.1)); ctx.fill();
+      ctx.strokeStyle = rgba(c.color, alfa * 0.75 * (1 - roto * 0.6)); ctx.stroke();
+      if (c.nucleo !== false) {
+        ctx.beginPath(); ctx.arc(sx, sy, sr * 0.38, 0, 6.28);
+        ctx.fillStyle = rgba(c.colorNucleo || c.color, alfa * 0.9 * (1 - roto)); ctx.fill();
+      }
+    }
+    ctx.restore();
+  };
+
+  // Estratos: líneas onduladas horizontales (dermis, capas de roca, agua...).
+  P.estratos = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const r = memo(c, () => { const g = rng(c.semilla ?? 3); return Array.from({ length: c.lineas }, () => [g() * 6.28, g() * 6.28, .6 + g() * .8]); });
+    ctx.save(); ctx.strokeStyle = rgba(c.color, a * 0.45); ctx.lineWidth = 2;
+    r.forEach(([f1, f2, amp], i) => {
+      const wy = c.y + (c.alto * (i + .5)) / c.lineas;
+      ctx.beginPath();
+      for (let sx = -20; sx <= W + 20; sx += 12) {
+        const wx = (sx - v.x(0)) / v.k;
+        const ond = c.onda * amp * (Math.sin(wx / c.onda / 9 + f1 + t * .25) + .5 * Math.sin(wx / c.onda / 4 + f2));
+        const sy = v.y(wy + ond);
+        sx === -20 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+    });
+    ctx.restore();
+  };
+
+  // Vaso: tubo por una polilínea con células que fluyen dentro.
+  function largo(pts) { let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return L; }
+  function puntoEn(pts, s) {
+    let L = largo(pts) * s;
+    for (let i = 1; i < pts.length; i++) {
+      const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      if (L <= d) { const k = L / d; return [mezcla(pts[i - 1][0], pts[i][0], k), mezcla(pts[i - 1][1], pts[i][1], k)]; }
+      L -= d;
+    }
+    return pts[pts.length - 1];
+  }
+  P.vaso = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const camino = () => { ctx.beginPath(); c.puntos.forEach(([x, y], i) => i ? ctx.lineTo(v.x(x), v.y(y)) : ctx.moveTo(v.x(x), v.y(y))); };
+    ctx.save(); ctx.lineCap = ctx.lineJoin = 'round';
+    camino(); ctx.strokeStyle = rgba(c.color, a * .9); ctx.lineWidth = c.grosor * v.k; ctx.stroke();
+    camino(); ctx.strokeStyle = rgba('#05070c', a * .85); ctx.lineWidth = c.grosor * v.k * .8; ctx.stroke();
+    const L = largo(c.puntos), n = c.celulas ?? 30, rr = rng(c.semilla ?? 5);
+    for (let i = 0; i < n; i++) {
+      const off = rr(), lado = (rr() - .5) * c.grosor * .45;
+      const s = ((i / n + off * .02 + t * (c.velocidad ?? 40) / L) % 1 + 1) % 1;
+      const [x, y] = puntoEn(c.puntos, s);
+      if (!v.dentro(x, y, c.grosor)) continue;
+      ctx.beginPath(); ctx.arc(v.x(x), v.y(y + lado), c.grosor * .17 * v.k, 0, 6.28);
+      ctx.fillStyle = rgba(c.colorCelulas || '#ff5fa2', a * .9); ctx.fill();
+    }
+    ctx.restore();
+  };
+
+  // Enjambre: n agentes que viajan de una zona a otra con trayectoria ondulante (glóbulos, hormigas, peces).
+  P.enjambre = (ctx, c, t, v) => {
+    const ag = memo(c, () => { const r = rng(c.semilla ?? 9), cir = z => { const an = r() * 6.28, d = Math.sqrt(r()); return [z.x + Math.cos(an) * d * z.r, z.y + Math.sin(an) * d * (z.ry ?? z.r)]; };
+      return Array.from({ length: c.n }, () => ({ o: cir(c.origen), d: cir(c.destino), t0: r(), f: r() * 6.28, s: .8 + r() * .4 })); });
+    const a = aparecer(c, t); if (a <= 0) return;
+    const ini = c.desde ?? 0, dur = c.duracion ?? 4;
+    ctx.save();
+    for (const g of ag) {
+      const k = suave((t - ini - g.t0 * dur * .5) / (dur * .6));
+      if (k <= 0 && c.ocultarAntes) continue;
+      const dx = g.d[0] - g.o[0], dy = g.d[1] - g.o[1], L = Math.hypot(dx, dy) || 1;
+      const ond = Math.sin(k * 9 + g.f) * L * .06 * (1 - k);
+      const x = g.o[0] + dx * k - dy / L * ond + Math.sin(t * 2 + g.f) * c.radio * .15;
+      const y = g.o[1] + dy * k + dx / L * ond + Math.cos(t * 1.7 + g.f) * c.radio * .15;
+      if (!v.dentro(x, y, c.radio * 2)) continue;
+      const sx = v.x(x), sy = v.y(y), sr = c.radio * g.s * v.k;
+      const halo = ctx.createRadialGradient(sx, sy, sr * .3, sx, sy, sr * 2);
+      halo.addColorStop(0, rgba(c.color, a * .35)); halo.addColorStop(1, rgba(c.color, 0));
+      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(sx, sy, sr * 2, 0, 6.28); ctx.fill();
+      ctx.fillStyle = rgba(c.color, a * .55); ctx.beginPath(); ctx.ellipse(sx, sy, sr, sr * .85, g.f, 0, 6.28); ctx.fill();
+      ctx.fillStyle = rgba(c.colorNucleo || '#ffffff', a * .7);
+      for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(sx + Math.cos(g.f + i * 2.1) * sr * .35, sy + Math.sin(g.f + i * 2.1) * sr * .35, sr * .22, 0, 6.28); ctx.fill(); }
+    }
+    ctx.restore();
+  };
+
+  // Partículas que se difunden desde un punto (veneno, moléculas, gas).
+  P.particulas = (ctx, c, t, v) => {
+    const ps = memo(c, () => { const r = rng(c.semilla ?? 11); return Array.from({ length: c.n }, () => ({ an: r() * 6.28, d: Math.sqrt(r()), f: r() * 6.28 })); });
+    const a = aparecer(c, t); if (a <= 0) return;
+    const ext = c.r * (0.15 + 0.85 * suave((t - (c.desde ?? 0)) / (c.duracion ?? 3)));
+    ctx.save(); ctx.fillStyle = rgba(c.color, a * .9);
+    for (const p of ps) {
+      const x = c.x + Math.cos(p.an) * p.d * ext + Math.sin(t * 3 + p.f) * c.tam;
+      const y = c.y + Math.sin(p.an) * p.d * ext + Math.cos(t * 2.6 + p.f) * c.tam;
+      if (!v.dentro(x, y, c.tam)) continue;
+      ctx.beginPath(); ctx.arc(v.x(x), v.y(y), Math.max(1.5, c.tam * v.k), 0, 6.28); ctx.fill();
+    }
+    ctx.restore();
+  };
+
+  // Forma simple con brillo que crece al aparecer (ronchas, núcleos, planetas, gotas).
+  P.forma = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const k = c.crece ? suave((t - (c.desde ?? 0)) / 1.2) : 1;
+    const sx = v.x(c.x), sy = v.y(c.y), rx = c.rx * v.k * k, ry = (c.ry ?? c.rx) * v.k * k;
+    ctx.save();
+    if (c.brillo) { const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, rx * 1.8);
+      g.addColorStop(0, rgba(c.color, a * .45)); g.addColorStop(1, rgba(c.color, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, rx * 1.8, 0, 6.28); ctx.fill(); }
+    ctx.beginPath(); ctx.ellipse(sx, sy, Math.max(.1, rx), Math.max(.1, ry), 0, 0, 6.28);
+    ctx.fillStyle = rgba(c.color, a * (c.opacidad ?? .9)); ctx.fill();
+    ctx.restore();
+  };
+
+  // ---------- capas de pantalla (no se mueven con la cámara) ----------
+  // Zonas de pantalla ocupadas en el cuadro actual: los textos grandes reservan su lugar desde un poco antes
+  // de aparecer (así nada salta al entrar) y las etiquetas buscan un hueco libre en vez de encimarse.
+  let ocupado = [];
+  const choca = (r) => ocupado.some(o => r.x0 < o.x1 && r.x1 > o.x0 && r.y0 < o.y1 && r.y1 > o.y0);
+  const reservada = (c, t) => t >= (c.desde ?? 0) - .6 && t < (c.hasta ?? Infinity) + .5;
+  // Etiqueta con línea guía hacia un punto del mundo.
+  P.etiqueta = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const k = suave((t - (c.desde ?? 0)) / 0.6);
+    const px = v.x(c.x), py = v.y(c.y);
+    // Si lo señalado quedó fuera del área del dibujo (la cámara se movió), la etiqueta no se muestra:
+    // su línea cruzaría los subtítulos o apuntaría a nada.
+    if (px < ZONA.x0 || px > ZONA.x1 || py < ZONA.y0 || py > ZONA.y1) return;
+    const tx = clamp(px + (c.dx ?? 160), ZONA.x0 + 10, ZONA.x1 - 10);
+    let ty = clamp(py + (c.dy ?? -120), ZONA.y0 + 60, ZONA.y1 - 30);
+    ctx.save(); ctx.font = '900 44px Montserrat, sans-serif'; ctx.textBaseline = 'bottom';
+    const ancho = ctx.measureText(c.texto.toUpperCase()).width, derecha = tx + ancho > ZONA.x1;
+    const caja = y => ({ x0: derecha ? tx - ancho : tx, x1: derecha ? tx : tx + ancho, y0: y - 58, y1: y });
+    // Busca la posición libre más cercana (abajo y arriba, en pasos de 60 px) dentro de la zona segura.
+    for (let paso = 0, base = ty; paso < 16 && choca(caja(ty)); paso++) {
+      const d = 60 * Math.ceil((paso + 1) / 2) * (paso % 2 ? -1 : 1);
+      ty = clamp(base + d, ZONA.y0 + 60, ZONA.y1 - 30);
+    }
+    ocupado.push(caja(ty));
+    ctx.globalAlpha = a; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#fff'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px, py, 7, 0, 6.28); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(mezcla(px, tx, k), mezcla(py, ty, k)); ctx.stroke();
+    ctx.textAlign = derecha ? 'right' : 'left';
+    ctx.globalAlpha = a * k; ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 12;
+    ctx.fillStyle = c.color || '#fff'; ctx.fillText(c.texto.toUpperCase(), tx, ty - 8);
+    ctx.restore();
+  };
+
+  // Número gigante arriba con subtítulo pequeño; opcional cuenta de "de" a "a".
+  P.numero = (ctx, c, t) => {
+    if (reservada(c, t)) ocupado.push({ x0: ZONA.x0, x1: ZONA.x1, y0: 290, y1: c.sub ? 560 : 500 });
+    const a = aparecer(c, t); if (a <= 0) return;
+    let txt = c.texto;
+    if (c.contar) { const k = suave((t - (c.desde ?? 0)) / (c.contar.dur ?? 1.2));
+      txt = Math.round(mezcla(c.contar.de, c.contar.a, k)).toLocaleString('es') + (c.sufijo || ''); }
+    const y = 300 + (1 - suave((t - (c.desde ?? 0)) / 0.5)) * 30;
+    ctx.save(); ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 20;
+    ctx.font = '170px Anton, Montserrat, sans-serif'; ctx.fillStyle = c.color || '#ffffff'; ctx.textBaseline = 'top';
+    ctx.fillText(txt, CX, y);
+    if (c.sub) { ctx.font = '700 44px "Space Mono", monospace'; ctx.fillStyle = '#fff'; ctx.fillText(c.sub, CX, y + 190); }
+    ctx.restore();
+  };
+
+  // Cita del estudio (credibilidad): revista · año, autores.
+  P.cita = (ctx, c, t) => {
+    if (reservada(c, t)) ocupado.push({ x0: ZONA.x0, x1: ZONA.x1, y0: 280, y1: 400 });
+    const a = aparecer(c, t); if (a <= 0) return;
+    ctx.save(); ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+    ctx.font = '700 46px "Space Mono", monospace'; ctx.fillText(c.texto, CX, 330);
+    if (c.sub) { ctx.font = '28px "Space Mono", monospace'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText(c.sub, CX, 380); }
+    ctx.restore();
+  };
+
+  // ---------- figuras hechas de piezas (dibujadas en código, con movimiento propio) ----------
+  // Cada modelo dibuja en coordenadas locales: la figura mide ~1 de largo, centrada en 0,0.
+  // c1 = color principal, c2 = color secundario. t = tiempo para su movimiento propio.
+  const ojo = (ctx, x, y, r) => {
+    ctx.fillStyle = '#f4ecd8'; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#1a1208'; ctx.beginPath(); ctx.arc(x + r * .2, y, r * .55, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + r * .35, y - r * .25, r * .18, 0, 6.28); ctx.fill();
+  };
+  const elipse = (ctx, x, y, rx, ry, rot, color) => { ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, rot || 0, 0, 6.28); ctx.fill(); };
+  const linea = (ctx, pts, color, ancho) => { ctx.strokeStyle = color; ctx.lineWidth = ancho; ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); };
+  const MODELOS = {
+    pez(ctx, t, c1, c2) {
+      const w = Math.sin(t * 6) * .12;
+      ctx.fillStyle = c2; ctx.beginPath(); ctx.moveTo(-.38, 0); ctx.lineTo(-.6, -.2 + w); ctx.lineTo(-.55, 0); ctx.lineTo(-.6, .2 + w); ctx.closePath(); ctx.fill();
+      elipse(ctx, 0, 0, .42, .2, 0, c1);
+      elipse(ctx, .02, .07, .3, .1, 0, 'rgba(255,255,255,.12)');
+      ctx.fillStyle = c2; ctx.beginPath(); ctx.moveTo(-.05, -.18); ctx.quadraticCurveTo(-.15, -.33, -.25, -.16); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(.0, .1); ctx.quadraticCurveTo(-.08, .2 + w * .5, -.16, .12); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.55)'; for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.arc(-.28 + i * .07, -.02, .01, 0, 6.28); ctx.fill(); }
+      ojo(ctx, .26, -.05, .055);
+    },
+    hormiga(ctx, t, c1, c2) {
+      for (let i = 0; i < 3; i++) for (const s of [-1, 1]) {
+        const f = Math.sin(t * 10 + i * 2 + (s > 0 ? 3.14 : 0)) * .06, x0 = -.02 + (i - 1) * .06;
+        linea(ctx, [[x0, 0], [x0 + (i - 1) * .12 + f, s * .2], [x0 + (i - 1) * .2 + f, s * .3]], c2, .02);
+      }
+      elipse(ctx, -.3, 0, .2, .13, 0, c1); elipse(ctx, -.02, 0, .1, .06, 0, c1); elipse(ctx, .2, 0, .1, .09, 0, c1);
+      for (const s of [-1, 1]) linea(ctx, [[.27, s * .03], [.36, s * .12 + Math.sin(t * 3) * .02], [.45, s * .1]], c2, .015);
+      elipse(ctx, -.35, -.04, .09, .05, 0, 'rgba(255,255,255,.12)'); elipse(ctx, .24, -.02, .02, .02, 0, '#1a1208');
+    },
+    bacteria(ctx, t, c1, c2) {
+      for (let k = 0; k < 3; k++) { const pts = []; for (let i = 0; i <= 20; i++) { const s = i / 20; pts.push([-.35 - s * .35, (k - 1) * .05 + Math.sin(s * 9 - t * 8 + k) * .04 * s]); } linea(ctx, pts, c2, .012); }
+      ctx.fillStyle = c1; ctx.beginPath(); ctx.roundRect(-.36, -.14, .72, .28, .14); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = .015; ctx.stroke();
+      const r = rng(4); ctx.fillStyle = c2; for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.arc(-.25 + r() * .5, -.07 + r() * .14, .018, 0, 6.28); ctx.fill(); }
+    },
+    virus(ctx, t, c1, c2) {
+      for (let i = 0; i < 14; i++) { const a = i / 14 * 6.28 + t * .3, l = .44 + Math.sin(t * 3 + i) * .01;
+        linea(ctx, [[Math.cos(a) * .3, Math.sin(a) * .3], [Math.cos(a) * l, Math.sin(a) * l]], c2, .02);
+        elipse(ctx, Math.cos(a) * l, Math.sin(a) * l, .04, .04, 0, c2); }
+      elipse(ctx, 0, 0, .32, .32, 0, c1); elipse(ctx, -.08, -.08, .16, .16, 0, 'rgba(255,255,255,.12)');
+    },
+    neurona(ctx, t, c1, c2) {
+      const r = rng(21);
+      for (let i = 0; i < 6; i++) { const a = 1.2 + i * .75 + r() * .3; let x = 0, y = 0; const pts = [[0, 0]];
+        for (let s = 0; s < 4; s++) { x += Math.cos(a + (r() - .5)) * .08; y += Math.sin(a + (r() - .5)) * .08; pts.push([x - .25, y]); }
+        pts[0] = [-.25, 0]; linea(ctx, pts, c1, .02); }
+      linea(ctx, [[-.25, 0], [.55, .02]], c1, .025);
+      for (let i = 0; i < 4; i++) elipse(ctx, -.05 + i * .16, .012, .06, .028, 0, c2);
+      for (const s of [-1, 0, 1]) linea(ctx, [[.55, .02], [.65, s * .08]], c1, .015);
+      elipse(ctx, -.25, 0, .1, .09, 0, c1); elipse(ctx, -.25, 0, .04, .04, 0, c2);
+      const p = (t * .5) % 1; const g = ctx.createRadialGradient(-.25 + p * .8, .01, 0, -.25 + p * .8, .01, .06);
+      g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(-.25 + p * .8, .01, .06, 0, 6.28); ctx.fill();
+    },
+    celula(ctx, t, c1, c2) {
+      ctx.fillStyle = rgbaDesde(c1, .25); ctx.strokeStyle = c1; ctx.lineWidth = .02; ctx.beginPath();
+      for (let i = 0; i <= 40; i++) { const a = i / 40 * 6.28, rr = .45 + Math.sin(a * 3 + t * 1.5) * .015 + Math.sin(a * 5 - t) * .01; i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      elipse(ctx, .05, -.03, .16, .14, 0, c2); elipse(ctx, .08, -.05, .05, .05, 0, rgbaDesde('#ffffff', .4));
+      const r = rng(8); for (let i = 0; i < 5; i++) { const a = r() * 6.28, d = .22 + r() * .12; elipse(ctx, Math.cos(a) * d, Math.sin(a) * d, .06, .025, a + t * .2, rgbaDesde(c2, .8)); }
+    },
+    persona(ctx, t, c1, c2) {
+      const res = Math.sin(t * 1.8) * .01;
+      ctx.fillStyle = c1; ctx.beginPath(); ctx.roundRect(-.17, -.12 + res, .34, .5, .14); ctx.fill();
+      elipse(ctx, 0, -.27 + res, .12, .13, 0, c2);
+      for (const s of [-1, 1]) linea(ctx, [[s * .15, -.05 + res], [s * .22, .14 + Math.sin(t * 2) * .01 * s]], c1, .07);
+      ctx.fillStyle = c1; ctx.fillRect(-.12, .32, .09, .17); ctx.fillRect(.03, .32, .09, .17);
+    },
+    ave(ctx, t, c1, c2) {
+      const al = Math.sin(t * 9) * .25;
+      ctx.fillStyle = c2; ctx.beginPath(); ctx.moveTo(-.05, -.02); ctx.quadraticCurveTo(-.1, -.3 - al, -.3, -.35 - al); ctx.quadraticCurveTo(-.2, -.1, -.2, 0); ctx.fill();
+      elipse(ctx, 0, 0, .3, .13, 0, c1);
+      ctx.fillStyle = c1; ctx.beginPath(); ctx.moveTo(-.28, 0); ctx.lineTo(-.48, -.08); ctx.lineTo(-.46, .06); ctx.fill();
+      elipse(ctx, .27, -.07, .1, .09, 0, c1);
+      ctx.fillStyle = '#f2a33a'; ctx.beginPath(); ctx.moveTo(.35, -.09); ctx.lineTo(.47, -.06); ctx.lineTo(.35, -.03); ctx.fill();
+      ojo(ctx, .3, -.1, .03);
+    },
+    planta(ctx, t, c1, c2) {
+      const sw = Math.sin(t * 1.2) * .03;
+      linea(ctx, [[0, .5], [sw * .5, .1], [sw, -.4]], c2, .03);
+      for (let i = 0; i < 5; i++) { const y = .35 - i * .17, s = i % 2 ? 1 : -1, x = sw * (1 - y);
+        ctx.save(); ctx.translate(x, y); ctx.rotate(s * (.6 + Math.sin(t * 1.5 + i) * .08)); elipse(ctx, 0, -.1, .05, .12, 0, c1); ctx.restore(); }
+    },
+    gota(ctx, t, c1) {
+      const s = 1 + Math.sin(t * 3) * .02; ctx.save(); ctx.scale(1 / s, s);
+      ctx.fillStyle = c1; ctx.beginPath(); ctx.moveTo(0, -.45); ctx.bezierCurveTo(.1, -.25, .3, -.05, .3, .15); ctx.arc(0, .15, .3, 0, 3.14); ctx.bezierCurveTo(-.3, -.05, -.1, -.25, 0, -.45); ctx.fill();
+      elipse(ctx, -.1, .1, .05, .1, .3, 'rgba(255,255,255,.4)'); ctx.restore();
+    },
+    moneda(ctx, t, c1, c2) {
+      const g = Math.cos(t * 2.2); ctx.save(); ctx.scale(Math.max(.08, Math.abs(g)), 1);
+      elipse(ctx, 0, 0, .4, .4, 0, c2); elipse(ctx, 0, 0, .34, .34, 0, c1);
+      if (g > 0) { ctx.scale(.01, .01); ctx.fillStyle = c2; ctx.font = '900 46px Montserrat'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('$', 0, 3); }
+      ctx.restore();
+    },
+    engranaje(ctx, t, c1, c2) {
+      ctx.save(); ctx.rotate(t * .8); ctx.fillStyle = c1; ctx.beginPath();
+      for (let i = 0; i < 24; i++) { const a = i / 24 * 6.28, r = i % 2 ? .38 : .46; ctx.lineTo(Math.cos(a - .1) * r, Math.sin(a - .1) * r); ctx.lineTo(Math.cos(a + .1) * r, Math.sin(a + .1) * r); }
+      ctx.closePath(); ctx.fill(); elipse(ctx, 0, 0, .14, .14, 0, c2); ctx.restore();
+    },
+    planeta(ctx, t, c1, c2) {
+      const g = ctx.createRadialGradient(-.15, -.15, .05, 0, 0, .45); g.addColorStop(0, c1); g.addColorStop(1, rgbaDesde(c2, 1));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, .42, 0, 6.28); ctx.fill();
+      ctx.save(); ctx.beginPath(); ctx.arc(0, 0, .42, 0, 6.28); ctx.clip();
+      const r = rng(31); ctx.fillStyle = 'rgba(255,255,255,.12)'; for (let i = 0; i < 6; i++) elipse(ctx, ((r() - .5) + t * .03) % 1 * .9, (r() - .5) * .7, .12 + r() * .1, .05, 0, 'rgba(255,255,255,.12)');
+      ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.arc(.18, .1, .48, 0, 6.28); ctx.fill(); ctx.restore();
+    },
+    sol(ctx, t, c1, c2) {
+      const g = ctx.createRadialGradient(0, 0, .1, 0, 0, .55); g.addColorStop(0, rgbaDesde(c1, .9)); g.addColorStop(1, rgbaDesde(c1, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, .55, 0, 6.28); ctx.fill();
+      elipse(ctx, 0, 0, .3 + Math.sin(t * 2) * .005, .3, 0, c2);
+    },
+    corazon(ctx, t, c1, c2) {
+      const p = 1 + Math.max(0, Math.sin(t * 7)) ** 8 * .08; ctx.save(); ctx.scale(p, p); ctx.fillStyle = c1; ctx.beginPath();
+      ctx.moveTo(0, .38); ctx.bezierCurveTo(-.5, 0, -.42, -.42, 0, -.2); ctx.bezierCurveTo(.42, -.42, .5, 0, 0, .38); ctx.fill();
+      elipse(ctx, -.15, -.17, .08, .05, -.5, 'rgba(255,255,255,.25)'); linea(ctx, [[.05, -.26], [.1, -.42]], c2, .06); ctx.restore();
+    },
+    llama(ctx, t, c1, c2) {
+      for (const [k, col] of [[1, c1], [.6, c2]]) { const f = Math.sin(t * 9) * .03 * k, f2 = Math.sin(t * 13) * .02;
+        ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, .35 * k);
+        ctx.bezierCurveTo(-.3 * k, .3 * k, -.25 * k, -.1, f - .02, -.45 * k + f2); ctx.bezierCurveTo(.25 * k, -.1, .3 * k, .3 * k, 0, .35 * k); ctx.fill(); }
+    },
+    chip(ctx, t, c1, c2) {
+      for (let i = 0; i < 5; i++) for (const s of [-1, 1]) { const o = -.2 + i * .1, on = ((t * 2 + i) % 5) < 1;
+        linea(ctx, [[o, s * .3], [o, s * .42]], on ? c2 : 'rgba(255,255,255,.5)', .03); linea(ctx, [[s * .3, o], [s * .42, o]], 'rgba(255,255,255,.5)', .03); }
+      ctx.fillStyle = c1; ctx.beginPath(); ctx.roundRect(-.3, -.3, .6, .6, .05); ctx.fill();
+      ctx.strokeStyle = c2; ctx.lineWidth = .015; ctx.strokeRect(-.18, -.18, .36, .36);
+    },
+    bateria(ctx, t, c1, c2, extra) {
+      const nivel = clamp(extra?.nivel ?? (.5 + Math.sin(t) * .3));
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = .03; ctx.beginPath(); ctx.roundRect(-.2, -.4, .4, .8, .05); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.fillRect(-.07, -.46, .14, .06);
+      ctx.fillStyle = nivel < .25 ? '#ff5a4f' : c1; ctx.fillRect(-.16, .36 - .72 * nivel, .32, .72 * nivel);
+    },
+  };
+  // ---- órganos y animales frecuentes en los temas de biología y cuerpo ----
+  Object.assign(MODELOS, {
+    estomago(ctx, t, c1, c2) {
+      const p = 1 + Math.sin(t * 1.6) * .02;
+      linea(ctx, [[-.12, -.5], [-.1, -.32]], c2, .09);                       // esófago
+      ctx.save(); ctx.scale(p, p); ctx.fillStyle = c1; ctx.beginPath();
+      ctx.moveTo(-.16, -.34); ctx.bezierCurveTo(-.45, -.3, -.5, .1, -.3, .3);
+      ctx.bezierCurveTo(-.1, .48, .3, .42, .42, .22); ctx.bezierCurveTo(.5, .08, .38, -.02, .26, .05);
+      ctx.bezierCurveTo(.12, .14, -.02, .1, -.02, -.05); ctx.bezierCurveTo(-.02, -.2, -.04, -.32, -.16, -.34); ctx.fill();
+      ctx.clip(); ctx.strokeStyle = rgba('#ffffff', .22); ctx.lineWidth = .015;   // pliegues, dentro de la silueta
+      for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(-.12, .1, .14 + i * .06, 1.2, 2.6); ctx.stroke(); }
+      ctx.restore(); linea(ctx, [[.4, .2], [.5, .3], [.48, .42]], c2, .07);      // duodeno
+    },
+    pulmon(ctx, t, c1, c2) {
+      const r = 1 + Math.sin(t * 1.4) * .05;
+      linea(ctx, [[0, -.5], [0, -.2]], c2, .06);
+      for (const s of [-1, 1]) {
+        ctx.save(); ctx.scale(r, r); ctx.fillStyle = c1; ctx.beginPath();
+        ctx.moveTo(s * .04, -.28); ctx.bezierCurveTo(s * .38, -.38, s * .46, .2, s * .36, .42);
+        ctx.bezierCurveTo(s * .2, .48, s * .06, .36, s * .05, .1); ctx.closePath(); ctx.fill(); ctx.restore();
+        linea(ctx, [[0, -.2], [s * .12, -.08], [s * .2, .05]], c2, .035);
+        linea(ctx, [[s * .12, -.08], [s * .24, -.12]], c2, .022); linea(ctx, [[s * .2, .05], [s * .28, .2]], c2, .022);
+      }
+    },
+    cerebro(ctx, t, c1, c2) {
+      elipse(ctx, .2, .24, .15, .09, .3, c2);                                    // cerebelo
+      ctx.save(); ctx.fillStyle = c1; ctx.beginPath(); ctx.ellipse(0, 0, .44, .32, 0, 0, 6.28); ctx.fill(); ctx.clip();
+      // circunvoluciones al estilo plano: lóbulos redondeados superpuestos, cada uno con su contorno
+      const r = rng(41), lob = [];
+      for (let y = -.26; y <= .27; y += .1) for (let x = -.4; x <= .41; x += .11)
+        if ((x / .44) ** 2 + (y / .32) ** 2 < 1.15) lob.push([x + (r() - .5) * .05 + (Math.round(y * 10) % 2) * .05, y + (r() - .5) * .04, .075 + r() * .03]);
+      ctx.strokeStyle = rgba('#8a4a55', .55); ctx.lineWidth = .016;
+      for (const [x, y, rr] of lob) { ctx.fillStyle = rgba(c1, 1); ctx.beginPath(); ctx.ellipse(x, y, rr * 1.15, rr, (x + y) * 2, 0, 6.28); ctx.fill(); ctx.stroke(); }
+      ctx.lineWidth = .026; ctx.strokeStyle = rgba('#7a3a45', .65);             // cisura lateral
+      ctx.beginPath(); ctx.moveTo(-.22, .14); ctx.bezierCurveTo(-.04, .04, .14, .08, .3, -.02); ctx.stroke();
+      ctx.restore();
+      ctx.strokeStyle = rgba('#8a4a55', .6); ctx.lineWidth = .02; ctx.beginPath(); ctx.ellipse(0, 0, .44, .32, 0, 0, 6.28); ctx.stroke();
+      const g = (t * .7) % 1, gx = -.35 + g * .7;                                 // chispa de actividad
+      const gr = ctx.createRadialGradient(gx, -.05, 0, gx, -.05, .1); gr.addColorStop(0, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(gx, -.05, .1, 0, 6.28); ctx.fill();
+    },
+    ojo(ctx, t, c1, c2) {
+      const parp = Math.max(.08, 1 - Math.max(0, Math.sin(t * 1.3)) ** 40);
+      ctx.save(); ctx.beginPath(); ctx.ellipse(0, 0, .46, .26 * parp, 0, 0, 6.28); ctx.clip();
+      elipse(ctx, 0, 0, .46, .3, 0, '#f4ecd8');
+      const mx = Math.sin(t * .8) * .08;
+      elipse(ctx, mx, 0, .2, .2, 0, c1); elipse(ctx, mx, 0, .09, .09, 0, '#0b0b0b'); elipse(ctx, mx + .05, -.05, .035, .035, 0, '#ffffff');
+      ctx.restore(); ctx.strokeStyle = c2; ctx.lineWidth = .03; ctx.beginPath(); ctx.ellipse(0, 0, .46, .26 * parp, 0, 0, 6.28); ctx.stroke();
+    },
+    hueso(ctx, t, c1, c2) {
+      ctx.fillStyle = c1; ctx.beginPath(); ctx.roundRect(-.34, -.06, .68, .12, .05); ctx.fill();
+      for (const s of [-1, 1]) for (const u of [-1, 1]) elipse(ctx, s * .38, u * .07, .1, .1, 0, c1);
+      ctx.strokeStyle = rgba(c2, .6); ctx.lineWidth = .012; ctx.beginPath(); ctx.moveTo(-.28, 0); ctx.lineTo(.28, 0); ctx.stroke();
+    },
+    rata(ctx, t, c1, c2) {
+      const cola = Math.sin(t * 3) * .05;
+      ctx.strokeStyle = c2; ctx.lineWidth = .025; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-.32, .05);
+      ctx.bezierCurveTo(-.5, .1 + cola, -.55, -.1 - cola, -.7, -.02); ctx.stroke();
+      elipse(ctx, -.06, 0, .3, .17, 0, c1);
+      ctx.fillStyle = c1; ctx.beginPath(); ctx.moveTo(.16, -.12); ctx.quadraticCurveTo(.4, -.08, .44, .03); ctx.quadraticCurveTo(.3, .1, .14, .1); ctx.fill();
+      elipse(ctx, .14, -.15, .07, .07, 0, c2); elipse(ctx, .14, -.15, .04, .04, 0, '#f2b8b0');
+      elipse(ctx, .44, .03, .025, .025, 0, '#f2b8b0'); ojo(ctx, .3, -.04, .03);
+      for (const x of [-.2, .08]) linea(ctx, [[x, .14], [x + .03 * Math.sin(t * 8), .22]], c2, .03);
+    },
+    gato(ctx, t, c1, c2) {
+      const cola = Math.sin(t * 2) * .12;
+      ctx.strokeStyle = c1; ctx.lineWidth = .06; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-.32, .05);
+      ctx.quadraticCurveTo(-.55, 0, -.5 + cola, -.32); ctx.stroke();
+      elipse(ctx, -.08, .06, .3, .17, 0, c1);
+      for (const x of [-.28, -.12, .06, .16]) linea(ctx, [[x, .16], [x, .34]], c1, .06);
+      elipse(ctx, .26, -.14, .16, .14, 0, c1);
+      for (const s of [-1, 1]) { ctx.fillStyle = c1; ctx.beginPath(); ctx.moveTo(.26 + s * .13, -.2); ctx.lineTo(.26 + s * .12, -.36); ctx.lineTo(.26 + s * .02, -.25); ctx.fill(); }
+      ojo(ctx, .2, -.16, .03); ojo(ctx, .33, -.16, .03);
+      elipse(ctx, .27, -.08, .02, .015, 0, c2);
+      for (const s of [-1, 1]) linea(ctx, [[.27, -.07], [.27 + s * .18, -.05 + s * .02]], rgba('#ffffff', .6), .006);
+    },
+    pulpo(ctx, t, c1, c2) {
+      for (let i = 0; i < 8; i++) { const x0 = -.21 + i * .06, pts = [];
+        for (let k = 0; k <= 12; k++) { const s = k / 12; pts.push([x0 + (x0 * .8) * s + Math.sin(t * 2 + i + s * 5) * .06 * s, .05 + s * .45]); }
+        linea(ctx, pts, c1, .06 * (1 - .5)); }
+      ctx.fillStyle = c1; ctx.beginPath(); ctx.ellipse(0, -.15, .26, .3, 0, 0, 6.28); ctx.fill();
+      for (let i = 0; i < 5; i++) elipse(ctx, -.12 + i * .06, -.3 + (i % 2) * .08, .025, .025, 0, c2);
+      ojo(ctx, -.1, .02, .045); ojo(ctx, .1, .02, .045);
+    },
+  });
+  const rgbaDesde = (hex, a) => rgba(hex, a);
+
+  // figura {modelo, x, y, tam, angulo?, color?, color2?, espejo?, ruta?:[[x,y]...], desde, duracionRuta?, nivel?}
+  // Si trae ruta, la figura viaja por ella (mirando hacia donde va). Aparece con un pequeño "pop".
+  const COLORES_MODELO = { pez: ['#8a6a4f', '#5e4532'], hormiga: ['#a5452b', '#6e2a19'], bacteria: ['#6fd38b', '#2f7a46'],
+    virus: ['#ff6a8e', '#ffc2d1'], neurona: ['#ffd36b', '#ffefc0'], celula: ['#7c8cff', '#c9a3ff'], persona: ['#4f6d8f', '#e7b49a'],
+    ave: ['#c56b3a', '#8a4524'], planta: ['#5fbf5a', '#3c7a2f'], gota: ['#4fb3ff'], moneda: ['#f2c14e', '#b8862a'],
+    engranaje: ['#9aa7b8', '#1b2a3d'], planeta: ['#4f9cff', '#0b2a55'], sol: ['#ffb347', '#fff1c1'], corazon: ['#e2384d', '#8c1d2c'],
+    llama: ['#ff7a1a', '#ffd23f'], chip: ['#24303f', '#5dff9c'], bateria: ['#5dff9c'],
+    estomago: ['#e08a8a', '#b65c5c'], pulmon: ['#ef9aa6', '#c25a6a'], cerebro: ['#efb3b3', '#d18f94'], ojo: ['#4f8fd6', '#e8d9c4'],
+    hueso: ['#efe6d2', '#b8a98a'], rata: ['#8f8a86', '#d79b96'], gato: ['#d08a3c', '#f2b8b0'], pulpo: ['#e0684f', '#ffb3a1'] };
+  P.figura = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const dib = MODELOS[c.modelo]; if (!dib) return;
+    let x = c.x, y = c.y, ang = (c.angulo ?? 0) * Math.PI / 180;
+    if (c.ruta && c.ruta.length > 1) {
+      const pts = [[c.x, c.y], ...c.ruta], k = suave((t - (c.desde ?? 0)) / (c.duracionRuta ?? 3));
+      [x, y] = puntoEn(pts, k); const [x2, y2] = puntoEn(pts, Math.min(1, k + .01));
+      if (k < 1) ang = Math.atan2(y2 - y, x2 - x);
+    }
+    if (!v.dentro(x, y, c.tam)) return;
+    const pop = 1 + .15 * Math.sin(Math.PI * clamp((t - (c.desde ?? 0)) / .35)) * (t - (c.desde ?? 0) < .35 ? 1 : 0);
+    const [d1, d2] = COLORES_MODELO[c.modelo] || ['#ffffff', '#999999'];
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(v.x(x), v.y(y)); ctx.rotate(ang);
+    const s = c.tam * v.k * pop * Math.min(1, .6 + .4 * a); ctx.scale(c.espejo ? -s : s, s);
+    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 0;
+    dib(ctx, t + (c.fase ?? 0), c.color || d1, c.color2 || d2 || d1, c);
+    ctx.restore();
+  };
+
+  // Red: nodos al azar unidos con sus vecinos; crece desde el centro y lleva pulsos de luz (moho, neuronas, internet, metro).
+  P.red = (ctx, c, t, v) => {
+    const red = memo(c, () => {
+      const r = rng(c.semilla ?? 13), nodos = [];
+      for (let i = 0; i < c.nodos; i++) { const an = r() * 6.28, d = Math.sqrt(r()); nodos.push([c.x + Math.cos(an) * d * c.r, c.y + Math.sin(an) * d * (c.ry ?? c.r)]); }
+      const aristas = [];
+      nodos.forEach((p, i) => nodos.map((q, j) => [j, Math.hypot(p[0] - q[0], p[1] - q[1])]).filter(([j]) => j !== i)
+        .sort((m, n) => m[1] - n[1]).slice(0, c.vecinos ?? 3).forEach(([j]) => { if (i < j || !aristas.some(([m, n]) => m === j && n === i)) aristas.push([i, j]); }));
+      return { nodos, aristas, dc: nodos.map(p => Math.hypot(p[0] - c.x, p[1] - c.y) / Math.max(c.r, c.ry ?? c.r)) };
+    });
+    const a = aparecer(c, t); if (a <= 0) return;
+    const crec = (t - (c.desde ?? 0)) / (c.duracion ?? 3);
+    ctx.save(); ctx.lineCap = 'round';
+    for (const [i, j] of red.aristas) {
+      const k = clamp((crec - Math.min(red.dc[i], red.dc[j])) * 3); if (k <= 0) continue;
+      const [x1, y1] = red.nodos[i], [x2, y2] = red.nodos[j];
+      ctx.strokeStyle = rgba(c.color, a * .7); ctx.lineWidth = Math.max(1.5, (c.grosor ?? 4) * v.k);
+      ctx.beginPath(); ctx.moveTo(v.x(x1), v.y(y1)); ctx.lineTo(v.x(mezcla(x1, x2, k)), v.y(mezcla(y1, y2, k))); ctx.stroke();
+      if (c.pulsos && k >= 1) { const p = ((t * .6 + (i * 7 + j) * .137) % 1);
+        ctx.fillStyle = rgba('#ffffff', a * .9); ctx.beginPath(); ctx.arc(v.x(mezcla(x1, x2, p)), v.y(mezcla(y1, y2, p)), Math.max(2, (c.grosor ?? 4) * v.k * .9), 0, 6.28); ctx.fill(); }
+    }
+    red.nodos.forEach((p, i) => { if (crec < red.dc[i]) return;
+      const g = ctx.createRadialGradient(v.x(p[0]), v.y(p[1]), 0, v.x(p[0]), v.y(p[1]), Math.max(4, (c.grosor ?? 4) * v.k * 3));
+      g.addColorStop(0, rgba(c.colorNodo || c.color, a)); g.addColorStop(1, rgba(c.colorNodo || c.color, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(v.x(p[0]), v.y(p[1]), Math.max(4, (c.grosor ?? 4) * v.k * 3), 0, 6.28); ctx.fill(); });
+    ctx.restore();
+  };
+
+  // Ramas: crecimiento ramificado desde una raíz (raíces, árboles, rayos, ríos, vasos, dendritas).
+  P.ramas = (ctx, c, t, v) => {
+    const segs = memo(c, () => {
+      const r = rng(c.semilla ?? 17), out = [];
+      const crecer = (x, y, ang, largo, nivel, t0) => {
+        if (nivel > (c.niveles ?? 5) || largo < 1e-9) return;
+        const x2 = x + Math.cos(ang) * largo, y2 = y + Math.sin(ang) * largo;
+        out.push({ x, y, x2, y2, nivel, t0 });
+        const hijos = r() < .25 ? 3 : 2;
+        for (let h = 0; h < hijos; h++) crecer(x2, y2, ang + (r() - .5) * (c.apertura ?? 1.1), largo * (.62 + r() * .18), nivel + 1, t0 + 1);
+      };
+      crecer(c.x, c.y, (c.angulo ?? -90) * Math.PI / 180, c.largo, 0, 0);
+      return out;
+    });
+    const a = aparecer(c, t); if (a <= 0) return;
+    const niv = (t - (c.desde ?? 0)) / (c.duracion ?? 3) * ((c.niveles ?? 5) + 1);
+    ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = rgba(c.color, a * .9);
+    for (const s of segs) { const k = clamp(niv - s.t0); if (k <= 0) continue;
+      ctx.lineWidth = Math.max(1, (c.grosor ?? 10) * v.k * Math.pow(.7, s.nivel));
+      ctx.beginPath(); ctx.moveTo(v.x(s.x), v.y(s.y)); ctx.lineTo(v.x(mezcla(s.x, s.x2, k)), v.y(mezcla(s.y, s.y2, k))); ctx.stroke(); }
+    ctx.restore();
+  };
+
+  // Corriente: partículas que fluyen por un camino, sin paredes (aire, electrones, dinero, tráfico, señales).
+  P.corriente = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const L = largo(c.puntos), n = c.n ?? 40, r = rng(c.semilla ?? 19);
+    ctx.save();
+    if (c.guia !== false) { ctx.setLineDash([10, 14]); ctx.strokeStyle = rgba(c.color, a * .3); ctx.lineWidth = 3; ctx.beginPath();
+      c.puntos.forEach(([x, y], i) => i ? ctx.lineTo(v.x(x), v.y(y)) : ctx.moveTo(v.x(x), v.y(y))); ctx.stroke(); ctx.setLineDash([]); }
+    ctx.fillStyle = rgba(c.color, a * .95);
+    for (let i = 0; i < n; i++) { const lado = (r() - .5) * (c.ancho ?? 0), off = r();
+      const s = ((i / n + off * .03 + t * (c.velocidad ?? 50) / L) % 1 + 1) % 1, [x, y] = puntoEn(c.puntos, s);
+      ctx.beginPath(); ctx.arc(v.x(x), v.y(y + lado), Math.max(2, (c.tam ?? 4) * v.k), 0, 6.28); ctx.fill(); }
+    if (c.flecha !== false) { const [x1, y1] = puntoEn(c.puntos, .97), [x2, y2] = c.puntos[c.puntos.length - 1], an = Math.atan2(v.y(y2) - v.y(y1), v.x(x2) - v.x(x1));
+      ctx.save(); ctx.translate(v.x(x2), v.y(y2)); ctx.rotate(an); ctx.fillStyle = rgba(c.color, a);
+      ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-22, -16); ctx.lineTo(-22, 16); ctx.fill(); ctx.restore(); }
+    ctx.restore();
+  };
+
+  // Onda: sonido, luz, ondas de radio, latidos. Se dibuja de x a x+ancho.
+  P.onda = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const k = suave((t - (c.desde ?? 0)) / 1.5);
+    ctx.save(); ctx.strokeStyle = rgba(c.color, a); ctx.lineWidth = Math.max(2, (c.grosor ?? 3) * v.k); ctx.shadowColor = c.color; ctx.shadowBlur = 12;
+    ctx.beginPath();
+    for (let i = 0; i <= 200 * k; i++) { const s = i / 200, wx = c.x + s * c.ancho;
+      const wy = c.y + Math.sin((s * c.ancho) / c.longitud * 6.28 - t * (c.velocidad ?? 2) * 6.28) * c.amplitud;
+      i ? ctx.lineTo(v.x(wx), v.y(wy)) : ctx.moveTo(v.x(wx), v.y(wy)); }
+    ctx.stroke(); ctx.restore();
+  };
+
+  // Órbita: n cuerpos girando alrededor de un centro (átomo, planetas, satélites, electrones).
+  P.orbita = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    ctx.save(); const inc = c.inclinacion ?? .35;
+    ctx.strokeStyle = rgba(c.color, a * .35); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(v.x(c.x), v.y(c.y), c.r * v.k, c.r * v.k * inc, c.giro ?? 0, 0, 6.28); ctx.stroke();
+    for (let i = 0; i < (c.n ?? 1); i++) { const an = t * 6.28 / (c.periodo ?? 3) + i / (c.n ?? 1) * 6.28, g = c.giro ?? 0;
+      const ex = Math.cos(an) * c.r, ey = Math.sin(an) * c.r * inc, x = c.x + ex * Math.cos(g) - ey * Math.sin(g), y = c.y + ex * Math.sin(g) + ey * Math.cos(g);
+      const rr = Math.max(4, (c.tam ?? 10) * v.k), gr = ctx.createRadialGradient(v.x(x), v.y(y), 0, v.x(x), v.y(y), rr * 2.5);
+      gr.addColorStop(0, rgba(c.color, a)); gr.addColorStop(1, rgba(c.color, 0)); ctx.fillStyle = gr;
+      ctx.beginPath(); ctx.arc(v.x(x), v.y(y), rr * 2.5, 0, 6.28); ctx.fill(); }
+    ctx.restore();
+  };
+
+  // ---------- más capas de pantalla ----------
+  // Gráfica de barras o línea dentro de la zona del dibujo (dinero, estadísticas). datos: números ≥ 0.
+  P.grafica = (ctx, c, t) => {
+    if (reservada(c, t)) ocupado.push({ x0: 110, x1: ZONA.x1, y0: 540, y1: 1140 });
+    const a = aparecer(c, t); if (a <= 0) return;
+    const k = suave((t - (c.desde ?? 0)) / (c.duracion ?? 2)), datos = c.datos, max = Math.max(...datos, 1e-9);
+    const x0 = 165, x1 = 915, y0 = 1080, y1 = 600, n = datos.length, paso = (x1 - x0) / n;
+    ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x0, y1 - 20); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+    ctx.font = '700 30px "Space Mono", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+    if (c.tipo2 === 'linea') {
+      ctx.strokeStyle = c.color; ctx.lineWidth = 8; ctx.lineJoin = 'round'; ctx.shadowColor = c.color; ctx.shadowBlur = 16; ctx.beginPath();
+      const hasta = k * (n - 1);
+      for (let i = 0; i <= Math.ceil(hasta) && i < n; i++) { const f = Math.min(1, hasta - i + 1), xi = x0 + paso * (i + .5);
+        const yi = y0 - (datos[i] / max) * (y0 - y1);
+        if (i === 0) ctx.moveTo(xi, yi); else { const xp = x0 + paso * (i - .5), yp = y0 - (datos[i - 1] / max) * (y0 - y1); ctx.lineTo(mezcla(xp, xi, f), mezcla(yp, yi, f)); } }
+      ctx.stroke(); ctx.shadowBlur = 0;
+    } else datos.forEach((d, i) => { const h = (d / max) * (y0 - y1) * suave(k * n - i), xi = x0 + paso * i + paso * .15;
+      ctx.fillStyle = i === (c.resaltar ?? -1) ? (c.colorResalte || '#ff5a4f') : c.color; ctx.fillRect(xi, y0 - h, paso * .7, h);
+      if (h > 0 && c.valores !== false) { ctx.fillStyle = '#fff'; ctx.fillText(String(d), xi + paso * .35, y0 - h - 14); } });
+    (c.etiquetas || []).forEach((e, i) => { ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillText(e, x0 + paso * (i + .5), y0 + 44); });
+    ctx.restore();
+  };
+
+  // Dial con aguja entre dos extremos (riesgo, temperatura, nivel, probabilidad). valor y deA en 0..1.
+  P.dial = (ctx, c, t) => {
+    if (reservada(c, t)) ocupado.push({ x0: 250, x1: 760, y0: 650, y1: 1150 });
+    const a = aparecer(c, t); if (a <= 0) return;
+    const k = suave((t - (c.desde ?? 0)) / (c.duracion ?? 1.5)), val = mezcla(c.de ?? 0, c.valor, k);
+    const cx = CX, cy = 900, R = 230, a0 = Math.PI * .8, a1 = Math.PI * 2.2;
+    ctx.save(); ctx.globalAlpha = a; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 26; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a1); ctx.stroke();
+    ctx.strokeStyle = c.color || '#ff5a4f'; ctx.beginPath(); ctx.arc(cx, cy, R, a0, mezcla(a0, a1, val)); ctx.stroke();
+    for (let i = 0; i <= 10; i++) { const an = mezcla(a0, a1, i / 10); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(cx + Math.cos(an) * (R - 40), cy + Math.sin(an) * (R - 40)); ctx.lineTo(cx + Math.cos(an) * (R - 58), cy + Math.sin(an) * (R - 58)); ctx.stroke(); }
+    const an = mezcla(a0, a1, val); ctx.strokeStyle = '#fff'; ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(an) * (R - 70), cy + Math.sin(an) * (R - 70)); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 20, 0, 6.28); ctx.fill();
+    ctx.font = '700 34px "Space Mono", monospace'; ctx.textAlign = 'center';
+    if (c.min) ctx.fillText(c.min, cx - R * .8, cy + R * .95); if (c.max) { ctx.fillStyle = c.color || '#ff5a4f'; ctx.fillText(c.max, cx + R * .8, cy + R * .95); }
+    ctx.restore();
+  };
+
+  // Frase corta grande, palabra por palabra (para conceptos sin dibujo: "una sola regla").
+  P.frase = (ctx, c, t) => {
+    if (!reservada(c, t)) return;
+    const a = aparecer(c, t);
+    const palabras = c.texto.split(/\s+/);
+    ctx.save(); ctx.font = '900 76px Montserrat, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    const lineas = [[]]; let ancho = 0;
+    palabras.forEach(p => { const w = ctx.measureText(p + ' ').width; if (ancho + w > 820 && lineas[lineas.length - 1].length) { lineas.push([]); ancho = 0; } lineas[lineas.length - 1].push(p); ancho += w; });
+    let y = c.y ?? 330; const alto = lineas.length * 84;
+    while (y + alto < ZONA.y1 && choca({ x0: ZONA.x0, x1: ZONA.x1, y0: y, y1: y + alto })) y += 40;
+    ocupado.push({ x0: ZONA.x0, x1: ZONA.x1, y0: y, y1: y + alto });
+    let idx = 0;
+    lineas.forEach((ln, j) => { let x = CX - ctx.measureText(ln.join(' ')).width / 2;
+      ln.forEach(p => { const k = suave((t - (c.desde ?? 0) - idx * .18) / .3); ctx.globalAlpha = a * k;
+        ctx.fillStyle = (c.resaltar || []).includes(p.toLowerCase().replace(/[^\p{L}\d]/gu, '')) ? (c.color || '#ff5a4f') : '#fff';
+        ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 16; ctx.fillText(p, x, y + j * 84 + (1 - k) * 20); x += ctx.measureText(p + ' ').width; idx++; }); });
+    ctx.restore();
+  };
+
+  const PANTALLA = new Set(['etiqueta', 'numero', 'cita', 'grafica', 'dial', 'frase']);
+
+  // ---------- dibujar una escena ----------
+  // escena = { fondo:{tema}, camara:[...], capas:[{tipo, ...}], escala:true, grano:0.07 }
+  function dibujar(canvas, escena, t) {
+    const ctx = canvas.getContext('2d');
+    fondo(ctx, escena.fondo);
+    const v = vista(camara(escena.camara, t));
+    for (const c of escena.capas) if (!PANTALLA.has(c.tipo)) P[c.tipo]?.(ctx, c, t, v);
+    grano(ctx, t, escena.grano ?? 0.07);
+    franjaSubtitulos(ctx);
+    if (escena.escala !== false) barraEscala(ctx, v, escena.unidad);
+    ocupado = [];
+    for (const c of escena.capas) if (PANTALLA.has(c.tipo) && c.tipo !== 'etiqueta') P[c.tipo]?.(ctx, c, t, v);
+    for (const c of escena.capas) if (c.tipo === 'etiqueta') P.etiqueta(ctx, c, t, v);
+  }
+
+  window.Primitivas = { dibujar, tipos: Object.keys(P), modelos: Object.keys(MODELOS), camara, ZONA };
+})();

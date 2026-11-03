@@ -1,7 +1,8 @@
 # 🎬 Fábrica de Videos Cortos Explicativos
 
-Videos verticales (1080×1920) que explican un tema con **diagramas animados en HTML/SVG**, voz neuronal
-gratis y subtítulos palabra por palabra. Todo gratis.
+Videos verticales (1080×1920, de 60 a 120 s) que explican un tema con **escenas procedurales en canvas**
+(cámara continua, campos de células, partículas, figuras, redes...), voz neuronal gratis, música de fondo y
+subtítulos palabra por palabra. Todo gratis.
 
 ## Uso
 ```bash
@@ -24,15 +25,17 @@ Cada escena se puede **🔁 rehacer** sola. Si cambias "Qué se dibuja", esa esc
 ## Zona segura (TikTok, Reels y Shorts)
 Todo se diseña dentro de la zona que no tapa la interfaz de ninguna de las tres apps (lienzo 1080×1920):
 libres ~250 px arriba, ~420 px abajo, ~140 px a la derecha (botones) y 70 px a la izquierda.
-Título 260-430 · diagrama 430-1190 (SVG de 870×760) · subtítulos 1210-1440 · portada 860-1240.
+Título 260-430 · dibujo 430-1190 (el canvas ocupa todo el cuadro; la cámara centra el protagonista en y=810) ·
+subtítulos 1210-1440 · portada 860-1240. Las etiquetas, los números y la barra de escala se recortan solos a la zona.
 
 ## Revisión automática (la fábrica verifica su propio resultado)
-1. **Escenas** (`src/revisor.py`): cada escena se abre en un navegador y se mide dónde quedó cada elemento.
-   Detecta: elementos que se salen de la zona segura, textos encimados o montados sobre el borde de una
-   figura, íconos encimados, título que choca con el dibujo, dibujo tapado por la portada, escenas casi
-   vacías y elementos que aparecen demasiado tarde. Los problemas se le devuelven a la IA para que rehaga la
-   escena (hasta 2 veces, quedándose con la mejor versión). Lo que no se pudo corregir sale como ⚠️.
-2. **MP4** (`render.verificar_mp4`): 1080×1920, 30 fps, H.264 yuv420p, AAC 48 kHz, 10-90 s, final en
+1. **Escenas** (`src/animador.py` + `src/revisor.py`): la IA describe cada escena como JSON (`src/prim.py` define
+   las primitivas y sus rangos; se valida y se recorta lo que sobra). Si el JSON no sirve tras 3 intentos, se arma
+   una escena de respaldo en código (🧩). El revisor abre cada escena en un navegador y mide qué fracción del cuadro
+   tiene dibujo en 4 momentos (menos de 0,20 en algún momento o de 0,30 en promedio = casi vacía) y si hay capas
+   que aparecen cuando la escena ya terminó. Los problemas se le devuelven a la IA (hasta 2 veces, quedándose con
+   la mejor versión). Lo que no se pudo corregir sale como ⚠️.
+2. **MP4** (`render.verificar_mp4`): 1080×1920, 30 fps, H.264 yuv420p, AAC 48 kHz, 10-120 s, final en
    silencio y peso que quepa en el correo.
 
 ## Estilos
@@ -40,7 +43,8 @@ Título 260-430 · diagrama 430-1190 (SVG de 870×760) · subtítulos 1210-1440 
 
 ## Sin clichés
 El guion no puede usar muletillas como "sabías que", "increíble", "secreto", "descubre" ni pedir que te sigan
-(se comprueba en código); los hashtags genéricos (#viral, #fyp, #curiosidades…) se eliminan.
+(se comprueba en código). La única petición de seguir es la escena final fija del sistema ("Síguenos", con
+`cierre:` por nicho); los hashtags genéricos (#viral, #fyp, #curiosidades…) se eliminan.
 
 ## Verificación de datos
 Después de escribir el guion, otra consulta a la IA busca mitos y exageraciones; si los hay, se reescribe
@@ -63,13 +67,15 @@ Las muestras de todas las voces probadas están en `muestras_voz/`.
 ## Cómo está hecho
 ```
 config/nichos.yaml     nichos (paleta, voz, ideas)
-plantilla/base.css     estilos + animaciones (aparece, pop, dibuja, vacia, pulso, sube, baja, izquierda, flujo)
+plantilla/base.css     estilos del título, la portada y los subtítulos
+plantilla/primitivas.js primitivas procedurales en canvas (cámara, células, vasos, partículas, figuras, red, ramas...)
 plantilla/motor.js     reloj de escenas y subtítulos (la vista previa y el MP4 son idénticos)
-src/guionista.py       temas sin repetir + guion con contrato (5-8 escenas, 100-160 palabras, gancho corto)
-src/animador.py        escena → SVG animado con IA (limpia scripts/enlaces; respaldo de texto animado)
+src/guionista.py       temas sin repetir + guion con contrato (6-12 escenas, 170-290 palabras, gancho corto)
+src/prim.py            esquema único de las primitivas: validar(), describir() para el prompt y respaldo()
+src/animador.py        escena → JSON de primitivas con IA (validado; respaldo procedural en código)
 src/voces.py           Gemini TTS / Edge-TTS + alineación de palabras con Whisper
 src/render.py          Chromium (Playwright) cuadro a cuadro + ffmpeg (-14 LUFS lineal) + verificación del MP4
-src/revisor.py         mide cada escena en el navegador y lista los problemas de composición
+src/revisor.py         mide cada escena en el navegador (cuadro casi vacío, capas tardías)
 src/fabrica.py         proyectos en proyectos/<id>/ (proyecto.json, video.html, video.mp4, miniatura.jpg)
 src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter → Gemini → Groq)
 ```
@@ -77,7 +83,7 @@ src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter �
 ## Problemas comunes
 - Voz con error 403 → `pip install -U edge-tts`
 - Falta Chromium → `python -m playwright install chromium`
-- Música: desactivada por defecto; para usarla, pon .mp3 sin copyright en `assets/musica/` y elígela en la app
+- Música: por defecto una pista aleatoria de `assets/musica/` (hay un ambiente incluido); para usar otra, pon .mp3 sin copyright ahí y elígela en la app, o `--musica ninguna`
 
 ## 🤖 Automático en GitHub Actions (un video cada 3 horas, por correo)
 `.github/workflows/fabrica.yml` corre cada 3 horas (21:17, 0:17, 3:17 … 18:17, hora de Colombia): 8 videos al día. Rota el nicho

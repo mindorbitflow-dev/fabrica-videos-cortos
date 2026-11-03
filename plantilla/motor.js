@@ -10,6 +10,33 @@
   let plan = [];
   let ultimoSub = '';
 
+  // Escenas procedurales (plantilla/primitivas.js): una escena puede traer su descripción en
+  // <script type="application/json" class="prim">. Se dibuja en un canvas de fondo, bajo el SVG y los subtítulos.
+  const prims = escenas.map(e => {
+    const s = e.querySelector('script.prim');
+    try { return s ? JSON.parse(s.textContent) : null; } catch (err) { console.error('escena prim inválida', err); return null; }
+  });
+  let canvas = null, buffer = null, escenaPrevia = -1;
+  if (prims.some(Boolean) && window.Primitivas) {
+    canvas = document.createElement('canvas');
+    canvas.id = 'prim'; canvas.width = 1080; canvas.height = 1920;
+    lienzo.prepend(canvas);
+    buffer = document.createElement('canvas'); buffer.width = 1080; buffer.height = 1920;
+  }
+  // Dibuja la escena en un búfer y la funde sobre el cuadro anterior: entre escenas queda un fundido corto.
+  function dibujarPrim(i, local) {
+    if (!canvas) return;
+    if (!prims[i]) { canvas.style.visibility = 'hidden'; escenaPrevia = -1; return; }
+    canvas.style.visibility = 'visible';
+    try { Primitivas.dibujar(buffer, prims[i], Math.max(0, local)); }
+    catch (err) { console.error('primitivas', err); prims[i] = null; return; }
+    const ctx = canvas.getContext('2d');
+    ctx.globalAlpha = escenaPrevia === -1 || escenaPrevia === i ? 1 : Math.min(1, local / 0.35);
+    ctx.drawImage(buffer, 0, 0);
+    ctx.globalAlpha = 1;
+    if (local >= 0.35) escenaPrevia = i;
+  }
+
   // Sin audio real (vista previa) se estiman los tiempos de cada palabra.
   function estimar() {
     let inicio = 0;
@@ -60,6 +87,7 @@
       e.style.opacity = activa ? Math.min(1, local / 0.2) : 0;
       e.getAnimations({ subtree: true }).forEach(a => { a.pause(); a.currentTime = Math.max(0, local) * 1000; });
       if (activa) {
+        dibujarPrim(i, local);
         if (e.querySelector('.portada')) { if (ultimoSub) { sub.innerHTML = ''; ultimoSub = ''; } }
         else subtitular(p, local);
       }
