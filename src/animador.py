@@ -94,7 +94,11 @@ def limpiar(markup: str) -> str:
     m = re.sub(r"</?(script|style|iframe|object|foreignObject|embed|link|meta|image|img)\b[^>]*>", "", m, flags=re.I)
     m = re.sub(r"\son\w+\s*=\s*(\"[^\"]*\"|'[^']*')", "", m, flags=re.I)
     m = re.sub(r"(href\s*=\s*\")(?!#)[^\"]*\"", r'\1#"', m, flags=re.I)
-    return m.strip()
+    # Solo se conservan el título y el dibujo: la IA a veces añade divs propios (p. ej. la narración en
+    # un <div class="subtitulos">) que salen como texto diminuto suelto en el video.
+    titulo = re.search(r'<div class="titulo[^"]*"[^>]*>.*?</div>', m, flags=re.S | re.I)
+    svg = re.search(r"<svg\b.*</svg>", m, flags=re.S | re.I)
+    return "\n".join(x.group(0) for x in (titulo, svg) if x).strip()
 
 
 def prefijar_ids(markup: str, prefijo: str) -> str:

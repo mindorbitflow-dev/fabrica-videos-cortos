@@ -35,6 +35,8 @@ MODELOS_GEMINI = ("gemini-3.8-flash-tts", "gemini-2.5-flash-preview-tts", "gemin
 PAUSA = 0.3        # silencio entre escenas con Edge (s)
 PAUSA_FINAL = 1.0  # cola al final del video (s)
 COBERTURA_MIN = 0.85  # fracción del guion que Whisper debe reconocer en el audio de Gemini
+PALABRAS_DE_MAS_MAX = 1.12  # Whisper puede partir/unir palabras; más que esto es lectura repetida
+SEG_POR_PALABRA_MAX = 0.75  # una escena más lenta que esto está mal alineada
 
 Aviso = Callable[[str], None]
 _whisper = None
@@ -188,9 +190,14 @@ def _narrar_gemini(textos: list[str], voz: str, velocidad: str, tmp: Path) -> tu
         for t in texto.split():
             tokens.append(t)
             escena_de.append(i)
-    tiempos, cobertura = alinear(tokens, _transcribir(voz_wav))
+    oidas = _transcribir(voz_wav)
+    tiempos, cobertura = alinear(tokens, oidas)
     if cobertura < COBERTURA_MIN:
         raise RuntimeError(f"la voz solo leyó el {cobertura:.0%} del guion")
+    # Gemini a veces vuelve a leer un trozo del guion (pasó en Actions: 20 s repetidos). La cobertura no lo
+    # detecta porque todas las palabras están; sí se nota en que se oyen más palabras de las escritas.
+    if len(oidas) > len(tokens) * PALABRAS_DE_MAS_MAX + 3:
+        raise RuntimeError(f"la voz repitió partes del guion ({len(oidas)} palabras oídas de {len(tokens)})")
 
     primeros = [escena_de.index(i) for i in range(len(textos))]
     inicios = [0.0] + [max(0.0, tiempos[k][0] - 0.15) for k in primeros[1:]]
@@ -200,7 +207,11 @@ def _narrar_gemini(textos: list[str], voz: str, velocidad: str, tmp: Path) -> tu
         fin = inicios[i + 1] if i + 1 < len(textos) else total
         palabras = [{"w": tokens[k], "t": tiempos[k][0] - inicios[i], "d": tiempos[k][1] - tiempos[k][0]}
                     for k in range(len(tokens)) if escena_de[k] == i]
-        plan.append({"inicio": inicios[i], "dur": fin - inicios[i], "palabras": palabras})
+        dur = fin - inicios[i]
+        # Una escena desproporcionada indica audio desalineado (pausas raras o trozos repetidos).
+        if not (0.6 <= dur <= len(palabras) * SEG_POR_PALABRA_MAX + 2.5):
+            raise RuntimeError(f"la escena {i + 1} quedó de {dur:.1f} s para {len(palabras)} palabras")
+        plan.append({"inicio": inicios[i], "dur": dur, "palabras": palabras})
     return voz_wav, plan
 
 
@@ -208,11 +219,13 @@ def narrar(textos: list[str], voz: str, velocidad: str, tmp: Path, avisar: Aviso
     """Devuelve (audio de voz, plan de escenas, voz realmente usada)."""
     tmp.mkdir(parents=True, exist_ok=True)
     if voz.startswith("gemini:"):
-        try:
-            avisar(f"Voz {voz[7:]} (Gemini)...")
-            return (*_narrar_gemini(textos, voz[7:], velocidad, tmp), voz)
-        except Exception as error:
-            avisar(f"Gemini no sirvió ({str(error)[:80]}); uso la voz de respaldo {nombre_voz(RESPALDO)}")
-            voz = RESPALDO
+        for intento in range(2):  # la repetición de Gemini es aleatoria: un segundo intento suele salir bien
+            try:
+                avisar(f"Voz {voz[7:]} (Gemini, intento {intento + 1})...")
+                return (*_narrar_gemini(textos, voz[7:], velocidad, tmp), voz)
+            except Exception as error:
+                avisar(f"Gemini no sirvió: {str(error)[:100]}")
+        avisar(f"Uso la voz de respaldo {nombre_voz(RESPALDO)}")
+        voz = RESPALDO
     avisar(f"Voz {nombre_voz(voz)}...")
     return (*_narrar_edge(textos, voz, velocidad, tmp), voz)
