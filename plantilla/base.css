@@ -41,6 +41,13 @@ html, body { background: #05080f; overflow: hidden; }
   mix-blend-mode: overlay; opacity: .55;
 }
 
+/* ---- Estilo "video" (body.estilo-video): capa transparente sobre clips reales ---- */
+html:has(body.estilo-video), body.estilo-video, .estilo-video #lienzo { background: transparent; }
+.estilo-video #lienzo::before {  /* sombra abajo y arriba para que subtítulos y rótulos se lean sobre cualquier clip */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(rgba(0,0,0,.45), transparent 22%, transparent 55%, rgba(0,0,0,.6) 85%);
+}
+
 /* ---- Portada: gancho gigante del primer segundo (también es la miniatura del reel) ---- */
 .portada {
   position: absolute; left: 40px; right: 40px; top: 1060px; z-index: 6; text-align: center;

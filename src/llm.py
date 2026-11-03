@@ -49,6 +49,7 @@ GEMINI_RETRY_WAITS = (0, 10, 30, 60)
 # margen se suma para que max_tokens siga siendo el espacio de la respuesta.
 GEMINI_THINKING_ROOM = 8192
 GEMINI_TIMEOUT_MS = 120_000  # por petición
+GEMINI_PRESUPUESTO_S = 180   # por consulta, sumando todos los modelos y reintentos
 
 
 # Groq retira y renombra modelos con frecuencia (un nombre fijo acaba en 404). Se consulta su
@@ -165,11 +166,18 @@ class LLMRouter:
         last_error: Optional[Exception] = None
         # Los picos de demanda (503) suelen durar segundos: si todos los modelos están
         # saturados se espera y se reintenta la ronda completa.
+        # Presupuesto total: con 8 modelos x timeout x 4 rondas, una Gemini lenta podía bloquear más de una
+        # hora antes de pasar a otro proveedor (pasó al fabricar el guion del microondas).
+        limite = time.monotonic() + GEMINI_PRESUPUESTO_S
         for round_index, wait in enumerate(GEMINI_RETRY_WAITS):
             if wait:
+                if time.monotonic() + wait > limite:
+                    break
                 print(f"[LLM] Gemini saturado; reintento en {wait}s...")
                 time.sleep(wait)
             for model in self.gemini_models:
+                if time.monotonic() > limite:
+                    raise last_error or TimeoutError(f"Gemini no respondió en {GEMINI_PRESUPUESTO_S} s")
                 try:
                     response = client.models.generate_content(model=model, contents=contents, config=build_config())
                     finish = response.candidates[0].finish_reason if response.candidates else None

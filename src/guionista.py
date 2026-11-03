@@ -28,6 +28,8 @@ Reglas:
 - Nada de clickbait falso ("no vas a creer", "nadie habla de esto").
 - La última escena cierra con un dato útil y termina exactamente con: "{cta}"
 - "visual": 1-2 frases que digan qué dibujar (formas, flechas, etiquetas de 1 a 3 palabras). Sin fotos ni personas realistas.
+- "clip": 2-4 palabras EN INGLÉS para buscar un video real de stock que muestre esa escena (algo filmable y
+  concreto: "giraffe drinking water", "close up skin hair", "heart beating animation"). Sin nombres propios.
 
 PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide si alguien mira el video):
 - "texto": 2 a 5 palabras, máximo 24 letras, que choquen con lo que la gente cree. Fórmulas que funcionan:
@@ -41,7 +43,7 @@ PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide s
 Responde SOLO con este JSON:
 {{"titulo": "título para YouTube, máximo 70 caracteres",
   "portada": {{"texto": "...", "destacado": "...", "sub": "..."}},
-  "escenas": [{{"voz": "narración de la escena", "visual": "qué se dibuja"}}],
+  "escenas": [{{"voz": "narración de la escena", "visual": "qué se dibuja", "clip": "stock video search"}}],
   "caption": "descripción de 1 o 2 frases",
   "hashtags": ["#ejemplo", "... entre 5 y 8"]}}"""
 
@@ -134,7 +136,8 @@ def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
     return {
         "titulo": str(ultimo.get("titulo", tema)).strip()[:100],
         "portada": {k: str((ultimo.get("portada") or {}).get(k, "")).strip() for k in ("texto", "destacado", "sub")},
-        "escenas": [{"voz": str(e.get("voz", "")).strip(), "visual": str(e.get("visual", "")).strip(), "html": ""}
+        "escenas": [{"voz": str(e.get("voz", "")).strip(), "visual": str(e.get("visual", "")).strip(),
+                     "clip": str(e.get("clip", "")).strip(), "html": ""}
                     for e in ultimo.get("escenas", [])],
         "caption": str(ultimo.get("caption", "")).strip(),
         "hashtags": [str(h).strip() for h in ultimo.get("hashtags", []) if str(h).strip()][:8],

@@ -23,6 +23,12 @@ EJEMPLO = """<div class="titulo aparece">El sifón</div>
 
 ESTILOS = {
     "plano": "ESTILO DIAGRAMA: explicación visual clara con formas, flechas, íconos y pocas etiquetas.",
+    "tipografia": """ESTILO TEXTO CINÉTICO (limpio, sin dibujos complejos):
+  - 2 a 4 PALABRAS CLAVE de la narración en letras ENORMES (font-size 120-170), en 2-3 líneas centradas (x=540),
+    que aparecen una tras otra al ritmo de la narración (pop / aparece con retrasos crecientes).
+  - La palabra más importante en color acento; el resto en blanco.
+  - UN solo ícono grande de la biblioteca (350-450 px) arriba que represente la idea, con pulso suave.
+  - Nada más: sin formas propias, sin diagramas, sin flechas.""",
     # Probado: dibujar anatomía detallada a mano en SVG sale deforme (manchas). Se pide composición simple y grande.
     "ilustracion": """ESTILO DOCUMENTAL (el fondo ya es cálido con grano; aquí importa UN protagonista claro):
   - UNA figura protagonista GRANDE (60-80 % del lienzo) en primer plano, armada con íconos de la biblioteca

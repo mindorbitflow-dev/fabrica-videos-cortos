@@ -15,7 +15,7 @@ from typing import Optional
 
 import yaml
 
-from src import animador, guionista, render
+from src import animador, clips, guionista, render
 from src.llm import LLMRouter
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -144,16 +144,54 @@ def escribir_guion(p: dict, router: LLMRouter) -> dict:
     return guardar(p)
 
 
+def estilo_de(p: dict) -> str:
+    """plano | ilustracion | tipografia | video. El proyecto puede fijarlo; si no, manda el nicho."""
+    return p.get("estilo") or cargar_nichos()[p["nicho"]].get("estilo", "plano")
+
+
+def clip_escena(p: dict, i: int) -> Path:
+    return carpeta(p) / "clips" / f"escena_{i}.mp4"
+
+
+def escena_lista(p: dict, i: int) -> bool:
+    return clip_escena(p, i).exists() if estilo_de(p) == "video" else bool(p["escenas"][i].get("html"))
+
+
+def _buscar_clips(p: dict, indices: list[int], progreso=None) -> dict:
+    """Estilo video: un clip real por escena (sin repetir). Si no hay resultados, usa el de la escena anterior."""
+    usados = {e["clip_id"] for e in p["escenas"] if e.get("clip_id")}
+    for n, i in enumerate(indices):
+        e = p["escenas"][i]
+        consulta = e.get("clip") or p["tema"]
+        if progreso:
+            progreso(n / max(1, len(indices)), f"Buscando clip para la escena {i + 1}: {consulta}")
+        vid = clips.buscar(consulta, clip_escena(p, i), animador.duracion_estimada(e["voz"]), usados)
+        if vid is None and i > 0 and clip_escena(p, i - 1).exists():
+            shutil.copyfile(clip_escena(p, i - 1), clip_escena(p, i))
+            e["origen"] = "clip repetido"
+        elif vid is None:
+            raise RuntimeError(f"Pexels no encontró ningún clip para \"{consulta}\"")
+        else:
+            usados.add(vid)
+            e.update(clip_id=vid, origen="clip")
+        e["html"] = ""
+        guardar(p)
+    p["estado"] = "animado"
+    return guardar(p)
+
+
 def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, progreso=None) -> dict:
-    """Anima las escenas indicadas (por defecto, las que aún no tienen HTML)."""
+    """Anima las escenas indicadas (por defecto, las que aún no están listas)."""
+    if indices is None:
+        indices = [i for i in range(len(p["escenas"])) if not escena_lista(p, i)]
+    estilo = estilo_de(p)
+    if estilo == "video":
+        return _buscar_clips(p, indices, progreso)
     paleta = cargar_nichos()[p["nicho"]]["paleta"]
     paleta_dibujo = {k: paleta[k] for k in ("principal", "secundario", "acento", "peligro", "ok")}
-    if indices is None:
-        indices = [i for i, e in enumerate(p["escenas"]) if not e.get("html")]
     if progreso:
         progreso(0, f"Animando {len(indices)} escenas...")
     with ThreadPoolExecutor(max_workers=3) as pool:
-        estilo = cargar_nichos()[p["nicho"]].get("estilo", "plano")
         tareas = {pool.submit(animador.animar_escena, router, p, i, paleta_dibujo, estilo): i for i in indices}
         for n, tarea in enumerate(as_completed(tareas), 1):
             i = tareas[tarea]
@@ -180,9 +218,8 @@ def html_portada(portada: Optional[dict]) -> str:
 
 def componer_html(p: dict) -> str:
     """Documento autocontenido (CSS y motor en línea): sirve para la vista previa y para el render."""
-    nicho = cargar_nichos()[p["nicho"]]
-    pal = nicho["paleta"]
-    estilo = nicho.get("estilo", "plano")
+    pal = cargar_nichos()[p["nicho"]]["paleta"]
+    estilo = estilo_de(p)
     portada = html_portada(p.get("portada"))
     fa, fb, fc = pal["fondo"]
     r, g, b = (int(pal["principal"][i:i + 2], 16) for i in (1, 3, 5))
@@ -216,12 +253,13 @@ def elegir_musica(opcion: str) -> Optional[Path]:
 
 def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, musica: str = "aleatoria",
                progreso=None) -> dict:
-    if not p["escenas"] or not all(e.get("html") for e in p["escenas"]):
+    if not p["escenas"] or not all(escena_lista(p, i) for i in range(len(p["escenas"]))):
         raise RuntimeError("Primero anima todas las escenas.")
+    fondos = [clip_escena(p, i) for i in range(len(p["escenas"]))] if estilo_de(p) == "video" else None
     html = carpeta(p) / "video.html"
     html.write_text(componer_html(p), encoding="utf-8")
     p["voz"] = voz or p.get("voz") or cargar_nichos()[p["nicho"]]["voz"]
-    duracion, p["voz_usada"] = render.renderizar(html, mp4(p), p["voz"], velocidad, elegir_musica(musica), progreso)
+    duracion, p["voz_usada"] = render.renderizar(html, mp4(p), p["voz"], velocidad, elegir_musica(musica), progreso, fondos)
     p["duracion"] = round(duracion, 1)
     render.miniatura(mp4(p), miniatura(p), min(2.0, p["duracion"] / 2))
     render.miniatura(mp4(p), portada_jpg(p), 0.5, ancho=1080)  # miniatura para subir al reel

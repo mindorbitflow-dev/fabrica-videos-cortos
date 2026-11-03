@@ -6,3 +6,4 @@ muestras_voz/
 salida/
 __pycache__/
 *.pyc
+demos/
