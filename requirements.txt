@@ -1,0 +1,10 @@
+edge-tts>=7.3.1
+playwright>=1.50
+streamlit>=1.50
+pyyaml>=6.0
+openai>=1.30
+google-genai>=1.0
+requests>=2.31
+faster-whisper>=1.0
+# av 19 quitó un parámetro que faster-whisper usa para leer el audio
+av<19

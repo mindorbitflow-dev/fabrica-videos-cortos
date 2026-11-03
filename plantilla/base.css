@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800;900&display=block');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #05080f; overflow: hidden; }
+
+/* Paleta: cada nicho la sobreescribe (fabrica.py inyecta :root) */
+:root {
+  --fondo-a: #12305a; --fondo-b: #0a1628; --fondo-c: #05080f;
+  --rejilla: rgba(127,209,255,.07); --acento: #FFD23F;
+}
+
+/* Lienzo vertical 9:16 para Shorts / TikTok / Reels */
+#lienzo {
+  position: relative; width: 1080px; height: 1920px; overflow: hidden;
+  font-family: 'Montserrat', sans-serif; color: #fff; transform-origin: top left;
+  background:
+    linear-gradient(var(--rejilla) 2px, transparent 2px) 0 0 / 60px 60px,
+    linear-gradient(90deg, var(--rejilla) 2px, transparent 2px) 0 0 / 60px 60px,
+    radial-gradient(ellipse at 50% 35%, var(--fondo-a) 0%, var(--fondo-b) 60%, var(--fondo-c) 100%);
+}
+
+.escena { position: absolute; inset: 0; visibility: hidden; }
+.escena svg { position: absolute; left: 0; top: 230px; width: 1080px; height: 1100px; }
+
+.titulo {
+  position: absolute; top: 120px; left: 60px; right: 60px; text-align: center;
+  font-weight: 900; font-size: 84px; line-height: 1.05; text-transform: uppercase;
+  color: var(--acento); text-shadow: 0 8px 0 rgba(0,0,0,.45);
+}
+.etiqueta { font-family: 'Montserrat', sans-serif; font-weight: 900; fill: #fff; }
+
+/* Subtítulos palabra por palabra (los genera motor.js) */
+#subtitulo {
+  position: absolute; left: 50px; right: 50px; top: 1360px; text-align: center;
+  font-weight: 900; font-size: 88px; line-height: 1.12; text-transform: uppercase;
+  text-shadow: 0 0 6px #000, 0 6px 0 #000, 0 -3px 0 #000, 4px 0 0 #000, -4px 0 0 #000;
+}
+#subtitulo .actual { color: var(--acento); }
+
+/* ---- Animaciones reutilizables. El motor controla el tiempo: ----
+   el retraso se mide desde que empieza la escena (style="animation-delay:1.5s") */
+* { animation-play-state: paused !important; }
+svg * { transform-box: fill-box; transform-origin: center; }
+
+.aparece { animation: aparece .5s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes aparece { from { opacity: 0; transform: translateY(60px); } }
+
+.pop { animation: pop .45s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes pop { from { opacity: 0; transform: scale(0); } }
+
+.dibuja { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: dibuja 1.2s ease-out both; }
+@keyframes dibuja { to { stroke-dashoffset: 0; } }
+
+.vacia { stroke-dasharray: 2000; stroke-dashoffset: 0; animation: vacia 1.4s ease-in both; }
+@keyframes vacia { to { stroke-dashoffset: -2000; } }
+
+.pulso { animation: pulso .8s ease-in-out infinite alternate both; }
+@keyframes pulso { to { transform: scale(1.12); } }
+
+.sube { animation: sube 2.2s linear infinite both; }
+@keyframes sube { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-320px); opacity: 0; } }
+
+.baja { animation: baja 1s linear infinite both; }
+@keyframes baja { 0% { transform: translateY(-120px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(120px); opacity: 0; } }
+
+.izquierda { animation: izquierda 1.8s ease-in infinite both; }
+@keyframes izquierda { 0% { transform: translateX(0); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateX(-200px); opacity: 0; } }
+
+.flujo { stroke-dasharray: 40 30; animation: flujo .6s linear infinite both; }
+@keyframes flujo { to { stroke-dashoffset: -70; } }

@@ -1,0 +1,8 @@
+# Claves: van en los secrets de GitHub, nunca en el repositorio
+.env
+# Videos y archivos generados
+proyectos/
+muestras_voz/
+salida/
+__pycache__/
+*.pyc

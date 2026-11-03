@@ -1,0 +1,100 @@
+# Nichos de la fábrica. Voces: gemini:Puck, gemini:Fenrir, gemini:Achird, en-US-BrianMultilingualNeural
+# (o cualquier voz de Edge-TTS). Puedes editarlos aquí o en la pestaña 🧭 Nichos.
+# paleta: colores del fondo (centro, medio, borde), acento (títulos y palabra resaltada)
+#         y colores que la IA usa para dibujar (principal, secundario, peligro, ok).
+
+cotidiano:
+  nombre: 🏠 Cosas de todos los días
+  descripcion: Objetos y detalles cotidianos que todos ven y nadie sabe para qué sirven.
+  tono: Curioso, cercano, con sorpresa en el gancho y explicación clara paso a paso.
+  voz: "gemini:Puck"
+  cta: Sígueme para más cosas que ves todos los días y nadie te explica.
+  paleta: {fondo: ["#12305a", "#0a1628", "#05080f"], acento: "#FFD23F", principal: "#7FD1FF", secundario: "#3BA7FF", peligro: "#e63946", ok: "#2ecc71"}
+  ideas:
+    - El agujero en la tapa de los bolígrafos
+    - Por qué los enchufes tienen agujeros en las patas
+    - El bolsillo pequeño de los jeans
+    - Por qué las teclas F y J tienen una rayita
+    - Los números en el fondo de las botellas de plástico
+    - Por qué los aviones tienen ventanas redondas
+    - Para qué sirve el agujero de las ollas
+    - Por qué los semáforos son rojo, amarillo y verde
+
+ciencia:
+  nombre: 🔬 Ciencia explicada fácil
+  descripcion: Fenómenos de física, química y naturaleza explicados con diagramas simples.
+  tono: Asombrado pero preciso, usa comparaciones fáciles.
+  voz: "gemini:Fenrir"
+  cta: Sígueme para entender el mundo en un minuto.
+  paleta: {fondo: ["#1f1147", "#120a2e", "#07040f"], acento: "#00E5FF", principal: "#B388FF", secundario: "#00E5FF", peligro: "#FF4D6D", ok: "#69F0AE"}
+  ideas:
+    - Por qué el cielo es azul
+    - Por qué el mar es salado
+    - Cómo se forma un rayo
+    - Por qué el hielo flota
+    - Cómo funciona un arcoíris
+    - Por qué vemos la Luna de día
+    - Por qué las nubes no se caen
+    - Cómo funciona la fotosíntesis
+
+cuerpo:
+  nombre: 🫀 Tu cuerpo por dentro
+  descripcion: Cómo funciona el cuerpo humano, con diagramas de órganos y procesos.
+  tono: Cercano y sorprendente, sin dar consejos médicos.
+  voz: "gemini:Achird"
+  cta: Sígueme para conocer tu cuerpo por dentro.
+  paleta: {fondo: ["#4a1020", "#2a0812", "#120307"], acento: "#FFB703", principal: "#FF8FA3", secundario: "#FFC2D1", peligro: "#ff3b3b", ok: "#80ED99"}
+  ideas:
+    - Por qué bostezamos
+    - Por qué se nos arruga la piel en el agua
+    - Qué pasa cuando te truenan los dedos
+    - Por qué nos da hipo
+    - Por qué se te duerme el pie
+    - Cómo sabe tu cuerpo que tienes sed
+    - Por qué la piel se pone de gallina
+
+tecnologia:
+  nombre: ⚙️ Cómo funciona
+  descripcion: Máquinas y tecnología del día a día explicadas por dentro.
+  tono: Didáctico y dinámico, como un ingeniero que explica a un amigo.
+  voz: "en-US-BrianMultilingualNeural"
+  cta: Sígueme para saber cómo funcionan las cosas.
+  paleta: {fondo: ["#0f3d3e", "#08201f", "#030b0b"], acento: "#F9C74F", principal: "#4CC9F0", secundario: "#90E0EF", peligro: "#F94144", ok: "#43AA8B"}
+  ideas:
+    - Cómo funciona un microondas
+    - Cómo funciona la nevera
+    - Cómo funciona el GPS de tu celular
+    - Cómo funciona una pantalla táctil
+    - Cómo funciona el wifi
+    - Cómo funciona un candado de combinación
+    - Cómo funciona un inodoro
+
+dinero:
+  nombre: 💰 Dinero claro
+  descripcion: Conceptos de finanzas personales explicados con gráficos y ejemplos simples. Educativo, no asesoría.
+  tono: Práctico y directo, ejemplos con cifras redondas y claras.
+  voz: "gemini:Achird"
+  cta: Sígueme para entender el dinero sin enredos.
+  paleta: {fondo: ["#0b3d20", "#06200f", "#020a05"], acento: "#FFD60A", principal: "#52B788", secundario: "#B7E4C7", peligro: "#E63946", ok: "#38B000"}
+  ideas:
+    - Qué es la inflación con un ejemplo de pan
+    - Cómo funciona el interés compuesto
+    - Por qué las tarjetas de crédito cobran tanto
+    - Qué es un fondo de emergencia
+    - La regla 50 30 20 para organizar tu sueldo
+    - Por qué el dólar sube y baja
+
+mente:
+  nombre: 🧠 Trucos de la mente
+  descripcion: Sesgos y efectos psicológicos conocidos, explicados con situaciones diarias.
+  tono: Intrigante y reflexivo, ejemplos con los que el espectador se identifica.
+  voz: "gemini:Fenrir"
+  cta: Sígueme para entender cómo piensa tu cerebro.
+  paleta: {fondo: ["#2b2d42", "#191a28", "#08080d"], acento: "#EF233C", principal: "#8D99AE", secundario: "#EDF2F4", peligro: "#EF233C", ok: "#06D6A0"}
+  ideas:
+    - Por qué los precios terminan en 99
+    - El efecto de mera exposición
+    - Por qué recuerdas lo que no terminaste
+    - El sesgo de confirmación
+    - Por qué te cuesta dejar algo en lo que ya invertiste
+    - Por qué bostezar es contagioso
