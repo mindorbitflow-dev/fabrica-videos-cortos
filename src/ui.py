@@ -139,34 +139,54 @@ with tab_crear:
             con_clips = fabrica.estilo_de(p) == "video"
             for i, e in enumerate(p["escenas"]):
                 with st.container(border=True):
-                    origen = {"ia": "🎨 IA", "respaldo": "🔤 texto", "manual": "✋ manual", "clip": "🎬 clip",
-                              "clip repetido": "🎬 clip repetido"}.get(e.get("origen"), "")
-                    estado = origen if fabrica.escena_lista(p, i) else ("⏳ sin clip" if con_clips else "⏳ sin animar")
+                    dibujo = {"ia": "🎨 diagrama IA", "respaldo": "🔤 texto", "manual": "✋ manual"}.get(e.get("origen"), "")
+                    if con_clips:
+                        clip_ok = bool(fabrica.clip_escena(p, i) and fabrica.clip_escena(p, i).exists())
+                        partes = ["🎬 clip" if clip_ok else "⏳ sin clip"]
+                        if fabrica.es_diagrama(p, i):
+                            partes.append(dibujo if e.get("html") else "⏳ sin diagrama")
+                        estado = " + ".join(partes)
+                    else:
+                        estado = dibujo if fabrica.escena_lista(p, i) else "⏳ sin animar"
                     st.markdown(f"**Escena {i + 1}** {'(gancho)' if i == 0 else ''} · {estado}")
                     voz = st.text_area("Narración", e["voz"], key=f"{pid}_voz_{i}", height=80)
+                    modo = e.get("modo", "clip")
                     if con_clips:
-                        visual = e.get("visual", "")
+                        if i > 0:  # la escena 1 (portada) siempre va sobre el clip nítido
+                            modo = st.radio("Modo", ["clip", "diagrama"], index=1 if modo == "diagrama" else 0,
+                                            horizontal=True, key=f"{pid}_modo_{i}",
+                                            format_func=lambda m: "🎬 Solo clip" if m == "clip" else "📐 Diagrama sobre el clip")
                         busqueda = st.text_input("Búsqueda del clip en Pexels (en inglés)", e.get("clip", ""),
                                                  key=f"{pid}_clip_{i}")
-                        if fabrica.escena_lista(p, i):
+                        visual = (st.text_input("Qué se dibuja", e.get("visual", ""), key=f"{pid}_vis_{i}")
+                                  if modo == "diagrama" else e.get("visual", ""))
+                        if clip_ok:
                             st.video(str(fabrica.clip_escena(p, i)), muted=True)
                     else:
                         busqueda = e.get("clip", "")
                         visual = st.text_input("Qué se dibuja", e.get("visual", ""), key=f"{pid}_vis_{i}")
                     cc = st.columns(3)
                     borrar = cc[0].checkbox("Quitar escena", key=f"{pid}_del_{i}")
-                    if cc[1].button("🔁 Otro clip" if con_clips else "🔁 Rehacer animación", key=f"{pid}_re_{i}",
-                                    disabled=not voz.strip()):
-                        p["escenas"][i].update(voz=voz, visual=visual, clip=busqueda)
+                    rehacer = []
+                    if con_clips:
+                        if cc[1].button("🔁 Otro clip", key=f"{pid}_reclip_{i}", disabled=not voz.strip()):
+                            rehacer = ["clip"]
+                        if modo == "diagrama" and cc[2].button("🔁 Rehacer diagrama", key=f"{pid}_redib_{i}"):
+                            rehacer = ["diagrama"]
+                    elif cc[1].button("🔁 Rehacer animación", key=f"{pid}_re_{i}", disabled=not voz.strip()):
+                        rehacer = ["todo"]
+                    if rehacer:
+                        p["escenas"][i].update(voz=voz, visual=visual, clip=busqueda, modo=modo)
                         with st.spinner(f"Escena {i + 1}..."):
-                            fabrica.animar(p, router, indices=[i])
+                            fabrica.animar(p, router, indices=[i], que=rehacer[0])
                         st.rerun()
                     if not borrar:
-                        # Si cambia lo que se dibuja o lo que se busca, lo anterior ya no sirve: queda pendiente.
-                        cambio = visual != e.get("visual", "") or busqueda != e.get("clip", "")
-                        nuevas.append({**e, "voz": voz, "visual": visual, "clip": busqueda,
-                                       "html": "" if cambio else e.get("html", ""),
-                                       "clip_id": None if cambio else e.get("clip_id")})
+                        # Lo que cambia queda pendiente: otra búsqueda pide otro clip; otro dibujo u otro modo, otro diagrama.
+                        nuevo_clip = busqueda != e.get("clip", "")
+                        nuevo_dibujo = visual != e.get("visual", "") or modo != e.get("modo", "clip")
+                        nuevas.append({**e, "voz": voz, "visual": visual, "clip": busqueda, "modo": modo,
+                                       "html": "" if nuevo_dibujo else e.get("html", ""),
+                                       "clip_id": None if nuevo_clip else e.get("clip_id")})
             caption = st.text_area("Descripción", p.get("caption", ""), key=f"{pid}_cap")
             hashtags = st.text_input("Hashtags", " ".join(p.get("hashtags", [])), key=f"{pid}_hash")
             g1, g2 = st.columns(2)
@@ -187,7 +207,7 @@ with tab_crear:
         with der:
             st.markdown("#### 2. Animación")
             faltan = [i for i in range(len(p["escenas"])) if not fabrica.escena_lista(p, i)]
-            accion = "🎬 Buscar clips" if con_clips else "🎨 Animar"
+            accion = "🎬 Clips y diagramas" if con_clips else "🎨 Animar"
             if p["escenas"] and st.button(f"{accion} {'pendientes (' + str(len(faltan)) + ')' if faltan else '(todo de nuevo)'}",
                                           type="primary", width="stretch"):
                 fabrica.animar(p, router, indices=faltan or list(range(len(p["escenas"]))),

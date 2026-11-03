@@ -24,7 +24,7 @@ Cada escena se puede **🔁 rehacer** sola. Si cambias "Qué se dibuja", esa esc
 ## Estilos (modo mixto)
 | Nichos | Estilo | Cómo se ve |
 |---|---|---|
-| Biología, Cuerpo, Ciencia, Cotidiano, Mente | `video` | Un clip real de Pexels por escena (zoom lento) + portada y subtítulos encima |
+| Biología, Cuerpo, Ciencia, Cotidiano, Mente | `video` | Clips reales de Pexels (zoom lento) + portada y subtítulos; las escenas de algo invisible llevan un **diagrama animado** sobre el clip anterior desenfocado (1-3 por video, nunca la primera ni la última) |
 | Tecnología, Dinero | `plano` | Diagramas animados que dibuja la IA (flechas, procesos, gráficas) |
 
 Se cambia con `estilo:` en `config/nichos.yaml` (también hay `ilustracion` y `tipografia`). En 🎬 Crear, cada

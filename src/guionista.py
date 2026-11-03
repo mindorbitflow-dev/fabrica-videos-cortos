@@ -32,6 +32,10 @@ Reglas:
   objetos, lugares, naturaleza. Si la idea es abstracta (el cerebro, una hormona), busca lo que se VE en la vida
   real: "woman blinking close up", "man yawning", "giraffe drinking water", "coffee pouring cup".
   PROHIBIDO: animation, diagram, graphic, illustration, icon, button, concept, 3d, cartoon. Sin nombres propios.
+- "modo": "clip" si lo que dice la escena SE PUEDE VER en la vida real (un animal bebiendo, alguien que bosteza);
+  "diagrama" si es algo INVISIBLE que hay que explicar con un esquema (dentro del cuerpo, moléculas, un proceso,
+  una comparación). La primera y la última escena son SIEMPRE "clip". Entre 1 y 3 escenas "diagrama" en
+  total (las más difíciles de imaginar), nunca más de 2 seguidas: el video debe sentirse como video real.
 
 PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide si alguien mira el video):
 - "texto": 2 a 5 palabras, máximo 24 letras, que choquen con lo que la gente cree. Fórmulas que funcionan:
@@ -45,7 +49,7 @@ PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide s
 Responde SOLO con este JSON:
 {{"titulo": "título para YouTube, máximo 70 caracteres",
   "portada": {{"texto": "...", "destacado": "...", "sub": "..."}},
-  "escenas": [{{"voz": "narración de la escena", "visual": "qué se dibuja", "clip": "stock video search"}}],
+  "escenas": [{{"voz": "narración de la escena", "visual": "qué se dibuja", "clip": "stock video search", "modo": "clip|diagrama"}}],
   "caption": "descripción de 1 o 2 frases",
   "hashtags": ["#ejemplo", "... entre 5 y 8"]}}"""
 
@@ -100,6 +104,24 @@ def proponer_tema(router: LLMRouter, nicho: dict, usados: list[str]) -> str:
     return random.choice(libres)
 
 
+MAX_DIAGRAMAS = 3
+
+
+def modos_escenas(escenas: list[dict]) -> list[str]:
+    """clip/diagrama por escena con las reglas aplicadas en código (la IA no siempre las cumple: en una prueba
+    puso 5 diagramas de 7, y el "sígueme" final como diagrama): primera y última siempre clip, máximo 3."""
+    modos, diagramas = [], 0
+    for i, e in enumerate(escenas):
+        quiere = str(e.get("modo", "")).strip().lower() == "diagrama"
+        dos_seguidos = modos[-2:] == ["diagrama", "diagrama"]
+        if quiere and 0 < i < len(escenas) - 1 and diagramas < MAX_DIAGRAMAS and not dos_seguidos:
+            modos.append("diagrama")
+            diagramas += 1
+        else:
+            modos.append("clip")
+    return modos
+
+
 def problemas_guion(g: dict) -> list[str]:
     """Lo que incumple el contrato del guion (lista vacía = válido)."""
     escenas = g.get("escenas") or []
@@ -141,12 +163,13 @@ def verificar_datos(router: LLMRouter, g: dict) -> list[dict]:
     portada = g.get("portada") or {}
     texto = f"PORTADA: {portada.get('texto', '')} ({portada.get('sub', '')})\n" + "\n".join(
         f"{i + 1}. {e.get('voz', '')}" for i, e in enumerate(g.get("escenas", [])))
-    try:
-        respuesta, _ = router.complete_any(PROMPT_VERIFICAR.format(guion=texto), max_tokens=1200, temperature=0.1)
-        return [e for e in leer_json(respuesta).get("errores", []) if isinstance(e, dict) and e.get("frase")]
-    except Exception as error:
-        print(f"[Guionista] no se pudo verificar: {error}")
-        return []
+    for intento in range(2):  # una respuesta mal formada (pasó) dejaba el guion sin verificar
+        try:
+            respuesta, _ = router.complete_any(PROMPT_VERIFICAR.format(guion=texto), max_tokens=1500, temperature=0.1)
+            return [e for e in leer_json(respuesta).get("errores", []) if isinstance(e, dict) and e.get("frase")]
+        except Exception as error:
+            print(f"[Guionista] no se pudo verificar (intento {intento + 1}): {error}")
+    return []
 
 
 def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
@@ -186,8 +209,9 @@ def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
         "titulo": str(ultimo.get("titulo", tema)).strip()[:100],
         "portada": {k: str((ultimo.get("portada") or {}).get(k, "")).strip() for k in ("texto", "destacado", "sub")},
         "escenas": [{"voz": str(e.get("voz", "")).strip(), "visual": str(e.get("visual", "")).strip(),
-                     "clip": str(e.get("clip", "")).strip(), "html": ""}
-                    for e in ultimo.get("escenas", [])],
+                     "clip": str(e.get("clip", "")).strip(), "html": "",
+                     "modo": modo}
+                    for e, modo in zip(ultimo.get("escenas", []), modos_escenas(ultimo.get("escenas", [])))],
         "caption": str(ultimo.get("caption", "")).strip(),
         "hashtags": [str(h).strip() for h in ultimo.get("hashtags", []) if str(h).strip()][:8],
         "avisos": errores + [f"tiene un dato dudoso: \"{d['frase']}\" ({d.get('problema', '')})"

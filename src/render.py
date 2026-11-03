@@ -19,7 +19,7 @@ Progreso = Optional[Callable[[float, str], None]]
 
 
 async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: Optional[Path], progreso: Progreso,
-                      fondos: Optional[list[Path]] = None) -> tuple[float, str]:
+                      fondos: Optional[list[tuple[Path, bool]]] = None) -> tuple[float, str]:
     avisar = progreso or (lambda f, m: print(f"[{f:4.0%}] {m}"))
     tmp = mp4.parent / "tmp_audio"
     tmp.mkdir(parents=True, exist_ok=True)
@@ -48,13 +48,15 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
             if fondos:
                 # Estilo "video": un clip real por escena (con zoom lento y algo oscurecido para que el texto
                 # se lea) y encima la capa HTML transparente con portada, subtítulos y rótulos.
-                for i, (clip, escena) in enumerate(zip(fondos, plan)):
+                for i, ((clip, desenfocar), escena) in enumerate(zip(fondos, plan)):
                     d = escena["dur"]
+                    # Escenas "diagrama": el clip queda de ambiente (desenfocado y oscuro) y el esquema manda.
+                    tono = "boxblur=12:2,eq=brightness=-0.12:saturation=0.95" if desenfocar else "eq=brightness=-0.06:saturation=1.08"
                     cmd += ["-stream_loop", "-1", "-t", f"{d + 0.5:.3f}", "-i", str(clip)]
                     filtros.append(
                         f"[{2 + i}:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps={FPS},"
                         f"zoompan=z='1+0.08*on/({d:.3f}*{FPS})':d=1:x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':s=1080x1920:fps={FPS},"
-                        f"trim=duration={d:.3f},setpts=PTS-STARTPTS,eq=brightness=-0.06:saturation=1.08[f{i}]")
+                        f"trim=duration={d:.3f},setpts=PTS-STARTPTS,{tono}[f{i}]")
                 filtros.append("".join(f"[f{i}]" for i in range(len(fondos))) + f"concat=n={len(fondos)}:v=1:a=0[fondo]")
                 filtros.append("[fondo][0:v]overlay=format=auto,format=yuv420p[v]")
                 video = "[v]"
@@ -99,8 +101,9 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
 
 
 def renderizar(html: Path, mp4: Path, voz: str, velocidad: str = "+8%", musica: Optional[Path] = None,
-               progreso: Progreso = None, fondos: Optional[list[Path]] = None) -> tuple[float, str]:
-    """Genera el MP4 y devuelve (duración en segundos, voz realmente usada). `fondos`: un clip por escena."""
+               progreso: Progreso = None, fondos: Optional[list[tuple[Path, bool]]] = None) -> tuple[float, str]:
+    """Genera el MP4 y devuelve (duración en segundos, voz realmente usada).
+    `fondos`: por escena, (clip, desenfocar) — desenfocado cuando lleva un diagrama encima."""
     return asyncio.run(_renderizar(Path(html), Path(mp4), voz, velocidad, musica, progreso, fondos))
 
 

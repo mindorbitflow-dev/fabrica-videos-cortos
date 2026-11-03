@@ -156,20 +156,33 @@ def clip_escena(p: dict, i: int) -> Optional[Path]:
     return carpeta(p) / "clips" / f"{cid}.mp4" if cid else None
 
 
+def es_diagrama(p: dict, i: int) -> bool:
+    """En estilo video, las escenas "diagrama" llevan un esquema animado sobre su clip desenfocado."""
+    return estilo_de(p) == "video" and p["escenas"][i].get("modo") == "diagrama"
+
+
 def escena_lista(p: dict, i: int) -> bool:
-    if estilo_de(p) == "video":
-        clip = clip_escena(p, i)
-        return bool(clip and clip.exists())
-    return bool(p["escenas"][i].get("html"))
+    e = p["escenas"][i]
+    if estilo_de(p) != "video":
+        return bool(e.get("html"))
+    clip = clip_escena(p, i)
+    return bool(clip and clip.exists()) and (not es_diagrama(p, i) or bool(e.get("html")))
 
 
-def _buscar_clips(p: dict, indices: list[int], progreso=None) -> dict:
-    """Estilo video: un clip real por escena (sin repetir; rehacer una escena trae otro distinto).
-    Si Pexels no tiene nada, se reutiliza el clip de la escena anterior."""
+def _buscar_clips(p: dict, indices: list[int], progreso=None, fondo_previo: bool = False) -> None:
+    """Un clip real por escena (sin repetir; pedirlo de nuevo trae otro distinto).
+    Si Pexels no tiene nada, se reutiliza el clip de la escena anterior.
+    fondo_previo: las escenas "diagrama" usan de fondo (desenfocado) el clip de la última escena "clip":
+    un clip propio sin relación (un veterinario con un perro detrás del corazón de la jirafa) distraía."""
     usados = {e["clip_id"] for e in p["escenas"] if e.get("clip_id")}
     descarga = carpeta(p) / "clips" / "descarga.mp4"
-    for n, i in enumerate(indices):
+    for n, i in enumerate(sorted(indices)):
         e = p["escenas"][i]
+        previas = [k for k in range(i) if not es_diagrama(p, k) and p["escenas"][k].get("clip_id")]
+        if fondo_previo and es_diagrama(p, i) and previas:
+            e.update(clip_id=p["escenas"][previas[-1]]["clip_id"], origen_clip=f"fondo de la escena {previas[-1] + 1}")
+            guardar(p)
+            continue
         # Sin búsqueda propia (o solo con palabras de gráficos) se usa la de la escena anterior: mismo tema visual.
         consulta = clips.limpiar_consulta(e.get("clip", "")) or (
             clips.limpiar_consulta(p["escenas"][i - 1].get("clip", "")) if i else "") or p["tema"]
@@ -179,24 +192,15 @@ def _buscar_clips(p: dict, indices: list[int], progreso=None) -> dict:
         if vid is not None:
             descarga.replace(descarga.with_name(f"{vid}.mp4"))
             usados.add(vid)
-            e.update(clip_id=vid, origen="clip")
-        elif i > 0 and escena_lista(p, i - 1):
-            e.update(clip_id=p["escenas"][i - 1]["clip_id"], origen="clip repetido")
+            e.update(clip_id=vid, origen_clip="clip")
+        elif i > 0 and p["escenas"][i - 1].get("clip_id"):
+            e.update(clip_id=p["escenas"][i - 1]["clip_id"], origen_clip="clip repetido")
         else:
             raise RuntimeError(f"Pexels no encontró ningún clip para \"{consulta}\"")
-        e["html"] = ""
         guardar(p)
-    p["estado"] = "animado"
-    return guardar(p)
 
 
-def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, progreso=None) -> dict:
-    """Anima las escenas indicadas (por defecto, las que aún no están listas)."""
-    if indices is None:
-        indices = [i for i in range(len(p["escenas"])) if not escena_lista(p, i)]
-    estilo = estilo_de(p)
-    if estilo == "video":
-        return _buscar_clips(p, indices, progreso)
+def _dibujar(p: dict, router: LLMRouter, indices: list[int], estilo: str, progreso=None) -> None:
     paleta = cargar_nichos()[p["nicho"]]["paleta"]
     paleta_dibujo = {k: paleta[k] for k in ("principal", "secundario", "acento", "peligro", "ok")}
     if progreso:
@@ -209,6 +213,29 @@ def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, prog
             guardar(p)  # se guarda escena por escena: si algo falla no se pierde lo hecho
             if progreso:
                 progreso(n / len(indices), f"Escena {i + 1} animada ({n} de {len(indices)})")
+
+
+def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, progreso=None, que: str = "todo") -> dict:
+    """Prepara las escenas: por defecto solo lo que falta. Con `indices` se rehacen esas escenas;
+    `que` = "clip" o "diagrama" limita qué se rehace en el estilo video."""
+    n = len(p["escenas"])
+    if estilo_de(p) != "video":
+        _dibujar(p, router, indices if indices is not None else [i for i in range(n) if not escena_lista(p, i)],
+                 estilo_de(p), progreso)
+    else:
+        if indices is None:
+            sin_clip = [i for i in range(n) if not (clip_escena(p, i) and clip_escena(p, i).exists())]
+            sin_dibujo = [i for i in range(n) if es_diagrama(p, i) and not p["escenas"][i].get("html")]
+        else:
+            sin_clip = indices if que in ("todo", "clip") else []
+            sin_dibujo = [i for i in indices if es_diagrama(p, i)] if que in ("todo", "diagrama") else []
+        for i in range(n):
+            if not es_diagrama(p, i):
+                p["escenas"][i]["html"] = ""  # escena "clip": solo video, portada y subtítulos
+        # Automático: los diagramas reutilizan el clip previo. A mano ("🔁 Otro clip") se busca uno nuevo.
+        _buscar_clips(p, sin_clip, progreso, fondo_previo=indices is None)
+        if sin_dibujo:
+            _dibujar(p, router, sin_dibujo, "sobre_video", progreso)
     p["estado"] = "animado"
     return guardar(p)
 
@@ -265,7 +292,8 @@ def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, m
                progreso=None) -> dict:
     if not p["escenas"] or not all(escena_lista(p, i) for i in range(len(p["escenas"]))):
         raise RuntimeError("Primero anima todas las escenas.")
-    fondos = [clip_escena(p, i) for i in range(len(p["escenas"]))] if estilo_de(p) == "video" else None
+    fondos = ([(clip_escena(p, i), es_diagrama(p, i)) for i in range(len(p["escenas"]))]
+              if estilo_de(p) == "video" else None)
     html = carpeta(p) / "video.html"
     html.write_text(componer_html(p), encoding="utf-8")
     p["voz"] = voz or p.get("voz") or cargar_nichos()[p["nicho"]]["voz"]

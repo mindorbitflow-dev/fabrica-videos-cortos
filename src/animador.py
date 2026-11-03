@@ -23,6 +23,13 @@ EJEMPLO = """<div class="titulo aparece">El sifón</div>
 
 ESTILOS = {
     "plano": "ESTILO DIAGRAMA: explicación visual clara con formas, flechas, íconos y pocas etiquetas.",
+    "sobre_video": """ESTILO DIAGRAMA SOBRE VIDEO: el fondo es un video real DESENFOCADO y oscurecido del tema.
+  - Encima va un esquema claro que explique lo invisible (lo que hay dentro, el proceso, la comparación).
+  - Primero una tarjeta: <rect x="60" y="60" width="960" height="940" rx="40" fill="#000" fill-opacity=".45"
+    stroke="#ffffff" stroke-opacity=".25" stroke-width="3"/> (con class="aparece"), y el diagrama dentro de ella.
+  - Alto contraste: rellenos sólidos con bordes blancos (stroke #fff, 4-6 px), flechas gruesas, íconos de la
+    biblioteca grandes. Nada de colores oscuros que se pierdan sobre el fondo.
+  - Máximo 3 etiquetas cortas. No dibujes paisajes ni el animal entero: eso ya lo muestra el video.""",
     "tipografia": """ESTILO TEXTO CINÉTICO (limpio, sin dibujos complejos):
   - 2 a 4 PALABRAS CLAVE de la narración en letras ENORMES (font-size 120-170), en 2-3 líneas centradas (x=540),
     que aparecen una tras otra al ritmo de la narración (pop / aparece con retrasos crecientes).
