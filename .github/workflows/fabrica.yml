@@ -1,9 +1,10 @@
-# Crea un video cada 3 horas y lo envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
+# Crea 2 videos cada 3 horas (16 al día en teoría) y los envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
 name: Fábrica de videos
 
 on:
   schedule:
-    # Cada 3 horas (8 videos al día). Hora UTC: 2,5,8,...,23 UTC = 21:17, 0:17, 3:17, ..., 18:17 en Colombia (UTC-5).
+    # Cada 3 horas, 2 videos por ejecución (16 al día en teoría; GitHub se salta parte de las ejecuciones programadas, así que
+    # varios videos por ejecución son más fiables que un cron más frecuente). Hora UTC: 2,5,8,...,23 UTC = 21:17, 0:17, 3:17, ..., 18:17 en Colombia (UTC-5).
     # GitHub puede retrasar las tareas programadas unos minutos en horas de mucha demanda.
     - cron: "17 2-23/3 * * *"
   workflow_dispatch:
@@ -13,6 +14,11 @@ on:
         type: choice
         options: [rotar, biologia, cotidiano, ciencia, cuerpo, tecnologia, dinero, mente]
         default: rotar
+      cantidad:
+        description: Videos en esta ejecución (cada uno por correo)
+        type: choice
+        options: ["1", "2", "3"]
+        default: "2"
 
 permissions:
   contents: write   # guardar state/historial.json para no repetir temas
@@ -61,7 +67,7 @@ jobs:
         run: python -m playwright install --with-deps chromium
 
       - name: Fabricar y enviar por correo
-        run: python run.py --auto --nicho "${{ inputs.nicho || 'rotar' }}"
+        run: python run.py --auto --cantidad "${{ inputs.cantidad || 2 }}" --nicho "${{ inputs.nicho || 'rotar' }}"
 
       - name: Guardar el video en Actions (respaldo, 7 días)
         if: always()
@@ -75,7 +81,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Guardar historial de temas
-        if: success()
+        if: always()   # aunque un video falle, los que salieron bien deben quedar en el historial (no repetir temas)
         run: |
           git config user.name "fabrica-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

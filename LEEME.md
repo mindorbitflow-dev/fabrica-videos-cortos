@@ -85,8 +85,9 @@ src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter �
 - Falta Chromium → `python -m playwright install chromium`
 - Música: por defecto una pista aleatoria de `assets/musica/` (hay un ambiente incluido); para usar otra, pon .mp3 sin copyright ahí y elígela en la app, o `--musica ninguna`
 
-## 🤖 Automático en GitHub Actions (un video cada 3 horas, por correo)
-`.github/workflows/fabrica.yml` corre cada 3 horas (21:17, 0:17, 3:17 … 18:17, hora de Colombia): 8 videos al día. Rota el nicho
+## 🤖 Automático en GitHub Actions (2 videos cada 3 horas, por correo)
+`.github/workflows/fabrica.yml` corre cada 3 horas (21:17, 0:17, 3:17 … 18:17, hora de Colombia) y fabrica 2 videos por ejecución: 16 al día en
+teoría (GitHub se salta parte de las ejecuciones programadas, así que el número real es menor). Rota el nicho
 (el que lleva más tiempo sin video), fabrica un video con tema nuevo y te lo envía a Gmail con el texto
 para publicar. Si falla, te llega un correo con el error. El video también queda 7 días en Actions.
 
@@ -96,5 +97,6 @@ Secrets necesarios (Settings → Secrets and variables → Actions):
 
 - Lanzarlo a mano: pestaña **Actions → Fábrica de videos → Run workflow** (puedes elegir el nicho).
 - Limitar los nichos: variable `NICHOS_AUTO` (ej. `cotidiano,ciencia`).
-- Cambiar la frecuencia: línea `cron` del workflow (hora UTC).
+- Cambiar la frecuencia: línea `cron` del workflow (hora UTC). Cambiar cuántos videos por ejecución: `python run.py --auto --cantidad N` (o el campo
+  *cantidad* al lanzarlo a mano); cada ejecución aguanta unos 3 videos antes del límite de 90 minutos.
 - Los temas usados se guardan en `state/historial.json` (lo actualiza el propio workflow).

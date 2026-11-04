@@ -7,6 +7,7 @@ Uso:
   python run.py --nicho dinero --lote 5              -> 5 videos con temas nuevos
   python run.py --auto                               -> Modo GitHub Actions: rota el nicho, fabrica y envía por correo
   python run.py --auto --nicho ciencia               -> Igual, con un nicho fijo
+  python run.py --auto --cantidad 2                  -> Dos videos seguidos, cada uno por correo
   python run.py --check                              -> Diagnóstico (ffmpeg, Chromium, IA, voz)
 """
 
@@ -20,7 +21,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 RAIZ = os.path.dirname(os.path.abspath(__file__))
-LIMITE_AUTO_MIN = 35  # el job de GitHub se corta a los 45
+LIMITE_AUTO_MIN = 35  # por video; el job de GitHub se corta a los 90 (ver fabrica.yml)
 os.chdir(RAIZ)  # .env, config y proyectos se resuelven desde aquí
 sys.path.insert(0, RAIZ)
 
@@ -53,8 +54,9 @@ def check() -> None:
         print("IA: sin claves en .env (puedes escribir guiones a mano en la interfaz)")
 
 
-def auto(nicho: str | None, musica: str) -> None:
-    """Un video de principio a fin y por correo. Si falla, avisa por correo y sale con error."""
+def auto(nicho: str | None, musica: str, cantidad: int = 1) -> None:
+    """`cantidad` videos de principio a fin, cada uno por correo. Si uno falla, avisa por correo y sigue con el siguiente; al final
+    sale con error si alguno falló. Varios videos por ejecución porque GitHub se salta parte de las ejecuciones programadas."""
     import signal
     import traceback
     from src import correo, fabrica
@@ -67,32 +69,40 @@ def auto(nicho: str | None, musica: str) -> None:
 
     if hasattr(signal, "SIGALRM"):  # Linux (GitHub Actions): avisar por correo antes de que GitHub cancele
         signal.signal(signal.SIGALRM, limite)
-        signal.alarm(LIMITE_AUTO_MIN * 60)
-    try:
-        if not correo.configurado():
-            raise RuntimeError("Faltan GMAIL_USUARIO y GMAIL_CLAVE_APP: no tendría a dónde enviar el video.")
-        permitidos = [n.strip() for n in os.getenv("NICHOS_AUTO", "").split(",") if n.strip()] or None
-        if not nicho or nicho == "rotar":
-            nicho = fabrica.elegir_nicho(permitidos)
-        print(f"Nicho: {nicho}")
-        p = fabrica.fabricar(nicho, "aleatorio", LLMRouter(), musica=musica)
-        print(f"Listo: {fabrica.mp4(p)} ({p['duracion']} s, voz {p['voz_usada']})")
-        correo.enviar_video(p, enlace)
-        print("Correo enviado.")
-    except Exception as error:
-        detalle = f"{type(error).__name__}: {error}"
-        print(f"ERROR: {detalle}")
-        traceback.print_exc()
-        if correo.configurado():
-            try:
-                correo.enviar_error(detalle, enlace)
-            except Exception as error_correo:
-                print(f"Tampoco se pudo enviar el aviso por correo: {error_correo}")
+    fallidos = 0
+    router = LLMRouter()
+    for n in range(cantidad):
+        if cantidad > 1:
+            print(f"\n=== Video {n + 1}/{cantidad} ===")
+        if hasattr(signal, "SIGALRM"):
+            signal.alarm(LIMITE_AUTO_MIN * 60)  # el límite es por video
+        try:
+            if not correo.configurado():
+                raise RuntimeError("Faltan GMAIL_USUARIO y GMAIL_CLAVE_APP: no tendría a dónde enviar el video.")
+            permitidos = [x.strip() for x in os.getenv("NICHOS_AUTO", "").split(",") if x.strip()] or None
+            elegido = nicho if nicho and nicho != "rotar" else fabrica.elegir_nicho(permitidos)  # el historial ya cuenta el video anterior
+            print(f"Nicho: {elegido}")
+            p = fabrica.fabricar(elegido, "aleatorio", router, musica=musica)
+            print(f"Listo: {fabrica.mp4(p)} ({p['duracion']} s, voz {p['voz_usada']})")
+            correo.enviar_video(p, enlace)
+            print("Correo enviado.")
+        except Exception as error:
+            fallidos += 1
+            detalle = f"{type(error).__name__}: {error}"
+            print(f"ERROR: {detalle}")
+            traceback.print_exc()
+            if correo.configurado():
+                try:
+                    correo.enviar_error(detalle, enlace)
+                except Exception as error_correo:
+                    print(f"Tampoco se pudo enviar el aviso por correo: {error_correo}")
+        finally:
+            if hasattr(signal, "SIGALRM"):
+                signal.alarm(0)
+    if fallidos:
+        print(f"{fallidos} de {cantidad} videos fallaron.")
         sys.stdout.flush()
         os._exit(1)  # sin esperar hilos colgados (una llamada de red atascada impediría terminar)
-    finally:
-        if hasattr(signal, "SIGALRM"):
-            signal.alarm(0)
 
 
 def main() -> None:
@@ -102,7 +112,8 @@ def main() -> None:
     ap.add_argument("--lote", type=int, default=0, help="Fabricar N videos con temas nuevos")
     ap.add_argument("--musica", default="aleatoria", help='"ninguna", "aleatoria" o archivo de assets/musica')
     ap.add_argument("--check", action="store_true")
-    ap.add_argument("--auto", action="store_true", help="Un video con nicho rotativo y envío por correo")
+    ap.add_argument("--auto", action="store_true", help="Videos con nicho rotativo y envío por correo (ver --cantidad)")
+    ap.add_argument("--cantidad", type=int, default=1, help="Con --auto: cuántos videos fabricar en esta ejecución")
     ap.add_argument("--puerto", default="8502")
     args = ap.parse_args()
 
@@ -111,7 +122,7 @@ def main() -> None:
     if args.auto:
         from src.env import load_env
         load_env()
-        return auto(args.nicho, args.musica)
+        return auto(args.nicho, args.musica, max(1, args.cantidad))
     if not args.nicho:
         subprocess.run([sys.executable, "-m", "streamlit", "run", os.path.join("src", "ui.py"),
                         "--server.port", args.puerto, "--browser.gatherUsageStats", "false"])
