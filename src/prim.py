@@ -19,10 +19,30 @@ MODELOS = ["pez", "hormiga", "bacteria", "virus", "neurona", "celula", "persona"
            "estomago", "pulmon", "cerebro", "ojo", "hueso", "rata", "gato", "pulpo"]
 MUNDO = 1e7  # límite de coordenadas del mundo (en la unidad de la escena)
 
+# Piezas de un personaje (coordenadas locales: la figura mide ~1 de largo, centrada en 0,0, y hacia abajo).
+LOCAL = 2.0
+MAX_PARTES = 40
+MOVS = ["oscilar", "flotar", "pulsar", "girar", "ondular"]
+PARTE_COMUN = {
+    "color": ("color", 0, 0, True, ""), "borde": ("color", 0, 0, False, ""), "grosor": ("num", .002, 1, False, "borde o línea"),
+    "opacidad": ("num", 0, 1, False, ""), "brillo": ("bool", 0, 0, False, "volumen con luz"),
+}
+PARTES: dict[str, dict[str, tuple]] = {
+    "elipse": {"x": ("num", -LOCAL, LOCAL, True, ""), "y": ("num", -LOCAL, LOCAL, True, ""), "rx": ("num", .003, LOCAL, True, ""),
+               "ry": ("num", .003, LOCAL, False, ""), "rot": ("num", -6.3, 6.3, False, "radianes")},
+    "poligono": {"puntos": ("puntos", 3, 24, True, "[[x,y],...]"), "suave": ("bool", 0, 0, False, "curvas en vez de esquinas")},
+    "linea": {"puntos": ("puntos", 2, 12, True, "[[x,y],...]"), "suave": ("bool", 0, 0, False, "")},
+    "ojo": {"x": ("num", -LOCAL, LOCAL, True, ""), "y": ("num", -LOCAL, LOCAL, True, ""), "r": ("num", .003, .5, True, "")},
+}
+MOV = {"tipo": ("enum", MOVS, 0, True, ""), "amp": ("num", 0, 2, False, "oscilar: radianes; flotar/ondular: distancia; pulsar: fracción"),
+       "vel": ("num", 0, 6, False, "ciclos/s"), "fase": ("num", 0, 10, False, ""), "px": ("num", -LOCAL, LOCAL, False, "pivote"),
+       "py": ("num", -LOCAL, LOCAL, False, "")}
+
 # Parámetro: (clase, mínimo, máximo, obligatorio, descripción breve para el prompt)
 #   clases: num, int, bool, color, texto (máx = caracteres), enum (mín = opciones), zona {x,y,r,ry?},
 #           puntos [[x,y]...] (mín/máx = cantidad), numeros [n...], textos [s...], muerte {x,y,r,desde,dur}
-COMUNES = {"desde": ("num", 0, 300, False, "segundo en que aparece"), "hasta": ("num", 0, 300, False, "segundo en que se va")}
+COMUNES = {"desde": ("num", 0, 300, False, "segundo en que aparece"), "hasta": ("num", 0, 300, False, "segundo en que se va"),
+           "profundidad": ("num", 0, 1, False, "solo capas de mundo: 0 cerca, 1 lejana (más tenue, borrosa y se mueve menos que la cámara)")}
 TIPOS: dict[str, dict[str, tuple]] = {
     "campoCelulas": {
         "x": ("num", -MUNDO, MUNDO, True, "esquina izquierda"), "y": ("num", -MUNDO, MUNDO, True, "esquina superior"),
@@ -90,6 +110,30 @@ TIPOS: dict[str, dict[str, tuple]] = {
         "n": ("int", 1, 12, False, "cuerpos"), "tam": ("num", .01, MUNDO, False, ""), "color": ("color", 0, 0, True, ""),
         "periodo": ("num", .3, 60, False, "segundos por vuelta"), "inclinacion": ("num", .05, 1, False, ""), "giro": ("num", -3.2, 3.2, False, "radianes"),
     },
+    "rejilla": {
+        "x": ("num", -MUNDO, MUNDO, True, "esquina izquierda"), "y": ("num", -MUNDO, MUNDO, True, "esquina superior"),
+        "ancho": ("num", 1, MUNDO, True, ""), "alto": ("num", 1, MUNDO, True, ""), "paso": ("num", .1, MUNDO, True, "separación entre puntos"),
+        "tam": ("num", .01, MUNDO, True, "radio de cada punto"), "color": ("color", 0, 0, True, ""), "colorPulso": ("color", 0, 0, False, "color de la ola"),
+        "velocidad": ("num", 0, 5, False, "ola, ciclos/s"), "semilla": ("int", 0, 9999, False, ""),
+    },
+    "anillos": {
+        "x": ("num", -MUNDO, MUNDO, True, "centro"), "y": ("num", -MUNDO, MUNDO, True, ""), "r": ("num", .1, MUNDO, True, "radio máximo"),
+        "ry": ("num", .1, MUNDO, False, "radio vertical"), "n": ("int", 1, 8, False, "anillos a la vez"), "color": ("color", 0, 0, True, ""),
+        "periodo": ("num", .5, 20, False, "segundos por ciclo"), "grosor": ("num", .01, MUNDO, False, ""),
+    },
+    "torres": {
+        "x": ("num", -MUNDO, MUNDO, True, "esquina izquierda"), "y": ("num", -MUNDO, MUNDO, True, "línea de base"),
+        "ancho": ("num", 1, MUNDO, True, "ancho total"), "alto": ("num", 1, MUNDO, True, "altura de la más alta"), "n": ("int", 2, 24, True, "columnas"),
+        "color": ("color", 0, 0, True, ""), "colorResalte": ("color", 0, 0, False, ""), "resaltar": ("int", 0, 23, False, "índice"),
+        "alturas": ("numeros", 2, 24, False, "0..1 de 'alto' por columna"), "duracion": ("num", .3, 20, False, ""), "semilla": ("int", 0, 9999, False, ""),
+    },
+    "personaje": {  # diseñado por la IA con piezas (ver PARTES) o tomado del reparto del video con "ref"
+        "x": ("num", -MUNDO, MUNDO, True, ""), "y": ("num", -MUNDO, MUNDO, True, ""), "tam": ("num", .1, MUNDO, True, "largo del personaje"),
+        "partes": ("partes", 1, MAX_PARTES, False, "piezas de atrás hacia adelante"), "ref": ("texto", 1, 30, False, "nombre de un personaje del reparto"),
+        "angulo": ("num", -360, 360, False, "grados"), "espejo": ("bool", 0, 0, False, "mirar a la izquierda"),
+        "ruta": ("puntos", 1, 12, False, "[[x,y],...] viaja por aquí"), "duracionRuta": ("num", .3, 60, False, ""),
+        "fase": ("num", 0, 100, False, "desfase de su movimiento"),
+    },
     # ---- capas de pantalla: posición fija dentro de la zona segura ----
     "etiqueta": {
         "texto": ("texto", 1, 18, True, "MAYÚSCULAS cortas"), "x": ("num", -MUNDO, MUNDO, True, "punto del mundo señalado"),
@@ -117,7 +161,36 @@ TIPOS: dict[str, dict[str, tuple]] = {
     },
 }
 PANTALLA = {"etiqueta", "numero", "cita", "grafica", "dial", "frase"}
-MAX_CELULAS = 12000
+MAX_PUNTOS = 2500  # por rejilla
+MAX_CELULAS = 1500  # por campo: pocas células, grandes y legibles, en vez de una alfombra de miles
+CELULARES = {"campoCelulas", "vaso", "estratos"}  # solo tienen sentido si la escena trata de células, tejido o sangre
+# Palabras que hacen que una escena pueda llevar células. Se busca en la narración y en lo que debe mostrar.
+CONTEXTO_CELULAR = re.compile(
+    r"c[eé]lula|tejido|sangre|sangu[ií]ne|capilar|gl[oó]bul|plaqueta|piel|dermis|m[uú]scul|neurona|nervio|bacteria|virus|"
+    r"infecci|inmun|microb|org[aá]nul|\badn\b|tumor|c[aá]ncer|herida|cicatri|esponja|embri|organismo", re.I)
+
+
+def contexto_celular(texto: str) -> bool:
+    """¿La escena habla de algo celular? Si no, campoCelulas, vaso y estratos solo la llenarían de relleno."""
+    return bool(CONTEXTO_CELULAR.search(texto or ""))
+
+
+def _norm_ref(v: Any) -> str:
+    """Nombre de un personaje del reparto, sin mayúsculas ni espacios de más."""
+    return " ".join(v.lower().split()) if isinstance(v, str) else ""
+
+
+def reparto_valido(reparto: Any) -> tuple[dict[str, list], list[str]]:
+    """Limpia el reparto del video {nombre: [piezas]} que diseñó la IA. Devuelve (reparto limpio, problemas)."""
+    if not isinstance(reparto, dict):
+        return {}, ["el reparto debe ser un objeto {nombre: [piezas]}"]
+    limpio, problemas = {}, []
+    for nombre, v in reparto.items():
+        partes, av = _partes(v.get("partes") if isinstance(v, dict) else v, f"personaje '{nombre}'")
+        problemas += av
+        if partes:
+            limpio[_norm_ref(nombre)] = partes
+    return limpio, problemas
 
 
 def _num(v: Any) -> float | None:
@@ -168,7 +241,62 @@ def _limpiar(clase: str, mn, mx, v: Any) -> tuple[Any, str | None]:
     return None, "clase desconocida"
 
 
-def _capa(c: Any, i: int) -> tuple[dict | None, list[str]]:
+def _parte(q: Any, j: int, pref: str) -> tuple[dict | None, list[str]]:
+    """Una pieza de personaje: forma conocida, campos recortados a su rango, movimiento válido."""
+    if not isinstance(q, dict) or q.get("forma") not in PARTES:
+        return None, [f"{pref} pieza {j}: forma desconocida {q.get('forma') if isinstance(q, dict) else q!r} (elipse, poligono, linea, ojo)"]
+    out, avisos = {"forma": q["forma"]}, []
+    spec = PARTES[q["forma"]] if q["forma"] == "ojo" else {**PARTES[q["forma"]], **PARTE_COMUN}
+    for k, (clase, mn, mx, req, _) in spec.items():
+        if k not in q:
+            if req:
+                return None, [f"{pref} pieza {j} ({q['forma']}): falta '{k}'"]
+            continue
+        val, aviso = _limpiar(clase, mn, mx, q[k])
+        if val is None:
+            if req:
+                return None, [f"{pref} pieza {j} ({q['forma']}).{k}: {aviso}"]
+            avisos.append(f"{pref} pieza {j}.{k}: {aviso}, se ignora")
+            continue
+        if clase == "puntos":  # recorta cada punto al rango local
+            val = [[min(max(x, -LOCAL), LOCAL), min(max(y, -LOCAL), LOCAL)] for x, y in val]
+        out[k] = val
+    if isinstance(q.get("mov"), dict):
+        mov = {}
+        for k, (clase, mn, mx, req, _) in MOV.items():
+            if k in q["mov"]:
+                val, _aviso = _limpiar(clase, mn, mx, q["mov"][k])
+                if val is not None:
+                    mov[k] = val
+        if "tipo" in mov:
+            out["mov"] = mov
+        else:
+            avisos.append(f"{pref} pieza {j}: movimiento sin tipo válido ({', '.join(MOVS)}), se ignora")
+    return out, avisos
+
+
+def _partes(v: Any, pref: str) -> tuple[list | None, list[str]]:
+    if not isinstance(v, list) or not v:
+        return None, [f"{pref}: 'partes' debe ser una lista de piezas"]
+    partes, avisos = [], []
+    for j, q in enumerate(v[:MAX_PARTES]):
+        pieza, av = _parte(q, j, pref)
+        avisos += av
+        if pieza:
+            partes.append(pieza)
+    if not partes:
+        return None, avisos or [f"{pref}: ninguna pieza válida"]
+    return partes, avisos
+
+
+def _capa(c: Any, i: int, reparto: dict | None = None) -> tuple[dict | None, list[str]]:
+    if isinstance(c, dict) and c.get("tipo") == "personaje" and "partes" not in c:
+        ref = _norm_ref(c.get("ref"))
+        if ref and reparto and ref in reparto:
+            c = {**c, "partes": reparto[ref]}
+        else:
+            return None, [f"capa {i} (personaje): falta 'partes' o 'ref' de un personaje del reparto" +
+                          (f" ('{c.get('ref')}' no existe; hay: {', '.join(reparto)})" if reparto else "")]
     if not isinstance(c, dict) or c.get("tipo") not in TIPOS:
         return None, [f"capa {i}: tipo desconocido {c.get('tipo') if isinstance(c, dict) else c!r}"]
     tipo = c["tipo"]
@@ -179,7 +307,12 @@ def _capa(c: Any, i: int) -> tuple[dict | None, list[str]]:
             if req:
                 return None, [f"capa {i} ({tipo}): falta '{k}'"]
             continue
-        val, aviso = _limpiar(clase, mn, mx, c[k])
+        if clase == "partes":
+            val, av = _partes(c[k], f"capa {i} (personaje)")
+            avisos += av
+            aviso = None if val else "sin piezas válidas"
+        else:
+            val, aviso = _limpiar(clase, mn, mx, c[k])
         if val is None:
             if req:
                 return None, [f"capa {i} ({tipo}).{k}: {aviso}"]
@@ -193,13 +326,22 @@ def _capa(c: Any, i: int) -> tuple[dict | None, list[str]]:
         if n > MAX_CELULAS:
             out["radio"] *= (n / MAX_CELULAS) ** .5
             avisos.append(f"capa {i}: {n:.0f} células, se agranda el radio")
+    if tipo == "rejilla":  # tope de puntos por rendimiento: se separan más
+        n = (out["ancho"] / out["paso"] + 1) * (out["alto"] / out["paso"] + 1)
+        if n > MAX_PUNTOS:
+            out["paso"] *= (n / MAX_PUNTOS) ** .5
+            avisos.append(f"capa {i}: {n:.0f} puntos, se separan más")
+    if tipo == "torres" and "alturas" in out:
+        out["alturas"] = [min(h, 1.0) for h in out["alturas"]]
     if tipo == "numero" and "texto" not in out and "contar" not in out:
         return None, [f"capa {i} (numero): falta 'texto' o 'contar'"]
     return out, avisos
 
 
-def validar(prim: Any) -> tuple[dict | None, list[str]]:
-    """Limpia una escena del LLM. Devuelve (escena válida o None, problemas). Recortes menores no invalidan."""
+def validar(prim: Any, celulas: bool = True, reparto: dict | None = None) -> tuple[dict | None, list[str]]:
+    """Limpia una escena del LLM. Devuelve (escena válida o None, problemas). Recortes menores no invalidan.
+    `celulas=False` (la escena no habla de células ni tejido): se quitan campoCelulas, vaso y estratos. Con `celulas=True`
+    se deja un solo campoCelulas por escena."""
     if not isinstance(prim, dict):
         return None, ["la escena no es un objeto JSON"]
     problemas: list[str] = []
@@ -226,11 +368,24 @@ def validar(prim: Any) -> tuple[dict | None, list[str]]:
 
     capas, graves = [], []
     for i, c in enumerate((prim.get("capas") or [])[:24]):
-        limpia, avisos = _capa(c, i)
+        limpia, avisos = _capa(c, i, reparto)
         (graves if limpia is None else problemas).extend(avisos)
         if limpia:
             capas.append(limpia)
     problemas += graves
+    filtradas, campos = [], 0
+    for c in capas:
+        if c["tipo"] in CELULARES and not celulas:
+            problemas.append(f"'{c['tipo']}' no va en esta escena: no trata de células ni tejido; muestra el tema con figura, red, "
+                             "corriente, onda, orbita, grafica, dial o ramas")
+            continue
+        if c["tipo"] == "campoCelulas":
+            campos += 1
+            if campos > 1:
+                problemas.append("más de un campoCelulas en la escena: se deja solo el primero")
+                continue
+        filtradas.append(c)
+    capas = filtradas
     if not any(c["tipo"] not in PANTALLA for c in capas) and not any(c["tipo"] in ("grafica", "dial") for c in capas):
         return None, problemas + ["la escena no tiene nada que dibujar (solo textos)"]
     # 'forma' es un acento (núcleo, roncha, gota). Pasó que la IA la usaba como disco gigante y borroso que tapaba
@@ -256,13 +411,25 @@ def describir() -> str:
                      else f"≤{mx} car." if clase == "texto" else clase)
             partes.append(f"{k}{'' if req else '?'}:{rango}" + (f" ({desc})" if desc else ""))
         lineas.append(f"- {tipo}{' [pantalla]' if tipo in PANTALLA else ''}: " + "; ".join(partes))
+    extras = lambda spec: "; ".join(f"{k}{'' if req else '?'}" + (f" ({d})" if d else "") for k, (_, _, _, req, d) in spec.items())
+    lineas.append("  Piezas de 'partes' (coordenadas locales: el personaje mide ~1 de largo, centrado en 0,0, y hacia abajo; van de atrás hacia adelante):")
+    for forma, spec in PARTES.items():
+        lineas.append(f"    · forma \"{forma}\": " + extras(spec if forma == "ojo" else {**spec, **PARTE_COMUN}))
+    lineas.append("    · movimiento propio de cualquier pieza, mov {" + extras(MOV) + "} con tipo: " + "|".join(MOVS))
     return "\n".join(lineas)
 
 
-def respaldo(texto: str, color: str = "#5dff9c", tema: str = "oscuro", semilla: int | None = None) -> dict:
-    """Escena viva armada en código cuando la IA no logra una válida: red con pulsos + partículas + cifra o frase."""
+def respaldo(texto: str, color: str = "#5dff9c", tema: str = "oscuro", semilla: int | None = None, celulas: bool = False) -> dict:
+    """Escena viva armada en código cuando la IA no logra una válida: fondo lejano (células dispersas si el tema es celular,
+    rejilla con ola si no) + red con pulsos + anillos + partículas + cifra o frase."""
     semilla = semilla if semilla is not None else random.randint(1, 9999)
+    fondo = ({"tipo": "campoCelulas", "x": -1300, "y": -950, "ancho": 2600, "alto": 2000, "radio": 90, "color": color, "densidad": .45,
+              "desde": 0, "profundidad": .6, "semilla": semilla + 2} if celulas else
+             {"tipo": "rejilla", "x": -1300, "y": -950, "ancho": 2600, "alto": 2000, "paso": 90, "tam": 4, "color": color,
+              "desde": 0, "profundidad": .75, "semilla": semilla + 2})
     capas: list[dict] = [
+        fondo,
+        {"tipo": "anillos", "x": 0, "y": 40, "r": 520, "ry": 400, "n": 3, "color": color, "periodo": 4, "grosor": 3, "desde": 0},
         {"tipo": "red", "x": 0, "y": 40, "r": 420, "ry": 320, "nodos": 46, "vecinos": 3, "color": color, "pulsos": True,
          "grosor": 4, "desde": 0, "duracion": 3, "semilla": semilla},
         {"tipo": "particulas", "x": 0, "y": 40, "r": 520, "n": 220, "tam": 2.5, "color": "#ffffff", "desde": 0,
@@ -288,8 +455,10 @@ def _centro_mundo(capas: list[dict]) -> tuple[float, float] | None:
         t = c["tipo"]
         if t in PANTALLA or t == "estratos":  # estratos cruzan todo el ancho: no dicen dónde está el protagonista
             continue
-        if t == "campoCelulas":
+        if t in ("campoCelulas", "rejilla"):
             pts.append((c["x"] + c["ancho"] / 2, c["y"] + c["alto"] / 2))
+        elif t == "torres":
+            pts.append((c["x"] + c["ancho"] / 2, c["y"] - c["alto"] / 2))
         elif t in ("vaso", "corriente"):
             pts += [tuple(p) for p in c["puntos"]]
         elif t == "enjambre":

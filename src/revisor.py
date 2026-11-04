@@ -26,6 +26,8 @@ VACIO_MEDIO = 0.3         # ...y el promedio de la escena entera debe pasar de e
 PROTAGONISTA_DEBIL = "no hay un protagonista grande"  # comienzo del aviso; fabrica lo busca para acercar la cámara en código
 PRINCIPAL_MINIMO = 0.22   # demo de referencia: 0,28; las escenas flojas de cuerpo: 0,10-0,21
 FORMA_MAXIMA = 0.65
+TEXTURAS = {"campoCelulas", "estratos", "rejilla"}  # capas repetitivas: sirven de contexto, no de protagonista
+TEXTURA_MAXIMA = 0.5      # una textura que cubre más de esta fracción del cuadro es una alfombra
 
 # Fracción de bloques de 24 px del cuadro con dibujo (≥3 % de sus píxeles distintos del fondo), con la misma cámara
 # y sin textos ni barra de escala.
@@ -76,7 +78,8 @@ def problemas_escena(medida: dict | None, dur: float) -> list[str]:
         problemas.append(
             f"el cuadro queda casi vacío ({sum(cob) / len(cob):.0%} del cuadro tiene dibujo" + (f"; sobre todo hacia los {momentos}" if momentos else "") +
             "): mantén el protagonista y el contexto cubriendo la pantalla durante todos los movimientos de cámara "
-            "(no te alejes ni te acerques a una zona sin dibujo; amplía los campos de células, estratos o vasos)")
+            "(no te alejes ni te acerques a una zona sin dibujo; agranda o acerca el protagonista y añade contexto con "
+            "redes, corrientes, partículas u otras figuras, no más células)")
     capas_medidas = medida["capas"]
     if medida["principal"] < PRINCIPAL_MINIMO:
         problemas.append(f"{PROTAGONISTA_DEBIL} (lo que se ve bien cubre solo {medida['principal']:.0%} del cuadro): "
@@ -85,6 +88,9 @@ def problemas_escena(medida: dict | None, dur: float) -> list[str]:
     if any(c["tipo"] == "forma" and c["cobertura"] > FORMA_MAXIMA for c in capas_medidas):
         problemas.append("una capa 'forma' cubre casi todo el cuadro (se ve como un disco gigante y borroso): "
                          "'forma' solo como acento pequeño (núcleo, roncha, gota), nunca como objeto principal")
+    if any(c["tipo"] in TEXTURAS and c["cobertura"] > TEXTURA_MAXIMA for c in capas_medidas):
+        problemas.append("una capa de células o estratos cubre más de la mitad del cuadro (se ve como una alfombra repetida): "
+                         "déjala como contexto pequeño y pon el detalle en el protagonista y en elementos distintos")
     capas = medida["escena"]["capas"]
     tarde = [c for c in capas if c.get("desde", 0) > dur - MARGEN_FINAL]
     if tarde:
