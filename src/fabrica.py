@@ -193,7 +193,7 @@ def _dibujar(p: dict, router: LLMRouter, indices: list[int], progreso=None,
         progreso(0, f"Animando {len(indices)} escenas...")
     with ThreadPoolExecutor(max_workers=3) as pool:
         tareas = {pool.submit(animador.animar_escena, router, p, i, paleta_dibujo, estilo_de(p),
-                              correcciones.get(i, []), p.get("reparto")): i for i in indices}
+                              correcciones.get(i, []), p.get("reparto"), p.get("reparto_alias")): i for i in indices}
         for n, tarea in enumerate(as_completed(tareas), 1):
             i = tareas[tarea]
             e = p["escenas"][i]
@@ -238,7 +238,7 @@ def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, prog
     if not p.get("reparto") and router.has_any:  # una vez por video: todas las escenas (y los reintentos) usan los mismos diseños
         if progreso:
             progreso(0, "Diseñando los personajes del video...")
-        p["reparto"] = animador.disenar_reparto(router, p, _paleta_dibujo(p))
+        p["reparto"], p["reparto_alias"] = animador.disenar_reparto(router, p, _paleta_dibujo(p))
         guardar(p)
     _dibujar(p, router, indices, progreso)
     revision = revisar(p, indices)

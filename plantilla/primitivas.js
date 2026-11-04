@@ -930,6 +930,26 @@
     ctx.drawImage(lienzoLejano, 0, 0); ctx.restore();
   }
 
+  // Velos: el dibujo se atenúa detrás de lo que debe leerse. Los textos grandes y las gráficas son capas de pantalla fijas y el
+  // protagonista puede quedar debajo; en vez de esquivarlo (la composición ya reparte la pantalla en franjas), se oscurece
+  // suavemente esa franja mientras el texto está visible.
+  function velos(ctx, capas, t) {
+    let txt = 0, graf = 0;
+    for (const c of capas) {
+      const a = aparecer(c, t);
+      if (c.tipo === 'numero' || c.tipo === 'cita' || c.tipo === 'frase') txt = Math.max(txt, a);
+      else if (c.tipo === 'grafica' || c.tipo === 'dial') graf = Math.max(graf, a);
+    }
+    const banda = (y0, y1, y2, y3, alfa) => {
+      const g = ctx.createLinearGradient(0, y0, 0, y3), r = (y) => (y - y0) / (y3 - y0);
+      g.addColorStop(0, 'rgba(4,6,10,0)'); g.addColorStop(r(y1), `rgba(4,6,10,${alfa})`);
+      g.addColorStop(r(y2), `rgba(4,6,10,${alfa})`); g.addColorStop(1, 'rgba(4,6,10,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, y0, W, y3 - y0);
+    };
+    if (txt > 0) banda(230, 300, 540, 620, .42 * txt);
+    if (graf > 0) banda(500, 570, 1130, 1200, .58 * graf);
+  }
+
   // ---------- dibujar una escena ----------
   // escena = { fondo:{tema}, camara:[...], capas:[{tipo, ...}], escala:true, grano:0.07 }
   function dibujar(canvas, escena, t) {
@@ -942,6 +962,7 @@
     }
     grano(ctx, t, escena.grano ?? 0.07);
     franjaSubtitulos(ctx);
+    if (escena.velos !== false) velos(ctx, escena.capas, t);
     if (escena.escala !== false) barraEscala(ctx, v, escena.unidad);
     ocupado = [];
     // Número y cita ocupan siempre el mismo lugar: si la IA pone varios a la vez (pasó: "$500" sobre "$1000"),

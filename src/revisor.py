@@ -35,7 +35,7 @@ JS_COBERTURA = """([i, tiempos]) => {
   const s = document.querySelectorAll('#lienzo > section.escena')[i].querySelector('script.prim');
   if (!s) return null;
   const escena = JSON.parse(s.textContent), textos = %s;
-  const con = {...escena, capas: escena.capas.filter(c => !textos.includes(c.tipo)), grano: 0, escala: false};
+  const con = {...escena, capas: escena.capas.filter(c => !textos.includes(c.tipo)), grano: 0, escala: false, velos: false};
   const sin = {...con, capas: []};
   const lienzo = () => { const c = document.createElement('canvas'); c.width = 1080; c.height = 1920; return c; };
   const a = lienzo().getContext('2d', {willReadFrequently: true}), b = lienzo().getContext('2d', {willReadFrequently: true});
@@ -81,7 +81,7 @@ def problemas_escena(medida: dict | None, dur: float) -> list[str]:
             "(no te alejes ni te acerques a una zona sin dibujo; agranda o acerca el protagonista y añade contexto con "
             "redes, corrientes, partículas u otras figuras, no más células)")
     capas_medidas = medida["capas"]
-    if medida["principal"] < PRINCIPAL_MINIMO:
+    if medida["principal"] < PRINCIPAL_MINIMO and not animador.protagonista_adecuado(medida["escena"], dur):
         problemas.append(f"{PROTAGONISTA_DEBIL} (lo que se ve bien cubre solo {medida['principal']:.0%} del cuadro): "
                          "haz que UN protagonista llene el centro de la pantalla (más de la mitad del ancho visible) "
                          "acercando la cámara o aumentando su tamaño; las partículas y los puntos tenues no cuentan")
