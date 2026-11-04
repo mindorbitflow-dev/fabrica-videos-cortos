@@ -157,6 +157,7 @@ def escena_cierre(nicho: str) -> Optional[dict]:
             {"tipo": "figura", "modelo": FIGURA_CIERRE.get(nicho, "celula"), "x": 0, "y": 120, "tam": 360},
             {"tipo": "frase", "texto": frase.rstrip(".")[:60], "resaltar": ["síguenos"], "color": color, "desde": .2},
         ]})
+    escena = prim.con_fondo_lejano(escena, color, False, 3)
     return {"voz": frase, "visual": "tarjeta final para seguir la página", "html": "", "origen": "cierre",
             "prim": escena, "cierre": True}
 

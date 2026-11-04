@@ -557,6 +557,14 @@ def _componer_protagonista(escena: dict, portada: bool, dur: float, texto: str, 
     return escena
 
 
+def _terminar(escena: dict, portada: bool, dur: float, texto: str, alias: dict | None, paleta: dict, celulas: bool, indice: int) -> dict:
+    """Últimas reglas en código de una escena de la IA: protagonista a la vista y fondo lejano si le falta textura de fondo."""
+    _componer_protagonista(escena, portada, dur, texto, alias)
+    # El fondo automático es siempre la rejilla neutra: las células las decide la IA según el contexto, y una narración que dice
+    # "pliegue de piel" (nutria nadando) no justifica meter células detrás de la portada.
+    return prim.con_fondo_lejano(escena, paleta["principal"], False, semilla=indice * 7 + 3)
+
+
 def animar_escena(router: LLMRouter, guion: dict, indice: int, paleta: dict, estilo: str = "plano",
                   correcciones: list[str] | None = None, reparto: dict | None = None,
                   alias: dict | None = None) -> tuple[str, str, dict]:
@@ -599,9 +607,9 @@ def animar_escena(router: LLMRouter, guion: dict, indice: int, paleta: dict, est
                         f"usaste la figura '{m}' pero la narración no habla de eso: dibuja lo que se nombra con un 'personaje' (ref del reparto o "
                         "'partes' propias) o con un diagrama (red, corriente, grafica, anillos...)" for m in ajenas]
                     if not faltas:
-                        return "", "ia", _componer_protagonista(limpia, portada, dur, texto_escena, alias)
+                        return "", "ia", _terminar(limpia, portada, dur, texto_escena, alias, paleta, celulas, indice)
                     if intento == INTENTOS - 1:  # último intento: se quitan las figuras ajenas y se acepta la escena válida
-                        return "", "ia", _componer_protagonista(_quitar_figuras(limpia, ajenas), portada, dur, texto_escena, alias)
+                        return "", "ia", _terminar(_quitar_figuras(limpia, ajenas), portada, dur, texto_escena, alias, paleta, celulas, indice)
                     problemas = faltas
             print(f"[Animador] escena {indice + 1}: escena inválida (intento {intento + 1}): {'; '.join(problemas)[:200]}")
     respaldo = prim.respaldo(escena["voz"], color=paleta["principal"], semilla=indice * 7 + 3, celulas=celulas)

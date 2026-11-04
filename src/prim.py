@@ -7,6 +7,7 @@ números recortados a su rango, textos acortados, colores verificados. Lo que no
 
 from __future__ import annotations
 
+import math
 import random
 import re
 from typing import Any
@@ -445,6 +446,37 @@ def respaldo(texto: str, color: str = "#5dff9c", tema: str = "oscuro", semilla: 
     escena, _ = validar({"fondo": {"tema": tema}, "escala": False,
                          "camara": [{"t": 0, "x": 0, "y": 0, "ancho": 1300}, {"t": 12, "x": 0, "y": 40, "ancho": 1050}],
                          "capas": capas})
+    return escena
+
+
+FONDO_PROFUNDIDAD = 0.75  # cuánto se aleja el fondo (0 cerca, 1 lejano)
+TEXTURAS_DE_FONDO = {"campoCelulas", "rejilla", "estratos"}
+
+
+def con_fondo_lejano(escena: dict, color: str, celulas: bool, semilla: int = 1) -> dict:
+    """Añade, detrás de todo, un fondo lejano y borroso (células dispersas si el tema es celular, rejilla con una ola de luz si no)
+    a las escenas que no tienen ya una textura de fondo. Se hizo porque las escenas con un solo protagonista sobre fondo liso
+    se veían vacías y sin detalle. Es determinista (sin IA) y se dimensiona con la cámara de la escena: las unidades cambian
+    mucho de una escena a otra (8 en una, 500 en otra), así que cubre lo que la cámara con paralaje puede ver en cada clave."""
+    capas = escena.get("capas", [])
+    if any(c["tipo"] in TEXTURAS_DE_FONDO for c in capas):
+        return escena
+    claves = escena["camara"]
+    base, q = claves[0], 0.45 * FONDO_PROFUNDIDAD   # la misma cámara con paralaje que usa el motor para las capas lejanas
+    vistas = []
+    for k in claves:
+        ancho = math.exp((1 - q) * math.log(k["ancho"]) + q * math.log(base["ancho"]))
+        vistas.append((base["x"] + (k["x"] - base["x"]) * (1 - q), base["y"] + (k["y"] - base["y"]) * (1 - q), ancho))
+    x0 = min(x - a * .6 for x, _, a in vistas); x1 = max(x + a * .6 for x, _, a in vistas)
+    y0 = min(y - a * 1.0 for _, y, a in vistas); y1 = max(y + a * 1.0 for _, y, a in vistas)   # el lienzo es 1,78 veces más alto que ancho
+    menor = min(a for _, _, a in vistas)
+    capa = ({"tipo": "campoCelulas", "x": x0, "y": y0, "ancho": x1 - x0, "alto": y1 - y0, "radio": menor / 10, "color": color,
+             "densidad": .45, "desde": 0, "profundidad": FONDO_PROFUNDIDAD, "semilla": semilla + 2} if celulas else
+            {"tipo": "rejilla", "x": x0, "y": y0, "ancho": x1 - x0, "alto": y1 - y0, "paso": menor / 9, "tam": menor / 180, "color": color,
+             "desde": 0, "profundidad": FONDO_PROFUNDIDAD, "semilla": semilla + 2})
+    limpia, _ = _capa(capa, 0)
+    if limpia:
+        escena["capas"] = [limpia, *capas]
     return escena
 
 
