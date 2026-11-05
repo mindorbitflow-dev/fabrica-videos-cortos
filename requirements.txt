@@ -8,3 +8,4 @@ requests>=2.31
 faster-whisper>=1.0
 # av 19 quitó un parámetro que faster-whisper usa para leer el audio
 av<19
+pillow>=10.0

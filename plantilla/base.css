@@ -51,10 +51,6 @@ html, body { background: #05080f; overflow: hidden; }
   position: absolute; left: 105px; width: 870px; top: 860px; z-index: 6; text-align: center;
   padding: 30px 0 10px; font-family: 'Anton', 'Montserrat', sans-serif; text-transform: uppercase;
 }
-.portada::before {
-  content: ""; position: absolute; left: -70px; right: -140px; top: -120px; bottom: -820px; z-index: -1;
-  background: linear-gradient(transparent, rgba(0,0,0,.75) 18%, rgba(0,0,0,.85));
-}
 /* En la escena de portada el gancho es el único texto: se ocultan títulos y etiquetas que dibuje la IA */
 .escena:has(.portada) .titulo, .escena:has(.portada) svg text { display: none; }
 .portada .linea { font-size: 120px; line-height: 1.02; color: #fff; letter-spacing: 1px;

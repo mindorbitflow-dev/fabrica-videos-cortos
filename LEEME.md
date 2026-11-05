@@ -29,13 +29,18 @@ Título 260-430 · dibujo 430-1190 (el canvas ocupa todo el cuadro; la cámara c
 subtítulos 1210-1440 · portada 860-1240. Las etiquetas, los números y la barra de escala se recortan solos a la zona.
 
 ## Revisión automática (la fábrica verifica su propio resultado)
-1. **Escenas** (`src/animador.py` + `src/revisor.py`): la IA describe cada escena como JSON (`src/prim.py` define
-   las primitivas y sus rangos; se valida y se recorta lo que sobra). Si el JSON no sirve tras 3 intentos, se arma
-   una escena de respaldo en código (🧩). El revisor abre cada escena en un navegador y mide qué fracción del cuadro
-   tiene dibujo en 4 momentos (menos de 0,20 en algún momento o de 0,30 en promedio = casi vacía) y si hay capas
-   que aparecen cuando la escena ya terminó. Los problemas se le devuelven a la IA (hasta 2 veces, quedándose con
-   la mejor versión). Lo que no se pudo corregir sale como ⚠️.
-2. **MP4** (`render.verificar_mp4`): 1080×1920, 30 fps, H.264 yuv420p, AAC 48 kHz, 10-120 s, final en
+1. **Historia** (`src/director.py`): la IA decide qué pasa en cada escena con un vocabulario fijo (acciones, plano, cámara,
+   escenario; `src/historia.py` lo convierte en rutas, cámara continua y paisajes planos). Cada protagonista sale de una
+   de tres fuentes: la **biblioteca propia** (`src/objetos.py`, dibujada a mano con piezas que giran), las **ilustraciones
+   abiertas** (`src/emojis.py`: Fluent Emoji Flat de Microsoft, MIT, y Noto Emoji de Google, Apache 2.0, por la API
+   pública de Iconify; licencias en `assets/emojis/LICENCIAS.md`) o un objeto que **la IA diseña como piezas planas**
+   (`src/objetos_ia.py`). Todo objeto se verifica con una IA con visión *a ciegas* (`src/vision.py`: primero dice qué ve,
+   sin saber qué debería ser). Una segunda pasada revisa que cada protagonista sea lo que dice la voz y, si no, la IA
+   replantea (hasta 3 rondas).
+2. **Control final** (`src/control.py`): cada escena armada se dibuja como la verá el público y una IA con visión describe
+   qué ve (objeto, color, tamaño) para compararlo con la voz y el rótulo. Lo que no concuerda pasa a **tarjeta de texto**
+   (nunca un dibujo que no corresponde); si son demasiadas, el video se descarta.
+3. **MP4** (`render.verificar_mp4`): 1080×1920, 30 fps, H.264 yuv420p, AAC 48 kHz, 10-150 s, final en
    silencio y peso que quepa en el correo.
 
 ## Estilos
@@ -68,14 +73,23 @@ Las muestras de todas las voces probadas están en `muestras_voz/`.
 ```
 config/nichos.yaml     nichos (paleta, voz, ideas)
 plantilla/base.css     estilos del título, la portada y los subtítulos
-plantilla/primitivas.js primitivas procedurales en canvas (cámara, células, vasos, partículas, figuras, red, ramas...)
+plantilla/primitivas.js primitivas en canvas: cámara, sprites (objetos vectoriales o ilustraciones) con rutas y giro, paisajes planos
+                       (colinas, carretera, siluetas), células, vasos, partículas, figuras, red, ramas...
 plantilla/motor.js     reloj de escenas y subtítulos (la vista previa y el MP4 son idénticos)
-src/guionista.py       temas sin repetir + guion con contrato (6-12 escenas, 170-290 palabras, gancho corto)
+src/guionista.py       temas sin repetir + guion con contrato (12-18 escenas, 240-380 palabras ≈ 80-135 s, gancho corto, "enlace"
+                       sin terminar para que el video encadene en bucle) + verificación de datos
+src/director.py        la IA dirige la historia, consigue los objetos y replantea lo que no concuerda
+src/historia.py        guion de movimientos → escena del motor (rutas, cámara que sigue, escenarios: carretera, campo, bosque, interior)
+src/objetos.py         biblioteca propia de objetos vectoriales (carro, llanta, cono, disco, pedal, módulo ABS)
+src/objetos_ia.py      objetos que la IA diseña como piezas planas + verificación
+src/emojis.py          ilustraciones abiertas (Fluent Emoji Flat / Noto) por la API de Iconify, con caché en assets/emojis
+src/vision.py          IA con visión: verificación ciega de objetos
+src/control.py         control final sobre cada escena armada
 src/prim.py            esquema único de las primitivas: validar(), describir() para el prompt y respaldo()
-src/animador.py        escena → JSON de primitivas con IA (validado; respaldo procedural en código)
+src/animador.py        (método anterior de escenas por IA, ya no se usa en la fábrica)
 src/voces.py           Gemini TTS / Edge-TTS + alineación de palabras con Whisper
 src/render.py          Chromium (Playwright) cuadro a cuadro + ffmpeg (-14 LUFS lineal) + verificación del MP4
-src/revisor.py         mide cada escena en el navegador (cuadro casi vacío, capas tardías)
+src/revisor.py         (método anterior: mide escenas del método viejo)
 src/fabrica.py         proyectos en proyectos/<id>/ (proyecto.json, video.html, video.mp4, miniatura.jpg)
 src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter → Gemini → Groq)
 ```

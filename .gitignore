@@ -7,3 +7,6 @@ salida/
 __pycache__/
 *.pyc
 demos/
+
+# Caché de ilustraciones abiertas (se vuelven a descargar solas; las licencias sí se guardan)
+assets/emojis/*.svg

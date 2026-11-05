@@ -100,6 +100,8 @@
     return plan.reduce((s, x) => s + x.dur, 0);
   }
 
+  // El render espera a que los sprites (ilustraciones recortadas) de las escenas estén decodificados.
+  window.__imagenesListas = window.Primitivas ? Primitivas.precargar(prims) : Promise.resolve();
   window.__textos = () => escenas.map(e => e.dataset.voz.trim());
   window.__preparar = preparar;
   window.__seek = seek;

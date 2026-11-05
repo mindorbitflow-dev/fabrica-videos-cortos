@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import datetime
 import html as htmlmod
 import json
@@ -15,7 +16,8 @@ from typing import Optional
 
 import yaml
 
-from src import animador, guionista, prim, render, revisor
+from src import animador, director, guionista, prim, render, revisor
+from src import prim as prim_mod
 from src.llm import LLMRouter
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -142,8 +144,9 @@ FIGURA_CIERRE = {"biologia": "celula", "cuerpo": "corazon", "ciencia": "planeta"
                  "tecnologia": "engranaje", "dinero": "moneda", "mente": "neurona"}
 
 
-def escena_cierre(nicho: str) -> Optional[dict]:
-    """Tarjeta final que pide seguir la página: la arma el código (no la IA) con la frase `cierre` del nicho."""
+def escena_cierre(nicho: str, enlace: str = "") -> Optional[dict]:
+    """Tarjeta final que pide seguir la página: la arma el código (no la IA) con la frase `cierre` del nicho. La voz dice además el
+    `enlace` del guion (una frase sin terminar que el gancho completa, para que el video encadene al repetirse en bucle)."""
     conf = cargar_nichos()[nicho]
     frase = str(conf.get("cierre", "")).strip()
     if not frase:
@@ -158,14 +161,14 @@ def escena_cierre(nicho: str) -> Optional[dict]:
             {"tipo": "frase", "texto": frase.rstrip(".")[:60], "resaltar": ["síguenos"], "color": color, "desde": .2},
         ]})
     escena = prim.con_fondo_lejano(escena, color, False, 3)
-    return {"voz": frase, "visual": "tarjeta final para seguir la página", "html": "", "origen": "cierre",
+    return {"voz": f"{frase} {enlace}".strip(), "visual": "tarjeta final para seguir la página", "html": "", "origen": "cierre",
             "prim": escena, "cierre": True}
 
 
 def escribir_guion(p: dict, router: LLMRouter) -> dict:
     g = guionista.escribir_guion(router, cargar_nichos()[p["nicho"]], p["tema"])
-    p.update({k: g[k] for k in ("titulo", "portada", "escenas", "caption", "hashtags", "avisos")})
-    cierre = escena_cierre(p["nicho"])
+    p.update({k: g[k] for k in ("titulo", "portada", "escenas", "caption", "hashtags", "avisos", "enlace")})
+    cierre = escena_cierre(p["nicho"], g["enlace"])
     if cierre:
         p["escenas"].append(cierre)
     p["estado"] = "guion"
@@ -230,8 +233,32 @@ def _acercar_debiles(p: dict, revision: dict[int, list[str]]) -> None:
             revision[i] = nueva.get(i, [])
 
 
-def animar(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, progreso=None) -> dict:
-    """Anima las escenas indicadas (por defecto, las que faltan) y las revisa midiendo el resultado real:
+def dirigir(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, progreso=None) -> dict:
+    """Da vida a las escenas indicadas (por defecto, las que faltan): la IA dirige la historia (qué pasa en cada escena y qué objetos hacen
+    falta), los objetos se consiguen (biblioteca propia, ilustraciones abiertas o diseño de la IA verificado con visión) y el código arma
+    las escenas del motor con rutas, cámara continua y paisajes planos. La tarjeta final la arma el código y no se toca."""
+    if indices is None:
+        indices = [i for i in range(len(p["escenas"])) if not escena_lista(p, i)]
+    indices = [i for i in indices if not p["escenas"][i].get("cierre")]
+    avisar = progreso or (lambda f, m: None)
+    avisar(0, f"Dirigiendo la historia de {len(indices)} escenas...")
+    color = cargar_nichos()[p["nicho"]]["paleta"]["acento"]
+    escenas = director.dirigir(router, p, indices, carpeta(p), color, lambda m: avisar(0.5, m))
+    for i, esc in escenas.items():
+        e = p["escenas"][i]
+        e["prim"], e["origen"], e["html"], e["revision"] = esc, "historia", "", []
+    p["avisos"] += [f"escena {i + 1} sin objeto fiable, se muestra como texto" for i in indices if not any(
+        c["tipo"] in ("sprite",) for c in p["escenas"][i]["prim"]["capas"])]
+    p["estado"] = "animado"
+    avisar(1, "Historia lista")
+    return guardar(p)
+
+
+animar = dirigir  # nombre histórico que usa la interfaz
+
+
+def animar_con_primitivas(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, progreso=None) -> dict:
+    """(Método anterior, ya no se usa en la fábrica) Anima con formas procedurales y las revisa midiendo el resultado real:
     las que tienen problemas (se salen, se enciman, quedan vacías...) se rehacen diciéndole a la IA qué
     corregir, hasta RONDAS_REVISION veces, quedándose siempre con la versión con menos problemas."""
     if indices is None:
@@ -279,12 +306,13 @@ def html_portada(portada: Optional[dict]) -> str:
     return f'<div class="portada"><div class="linea">{texto}</div>' + (f'<div class="sub">{sub}</div>' if sub else "") + "</div>"
 
 
-def _json_prim(escena: dict) -> str:
-    """Escena procedural (plantilla/primitivas.js) incrustada como JSON; "</" se escapa para no cerrar el <script>."""
+def _json_prim(p: dict, escena: dict) -> str:
+    """Escena procedural o ilustrada (plantilla/primitivas.js) incrustada como JSON; "</" se escapa para
+    no cerrar el <script>. La imagen de una escena ilustrada se incrusta como data URI: el HTML queda autocontenido."""
     prim = escena.get("prim")
     if not prim:
         return ""
-    datos = json.dumps(prim, ensure_ascii=False).replace("</", "<\\/")
+    datos = json.dumps(prim_mod.con_imagenes(carpeta(p), prim), ensure_ascii=False).replace("</", "<\\/")
     return f'<script type="application/json" class="prim">{datos}</script>\n'
 
 
@@ -299,7 +327,7 @@ def componer_html(p: dict) -> str:
     js = "\n".join((PLANTILLA / f).read_text(encoding="utf-8") for f in ("primitivas.js", "motor.js"))
     iconos = (PLANTILLA / "iconos.svg").read_text(encoding="utf-8")
     secciones = "\n".join(
-        f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{_json_prim(e)}{e.get("html") or ""}\n'
+        f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{_json_prim(p, e)}{e.get("html") or ""}\n'
         f'{portada if i == 0 else ""}</section>'
         for i, e in enumerate(p["escenas"]))
     return f"""<!DOCTYPE html>
@@ -351,11 +379,22 @@ def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "
     avisar = progreso or (lambda f, m: print(f"[{f:4.0%}] {m}"))
     if not router.has_any:
         raise RuntimeError("La fabricación automática necesita una clave de IA (Ajustes en la barra lateral).")
-    if not tema or tema.lower() == "aleatorio":
-        avisar(0, "Eligiendo tema...")
-        tema = guionista.proponer_tema(router, cargar_nichos()[nicho], temas_usados(nicho))
-    p = nuevo_proyecto(nicho, tema)
-    avisar(0.02, f"Escribiendo guion: {tema}")
-    escribir_guion(p, router)
-    animar(p, router, progreso=lambda f, m: avisar(0.05 + 0.45 * f, m))
+    elegir = not tema or tema.lower() == "aleatorio"
+    descartados: list[str] = []
+    for intento in range(2):
+        if elegir:
+            avisar(0, "Eligiendo tema...")
+            tema = guionista.proponer_tema(router, cargar_nichos()[nicho], temas_usados(nicho) + descartados)
+        p = nuevo_proyecto(nicho, tema)
+        avisar(0.02, f"Escribiendo guion: {tema}")
+        escribir_guion(p, router)
+        dudosos = [a for a in p["avisos"] if "dato dudoso" in a]
+        if not dudosos:
+            break
+        eliminar(p["id"])  # un guion con un dato falso no se entrega: se descarta (y se prueba otro tema si era aleatorio)
+        descartados.append(tema)
+        avisar(0, f"Guion descartado: {dudosos[0]}")
+        if not elegir or intento == 1:
+            raise RuntimeError(f"El guion de «{tema}» tiene datos dudosos y se descartó: {'; '.join(dudosos)}")
+    dirigir(p, router, progreso=lambda f, m: avisar(0.05 + 0.45 * f, m))
     return renderizar(p, musica=musica, progreso=lambda f, m: avisar(0.5 + 0.5 * f, m))

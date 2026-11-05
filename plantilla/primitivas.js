@@ -59,7 +59,7 @@
   // ---------- fondo, grano y viñeta ----------
   const TEMAS = {
     oscuro: ['#0f1a26', '#070b12'], mar: ['#0d2236', '#04080e'], piel: ['#a8705a', '#5a3428'],
-    tejido: ['#141b2b', '#080b14'], claro: ['#f2eee6', '#d9d3c7'],
+    tejido: ['#141b2b', '#080b14'], claro: ['#f2eee6', '#d9d3c7'], neutro: ['#8b97a8', '#3f4957'], atardecer: ['#f7c08a', '#8a5a7a'], cielo: ['#d3ebf7', '#7fb4d3'], bosque: ['#143a40', '#05100f'], interior: ['#efe2cf', '#bfa78a'],
   };
   function fondo(ctx, f) {
     const [a, b] = TEMAS[f?.tema] || TEMAS.oscuro;
@@ -83,14 +83,6 @@
     const v = ctx.createRadialGradient(CX, CY, 500, CX, CY, 1250);
     v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.6)');
     ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
-  }
-
-  // Franja oscura difuminada detrás de los subtítulos (1210-1440): el dibujo sigue a sangre pero no compite con el texto.
-  function franjaSubtitulos(ctx) {
-    const g = ctx.createLinearGradient(0, 1150, 0, 1560);
-    g.addColorStop(0, 'rgba(4,6,10,0)'); g.addColorStop(.18, 'rgba(4,6,10,.82)');
-    g.addColorStop(.75, 'rgba(4,6,10,.82)'); g.addColorStop(1, 'rgba(4,6,10,0)');
-    ctx.fillStyle = g; ctx.fillRect(0, 1150, W, 410);
   }
 
   // ---------- barra de escala (abajo a la izquierda, dentro de la zona segura) ----------
@@ -698,6 +690,104 @@
   }
   P.personaje = (ctx, c, t, v) => P.figura(ctx, c, t, v);
 
+  // Sprite: ilustración recortada (PNG con transparencia, generada por IA) que vive en el mundo como cualquier otra figura: la cámara la
+  // acerca y la mueve, puede viajar por una `ruta` (como `figura`) y tiene movimiento propio con `mov`. `ancho` está en unidades del mundo,
+  // así la barra de escala dice su tamaño real. amp: flotar = fracción del alto; oscilar = radianes; pulsar = fracción; girar = vueltas
+  // por segundo en `vel`. orienta: gira el sprite hacia donde avanza por la ruta.
+  const cargarSprite = c => memo(c, () => {
+    const img = new Image();
+    const listo = new Promise(res => { img.onload = res; img.onerror = res; });
+    img.src = c.src;
+    return { img, listo };
+  });
+  P.sprite = (ctx, c, t, v) => {
+    const img = c.partes ? null : cargarSprite(c).img;
+    const a = aparecer(c, t);
+    if (a <= 0 || (img && !img.naturalWidth)) return;
+    const w = c.ancho, h = img ? w * img.naturalHeight / img.naturalWidth : w / (c.aspecto ?? 1), t0 = t - (c.desde ?? 0);
+    let px = c.x, py = c.y, rot = (c.angulo ?? 0) * Math.PI / 180;
+    if (c.ruta && c.ruta.length) {                                     // viaja por la ruta con arranque y llegada suaves
+      const pts = [[c.x, c.y], ...c.ruta], k = suave(t0 / (c.duracionRuta ?? 3));
+      [px, py] = puntoEn(pts, k);
+      if (c.orienta) {
+        const [qx, qy] = puntoEn(pts, Math.min(1, k + .02)), [ox, oy] = puntoEn(pts, Math.max(0, k - .02));
+        if (qx !== ox || qy !== oy) rot += Math.atan2(qy - oy, qx - ox);
+      }
+    }
+    if (!v.dentro(px, py, Math.max(w, h))) return;
+    const s = Math.sin((t0 * (c.vel ?? .35) + (c.fase ?? 0)) * 6.283), amp = c.amp ?? .02;
+    let dy = 0, esc = c.fondo ? 1 : (.93 + .07 * suave(t0 / .8)) * (1 + Math.sin(t * 1.4) * .006);
+    if (c.mov === 'flotar') dy = s * amp * h; else if (c.mov === 'oscilar') rot += s * amp; else if (c.mov === 'pulsar') esc *= 1 + s * amp;
+    else if (c.mov === 'girar') rot += t0 * (c.vel ?? .35) * 6.283;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.translate(v.x(px), v.y(py + dy)); ctx.rotate(rot); ctx.scale(esc * (c.espejo ? -1 : 1), esc);
+    if (c.partes) {                                                    // objeto vectorial: las piezas miden 1 de ancho y se escalan al mundo
+      if (c.sombra) { ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(0, h * v.k / 2, w * v.k * .42, w * v.k * .035, 0, 0, 6.283); ctx.fill(); }
+      ctx.scale(w * v.k, w * v.k); personaje(ctx, t, c.partes);
+    } else {
+      if (!c.fondo) { ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 46; ctx.shadowOffsetY = 26; }
+      ctx.drawImage(img, -w * v.k / 2, -h * v.k / 2, w * v.k, h * v.k);
+    }
+    ctx.restore();
+  };
+
+  // ---------- paisajes planos hechos en código (estilo vectorial, colores lisos); se les da `profundidad` para el paralaje ----------
+  // colinas {x, y (línea del horizonte), ancho, alto (altura máxima), n (cuántas lomas), color, semilla?}
+  P.colinas = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const r = rng(c.semilla ?? 3), f1 = r() * 6.283, f2 = r() * 6.283, N = Math.max(1, c.n ?? 4);
+    const h = x => c.alto * (.55 + .3 * Math.sin(x / c.ancho * N * 6.283 + f1) + .15 * Math.sin(x / c.ancho * N * 13.1 + f2));
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = c.color; ctx.beginPath();
+    ctx.moveTo(v.x(c.x), v.y(c.y + c.alto * 3));
+    for (let i = 0; i <= 160; i++) { const x = c.x + c.ancho * i / 160; ctx.lineTo(v.x(x), v.y(c.y - h(x - c.x))); }
+    ctx.lineTo(v.x(c.x + c.ancho), v.y(c.y + c.alto * 3)); ctx.closePath(); ctx.fill(); ctx.restore();
+  };
+  // carretera {x, y (borde superior), ancho, alto, color, colorLinea?}: calzada con borde claro y línea central discontinua fija en el mundo
+  // (con la cámara siguiendo al carro, las rayas pasan: da la sensación de velocidad sin animar nada más).
+  P.carretera = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const X0 = v.x(c.x), X1 = v.x(c.x + c.ancho), Y0 = v.y(c.y), Y1 = v.y(c.y + c.alto);
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.fillStyle = c.color; ctx.fillRect(X0, Y0, X1 - X0, Y1 - Y0);
+    ctx.fillStyle = mezclaHex(c.color, '#ffffff', .22); ctx.fillRect(X0, Y0, X1 - X0, Math.max(3, (Y1 - Y0) * .05));
+    const largoRaya = c.alto * 1.1, ciclo = largoRaya * 2.1, camX = c.x - (X0 - CX) / v.k;     // x del mundo que está en el centro de la pantalla
+    const desde = Math.floor((camX - CX / v.k - c.x) / ciclo), hasta = Math.ceil((camX + (W - CX) / v.k - c.x) / ciclo);
+    ctx.fillStyle = c.colorLinea || '#f4d35e';
+    const yc = v.y(c.y + c.alto * .5), grueso = Math.max(4, (Y1 - Y0) * .06);
+    if (c.linea !== false) for (let i = Math.max(0, desde); i <= hasta; i++) { const x = c.x + i * ciclo; ctx.fillRect(v.x(x), yc - grueso / 2, largoRaya * v.k, grueso); }
+    ctx.restore();
+  };
+  // siluetas {x, ancho, y (base), forma: arbol|pino|poste|nube, n, alto, color, semilla?}: elementos sueltos repartidos a lo ancho
+  P.siluetas = (ctx, c, t, v) => {
+    const a = aparecer(c, t); if (a <= 0) return;
+    const r = rng(c.semilla ?? 5);
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = c.color; ctx.strokeStyle = c.color; ctx.lineCap = 'round';
+    for (let i = 0; i < c.n; i++) {
+      const x = c.x + (i + .15 + .7 * r()) * c.ancho / c.n, h = c.alto * (.6 + .6 * r()), sx = v.x(x), by = v.y(c.y), k = v.k;
+      if (c.forma === 'pino') {
+        for (let j = 0; j < 3; j++) {
+          const w = h * (.32 - j * .07), y0 = by - h * (.25 + j * .25) * k, y1 = y0 - h * .45 * k;
+          ctx.beginPath(); ctx.moveTo(sx - w * k, y0); ctx.lineTo(sx + w * k, y0); ctx.lineTo(sx, y1); ctx.closePath(); ctx.fill();
+        }
+        ctx.fillRect(sx - h * .03 * k, by - h * .25 * k, h * .06 * k, h * .25 * k);
+      } else if (c.forma === 'arbol') {
+        ctx.fillRect(sx - h * .04 * k, by - h * .5 * k, h * .08 * k, h * .5 * k);
+        ctx.beginPath(); ctx.arc(sx, by - h * .65 * k, h * .3 * k, 0, 6.283); ctx.fill();
+      } else if (c.forma === 'poste') {
+        ctx.lineWidth = Math.max(2, h * .035 * k); ctx.beginPath(); ctx.moveTo(sx, by); ctx.lineTo(sx, by - h * k);
+        ctx.moveTo(sx - h * .22 * k, by - h * .92 * k); ctx.lineTo(sx + h * .22 * k, by - h * .92 * k); ctx.stroke();
+      } else if (c.forma === 'nube') {
+        for (let j = 0; j < 4; j++) { ctx.beginPath(); ctx.ellipse(sx + (j - 1.5) * h * .35 * k, by - Math.sin(j * 1.7) * h * .12 * k, h * .35 * k, h * .2 * k, 0, 0, 6.283); ctx.fill(); }
+      }
+    }
+    ctx.restore();
+  };
+
+  // El motor espera a que los sprites estén decodificados antes de capturar el primer cuadro.
+  const precargar = escenas => Promise.all(escenas.filter(Boolean).flatMap(e => e.capas || [])
+    .filter(c => c.tipo === 'sprite' && !c.partes).map(c => cargarSprite(c).listo));
+
   // Red: nodos al azar unidos con sus vecinos; crece desde el centro y lleva pulsos de luz (moho, neuronas, internet, metro).
   P.red = (ctx, c, t, v) => {
     const red = memo(c, () => {
@@ -961,7 +1051,6 @@
       if (c.profundidad > 0) capaLejana(ctx, c, t, escena.camara[0], cam); else P[c.tipo]?.(ctx, c, t, v);
     }
     grano(ctx, t, escena.grano ?? 0.07);
-    franjaSubtitulos(ctx);
     if (escena.velos !== false) velos(ctx, escena.capas, t);
     if (escena.escala !== false) barraEscala(ctx, v, escena.unidad);
     ocupado = [];
@@ -978,5 +1067,5 @@
     for (const c of escena.capas) if (c.tipo === 'etiqueta') P.etiqueta(ctx, c, t, v);
   }
 
-  window.Primitivas = { dibujar, tipos: Object.keys(P), modelos: Object.keys(MODELOS), camara, ZONA };
+  window.Primitivas = { dibujar, precargar, tipos: Object.keys(P), modelos: Object.keys(MODELOS), camara, ZONA };
 })();

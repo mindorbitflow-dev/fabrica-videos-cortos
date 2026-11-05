@@ -20,7 +20,7 @@ Progreso = Optional[Callable[[float, str], None]]
 LUFS = -14            # volumen de referencia de TikTok, Reels y Shorts
 MAX_MB_CORREO = 20    # Gmail: 25 MB contando la codificación del adjunto
 MAX_KBPS_VIDEO = 1800  # tope de tasa del video; el de videos largos baja según la duración
-MAX_SEGUNDOS = 120    # Reels, TikTok y Shorts admiten hasta 3 min; los videos largos con cámara continua duran 60-120 s
+MAX_SEGUNDOS = 150    # Reels, TikTok y Shorts admiten hasta 3 min; las historias duran 80-135 s
 
 
 def _medir_volumen(wav: Path, total: float) -> dict:
@@ -85,6 +85,7 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
             pag = await nav.new_page(viewport={"width": 1080, "height": 1920}, device_scale_factor=1)
             await pag.goto(html.resolve().as_uri() + "?render=1")
             await pag.evaluate("document.fonts.ready")
+            await pag.evaluate("window.__imagenesListas")
             textos = await pag.evaluate("__textos()")
 
             avisar(0.02, f"Generando la voz ({voces.nombre_voz(voz)})...")

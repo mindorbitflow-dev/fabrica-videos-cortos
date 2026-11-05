@@ -9,11 +9,12 @@ import unicodedata
 
 from src.llm import LLMRouter
 
-ESCENAS_MIN, ESCENAS_MAX = 6, 12
-PALABRAS_MIN, PALABRAS_MAX = 170, 290   # ≈ 60-110 s con la voz a +8 % (más la tarjeta de cierre)
+ESCENAS_MIN, ESCENAS_MAX = 12, 18  # cambio de escena cada 5-8 s
+PALABRAS_MIN, PALABRAS_MAX = 240, 380   # ≈ 80-135 s con la voz a +8 % (más la tarjeta de cierre): la duración de la referencia
 
 PROMPT_GUION = """Eres guionista de videos cortos verticales (YouTube Shorts / TikTok) que explican un tema
-con animación científica hecha en código (células, partículas, redes, criaturas planas, zoom de cámara), no con fotos.
+como una historia animada de objetos planos en movimiento (un carro que cruza, un pollo que se cocina, una célula que late): cada escena muestra
+algo concreto que PASA.
 
 Nicho: {nombre}. {descripcion}
 Tono: {tono}
@@ -24,16 +25,22 @@ Reglas:
 - Entre {emin} y {emax} escenas, y entre {pmin} y {pmax} palabras de narración en total.
 - Escena 1 = gancho: arranca directo con el dato que contradice lo que la gente cree, en la primera frase
   (nada de "hoy te voy a contar"). Máximo 22 palabras.
-- Cada escena explica UNA sola idea que se pueda mostrar en movimiento.
+- Cada escena explica UNA sola idea que se pueda mostrar con un objeto concreto y reconocible haciendo algo (ver "visual").
+  Frases de 12 a 25 palabras. Evita ideas que solo se puedan mostrar con formas abstractas o metáforas.
 - Usa al menos una cifra concreta y verificable ("60 veces más larga", "26 horas"). Nombra un estudio (revista y año)
   SOLO si es muy conocido y estás seguro de él; si no, no menciones ninguno.
 - Solo hechos ampliamente aceptados. No inventes cifras, fechas, estudios ni récords; si dudas de un dato, no lo uses.
 - La última escena cierra con una consecuencia concreta o un dato práctico. NO pidas que te sigan, comenten
   o den like (la tarjeta final para seguir la página la agrega el sistema), y no termines con preguntas al público.
+- BUCLE: el video se repite solo, y debe leerse sin corte. Escribe el campo "enlace": de 3 a 8 palabras que se dicen AL FINAL
+  (después de la invitación a seguir la página) y que quedan SIN TERMINAR: acaban en una palabra como "que", "porque", "cuando", "y",
+  "de", "el" o "la". La PRIMERA frase del video (el gancho) debe completar ese enlace con sentido, como si fuera una sola frase.
+  Ej.: enlace "Y recuerda que" + gancho "pisar el freno a fondo bloquea las llantas". El gancho debe poder leerse como continuación.
 - Escribe como alguien que sabe del tema y lo cuenta directo, con datos concretos (cifras, nombres de partes,
   causas). PROHIBIDO usar estas muletillas que hacen sonar genérico el video: {prohibidas}.
-- "visual": 1-2 frases que digan qué se VE y qué se MUEVE: el protagonista, a qué escala (metros, mm, µm) y hacia dónde
-  va la cámara (acercarse, alejarse). Ej.: "corte de la piel; zoom hasta las células; glóbulos verdes salen del vaso".
+- "visual": UNA frase con lo que se VE literalmente en la ilustración de esa escena: el objeto, animal o parte del cuerpo
+  y lo que hace. Ej.: "un pie pisando fuerte el pedal del freno de un carro"; "primer plano de una lengua con capa blanca".
+  Nunca engranajes, chips, partículas ni células de adorno: solo lo que la voz dice en esa escena.
 
 PORTADA (lo que se ve en el primer segundo y en la miniatura; es lo que decide si alguien mira el video):
 - "texto": 2 a 5 palabras, máximo 24 letras, que choquen con lo que la gente cree. Fórmulas que funcionan:
@@ -48,6 +55,7 @@ Responde SOLO con este JSON:
 {{"titulo": "título para YouTube, máximo 70 caracteres",
   "portada": {{"texto": "...", "destacado": "...", "sub": "..."}},
   "escenas": [{{"voz": "narración de la escena", "visual": "qué se dibuja"}}],
+  "enlace": "3 a 8 palabras sin terminar que el gancho completa",
   "caption": "descripción de 1 o 2 frases con el dato central (sin muletillas)",
   "hashtags": ["#ejemplo", "... entre 3 y 5, específicos del tema (nada de #viral, #fyp, #parati, #curiosidades)"]}}"""
 
@@ -61,7 +69,8 @@ Responde SOLO JSON: {{"tema": "..."}}"""
 
 
 VISUAL_TEMA = {
-    "plano": "Debe poder explicarse con diagramas simples (flechas, procesos, comparaciones, gráficas).",
+    "plano": "Debe poder CONTARSE como una historia de objetos concretos que se mueven y cambian (un carro que frena, un pollo que se cocina, "
+             "una taza que se enfría). Evita procesos que solo ocurren a escala molecular o atómica y conceptos abstractos.",
 }
 
 
@@ -119,6 +128,11 @@ def muletillas_en(g: dict) -> list[str]:
     return [m for m in MULETILLAS if re.search(rf"\b{re.escape(_norm(m))}\b", texto)]
 
 
+# Palabras con las que no se puede terminar una frase: obligan a seguir (el gancho del video las completa al repetirse).
+CONECTORES = {"que", "porque", "cuando", "y", "o", "de", "del", "el", "la", "los", "las", "un", "una", "si", "como", "donde", "con", "para",
+              "por", "a", "al", "en", "es", "son", "se", "tu", "tus", "su", "sus", "mientras", "aunque", "pero", "sin", "sobre", "entre"}
+
+
 def problemas_guion(g: dict) -> list[str]:
     """Lo que incumple el contrato del guion (lista vacía = válido)."""
     escenas = g.get("escenas") or []
@@ -137,6 +151,11 @@ def problemas_guion(g: dict) -> list[str]:
     usadas = muletillas_en(g)
     if usadas:
         errores.append("usa muletillas prohibidas: " + ", ".join(f'"{m}"' for m in usadas))
+    enlace = str(g.get("enlace", "")).strip().rstrip(".,;:").split()
+    if not 2 <= len(enlace) <= 9:
+        errores.append("falta el 'enlace' (3 a 8 palabras sin terminar que el gancho completa)")
+    elif _norm(enlace[-1]) not in CONECTORES:
+        errores.append(f"el enlace \"{' '.join(enlace)}\" no queda sin terminar (debe acabar en que, porque, cuando, y, de, el, la...)")
     portada = g.get("portada") or {}
     texto = str(portada.get("texto", "")).strip()
     if not texto:
@@ -155,7 +174,8 @@ No señales simplificaciones razonables ni cuestiones de estilo.
 
 {guion}
 
-Responde SOLO JSON: {{"errores": [{{"frase": "copia EXACTA de la frase del guion", "problema": "por qué es falso", "correccion": "dato correcto"}}]}}
+Responde SOLO JSON: {{"errores": [{{"tipo": "dato" o "ortografia", "frase": "copia EXACTA de la frase del guion", "problema": "por qué es falso", "correccion": "dato correcto"}}]}}
+("dato" = afirmación falsa o engañosa; "ortografia" = gramática, tildes o mayúsculas)
 (lista vacía si todo es correcto)."""
 
 
@@ -222,10 +242,11 @@ def escribir_guion(router: LLMRouter, nicho: dict, tema: str) -> dict:
         "portada": {k: str((ultimo.get("portada") or {}).get(k, "")).strip() for k in ("texto", "destacado", "sub")},
         "escenas": [{"voz": str(e.get("voz", "")).strip(), "visual": str(e.get("visual", "")).strip(), "html": ""}
                     for e in ultimo.get("escenas", [])],
+        "enlace": " ".join(str(ultimo.get("enlace", "")).split()).strip(),
         "caption": str(ultimo.get("caption", "")).strip(),
         "hashtags": [h for h in (str(x).strip() for x in ultimo.get("hashtags", []))
                      if h and _norm(h.lstrip("#")) not in HASHTAGS_GENERICOS][:5],
-        "avisos": errores + [f"tiene un dato dudoso: \"{d['frase']}\" ({d.get('problema', '')})"
-                                             for d in dudosos],
+        "avisos": errores + [f"tiene {'un error de ortografía' if d.get('tipo') == 'ortografia' else 'un dato dudoso'}: "
+                             f"\"{d['frase']}\" ({d.get('problema', '')})" for d in dudosos],
         "proveedor": proveedor,
     }

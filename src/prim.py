@@ -7,13 +7,15 @@ números recortados a su rango, textos acortados, colores verificados. Lo que no
 
 from __future__ import annotations
 
+import base64
 import math
 import random
 import re
+from pathlib import Path
 from typing import Any
 
 COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
-TEMAS = ["oscuro", "mar", "piel", "tejido", "claro"]
+TEMAS = ["oscuro", "mar", "piel", "tejido", "claro", "neutro", "atardecer", "cielo", "bosque", "interior"]
 UNIDADES = ["µm", "mm", "m", "km"]
 MODELOS = ["pez", "hormiga", "bacteria", "virus", "neurona", "celula", "persona", "ave", "planta", "gota", "moneda",
            "engranaje", "planeta", "sol", "corazon", "llama", "chip", "bateria",
@@ -134,6 +136,33 @@ TIPOS: dict[str, dict[str, tuple]] = {
         "angulo": ("num", -360, 360, False, "grados"), "espejo": ("bool", 0, 0, False, "mirar a la izquierda"),
         "ruta": ("puntos", 1, 12, False, "[[x,y],...] viaja por aquí"), "duracionRuta": ("num", .3, 60, False, ""),
         "fase": ("num", 0, 100, False, "desfase de su movimiento"),
+    },
+    "sprite": {  # ilustración recortada del sujeto de la escena (la arma el código, no la IA de animación): ver escena_sujeto
+        "imagen": ("texto", 1, 80, False, "ruta del PNG recortado"),
+        "partes": ("partes", 1, MAX_PARTES, False, "objeto vectorial: piezas de 1 de ancho (ver src/objetos.py)"),
+        "aspecto": ("num", .05, 20, False, "ancho/alto del objeto vectorial"), "sombra": ("bool", 0, 0, False, "sombra plana en el suelo"), "x": ("num", -MUNDO, MUNDO, True, ""), "y": ("num", -MUNDO, MUNDO, True, ""),
+        "ancho": ("num", 1e-6, MUNDO, True, "ancho en unidades del mundo"), "mov": ("enum", ["flotar", "oscilar", "pulsar", "girar"], 0, False, ""),
+        "amp": ("num", 0, .3, False, ""), "vel": ("num", 0, 3, False, "ciclos/s"), "fase": ("num", 0, 10, False, ""),
+        "angulo": ("num", -360, 360, False, "grados"), "espejo": ("bool", 0, 0, False, ""),
+        "fondo": ("bool", 0, 0, False, "telón de fondo: sin sombra ni entrada"),
+        "ruta": ("puntos", 1, 12, False, "[[x,y],...] viaja por aquí"), "duracionRuta": ("num", .3, 60, False, ""),
+        "orienta": ("bool", 0, 0, False, "mira hacia donde avanza"),
+    },
+    # ---- paisajes planos hechos en código (los arma historia.py; la IA de animación no los usa) ----
+    "colinas": {
+        "x": ("num", -MUNDO, MUNDO, True, ""), "y": ("num", -MUNDO, MUNDO, True, "horizonte"), "ancho": ("num", 1e-6, MUNDO, True, ""),
+        "alto": ("num", 1e-6, MUNDO, True, ""), "n": ("int", 1, 12, False, "lomas"), "color": ("color", 0, 0, True, ""),
+        "semilla": ("int", 0, 9999, False, ""),
+    },
+    "carretera": {
+        "x": ("num", -MUNDO, MUNDO, True, ""), "y": ("num", -MUNDO, MUNDO, True, "borde superior"), "ancho": ("num", 1e-6, MUNDO, True, ""),
+        "alto": ("num", 1e-6, MUNDO, True, ""), "color": ("color", 0, 0, True, ""), "colorLinea": ("color", 0, 0, False, ""),
+        "linea": ("bool", 0, 0, False, "false: sin raya central (suelo de campo, bosque o interior)"),
+    },
+    "siluetas": {
+        "x": ("num", -MUNDO, MUNDO, True, ""), "y": ("num", -MUNDO, MUNDO, True, "base"), "ancho": ("num", 1e-6, MUNDO, True, ""),
+        "alto": ("num", 1e-6, MUNDO, True, ""), "forma": ("enum", ["arbol", "pino", "poste", "nube"], 0, True, ""),
+        "n": ("int", 1, 80, True, ""), "color": ("color", 0, 0, True, ""), "semilla": ("int", 0, 9999, False, ""),
     },
     # ---- capas de pantalla: posición fija dentro de la zona segura ----
     "etiqueta": {
@@ -406,6 +435,8 @@ def describir() -> str:
     """Referencia compacta de las primitivas para el prompt del animador (generada del mismo ESQUEMA)."""
     lineas = []
     for tipo, spec in TIPOS.items():
+        if tipo in ("sprite", "colinas", "carretera", "siluetas"):
+            continue  # los arma el código (historia.py); la IA de animación no los usa
         partes = []
         for k, (clase, mn, mx, req, desc) in spec.items():
             rango = (f"{'|'.join(mn)}" if clase == "enum" else f"{mn:g}..{mx:g}" if clase in ("num", "int") and abs(mx) < MUNDO
@@ -517,3 +548,89 @@ def acercar(escena: dict, factor: float = 1.6) -> dict | None:
         clave["ancho"] = max(clave["ancho"] / factor, 1e-3)
     limpia, _ = validar(nueva)
     return limpia
+
+
+# ---------- escena con un sujeto ilustrado ----------
+SUJETO_PX = 780   # tamaño máximo del sujeto en pantalla al empezar la escena (zona de dibujo: 560-1180 de alto, 870 de ancho)
+MOVS_SUJETO = [("flotar", .035), ("oscilar", .05), ("pulsar", .03)]
+
+
+def _unidad_mundo(metros: float | None) -> tuple[str, float]:
+    """(unidad de la barra de escala, metros por unidad) adecuada al tamaño real del sujeto."""
+    if metros and 1e-7 <= metros <= 1e5:
+        for unidad, m in (("km", 1e3), ("m", 1.0), ("mm", 1e-3), ("µm", 1e-6)):
+            if metros >= m:
+                return unidad, m
+        return "µm", 1e-6
+    return "m", 1.0
+
+
+def _ambiente_con_contraste(ambiente: str, luz: float | None) -> str:
+    """Un sujeto oscuro se pierde sobre un fondo oscuro (y uno claro sobre uno claro): se cambia el fondo del tema."""
+    if luz is not None and luz < 85 and ambiente in ("oscuro", "mar", "tejido"):
+        return "neutro"
+    if luz is not None and luz > 190 and ambiente == "claro":
+        return "oscuro"
+    return ambiente
+
+
+def escena_frase(texto: str, ambiente: str, color: str, indice: int, dur: float) -> dict:
+    """Escena de texto: la frase clave sobre un fondo de rejilla con cámara lenta. Se usa cuando no hubo una imagen fiel de la escena:
+    es mejor decir la idea con palabras que mostrar un dibujo que no corresponde."""
+    vista = 1200.0
+    fin = max(dur * 1.3, 4.0)
+    camara = [{"t": 0, "x": 0, "y": 0, "ancho": vista * 1.05}, {"t": fin, "x": 0, "y": 0, "ancho": vista}]
+    palabras = texto.split()
+    capas = [{"tipo": "frase", "texto": " ".join(palabras[:6])[:60], "desde": .2, "color": color}]
+    escena, _ = validar({"fondo": {"tema": ambiente if ambiente in TEMAS else "oscuro"}, "escala": False, "camara": camara,
+                         "capas": [{"tipo": "particulas", "x": 0, "y": 0, "r": 500, "n": 120, "tam": 2.5, "color": color, "duracion": 5,
+                                    "desde": 0, "semilla": indice + 1}, *capas]}, celulas=False)
+    return con_fondo_lejano(escena, color, False, indice + 1)
+
+
+def escena_sujeto(imagen: str, aspecto: float, ambiente: str, color: str, indice: int, dur: float, metros: float | None = None,
+                  rotulo: str = "", numero: dict | None = None, luz: float | None = None, telon: str | None = None) -> dict:
+    """Escena animada alrededor de un sujeto ilustrado (PNG recortado, aspecto = ancho/alto): fondo del tema del contexto
+    (piel, mar, oscuro...), rejilla lejana con paralaje, el sujeto grande y centrado que respira o se mece mientras la cámara
+    se acerca, se desplaza o se aleja (según el índice), rótulo, cifra y barra de escala con su tamaño real. La composición la fija el
+    código: la IA solo aporta el sujeto, así lo que se ve siempre es lo que dice la voz."""
+    px = min(SUJETO_PX, SUJETO_PX * aspecto)                 # ancho del sujeto en pantalla al empezar
+    unidad, m_por_u = _unidad_mundo(metros)
+    ancho = (metros / m_por_u) if metros and 1e-7 <= metros <= 1e5 else 1000.0
+    alto = ancho / aspecto
+    vista = ancho * 1080 / px                                # ancho de mundo visible al empezar: el sujeto mide `px`
+    fin = max(dur * 1.3, 4.0)
+    movimiento = indice % 3
+    if movimiento == 0:                                      # acercarse
+        camara = [{"t": 0, "x": 0, "y": 0, "ancho": vista}, {"t": fin, "x": 0, "y": 0, "ancho": vista / 1.14}]
+    elif movimiento == 1:                                    # recorrer de lado a lado
+        camara = [{"t": 0, "x": -.06 * vista, "y": 0, "ancho": vista * 1.03}, {"t": fin, "x": .06 * vista, "y": 0, "ancho": vista / 1.08}]
+    else:                                                    # alejarse
+        camara = [{"t": 0, "x": 0, "y": 0, "ancho": vista / 1.14}, {"t": fin, "x": 0, "y": 0, "ancho": vista * 1.02}]
+    mov, amp = MOVS_SUJETO[indice % len(MOVS_SUJETO)]
+    capas: list[dict] = []
+    if telon:  # entorno desenfocado y lejano (se mueve menos que el sujeto cuando la cámara se desplaza): da profundidad
+        capas.append({"tipo": "sprite", "imagen": telon, "x": 0, "y": 0, "ancho": vista * 2.4, "fondo": True, "profundidad": .6, "desde": 0})
+    capas.append({"tipo": "sprite", "imagen": imagen, "x": 0, "y": 0, "ancho": ancho, "mov": mov, "amp": amp,
+                  "vel": .3 + .05 * (indice % 3), "fase": (indice * .37) % 1, "desde": 0})
+    if rotulo.strip():
+        lado = 1 if indice % 2 == 0 else -1
+        capas.append({"tipo": "etiqueta", "texto": rotulo.strip().upper()[:18], "x": lado * .2 * ancho, "y": -.22 * alto,
+                      "dx": lado * 120, "dy": -170, "color": color, "desde": .8})
+    if numero and numero.get("valor"):
+        capas.append({"tipo": "numero", "texto": str(numero["valor"])[:6], "sub": str(numero.get("texto", ""))[:24], "desde": .6, "color": color})
+    ambiente = _ambiente_con_contraste(ambiente if ambiente in TEMAS else "oscuro", luz)
+    escena, _ = validar({"fondo": {"tema": ambiente}, "unidad": unidad,
+                         "escala": bool(metros and 1e-7 <= metros <= 1e5), "camara": camara, "capas": capas}, celulas=False)
+    return escena if telon else con_fondo_lejano(escena, color, False, indice + 1)
+
+
+def con_imagenes(raiz: Path, escena: dict) -> dict:
+    """La escena con las imágenes de sus sprites incrustadas como data URI (`src`): autocontenida, lista para el motor del navegador.
+    `raiz`: carpeta del proyecto donde están las rutas relativas de las imágenes."""
+    if not any(c["tipo"] == "sprite" and c.get("imagen") for c in escena["capas"]):
+        return escena
+    mime = lambda ruta: {"png": "image/png", "svg": "image/svg+xml"}.get(ruta.rsplit(".", 1)[-1], "image/jpeg")
+    return {**escena, "capas": [
+        {**c, "src": f"data:{mime(c['imagen'])};base64," + base64.b64encode((raiz / c["imagen"]).read_bytes()).decode()}
+        if c["tipo"] == "sprite" and c.get("imagen") else c for c in escena["capas"]]}
