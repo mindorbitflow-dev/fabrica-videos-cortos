@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import os
 import smtplib
+import time
 from email.message import EmailMessage
 
 from src import fabrica, voces
 
 MAX_ADJUNTO = 20 * 1024 * 1024  # Gmail admite 25 MB contando la codificación del adjunto
+ESPERAS_REINTENTO = (30, 90, 180)  # segundos entre reintentos si Gmail falla de forma pasajera
 
 
 def configurado() -> bool:
@@ -37,9 +39,19 @@ def _enviar(asunto: str, cuerpo: str, adjunto: tuple[bytes, str] | None = None,
         msg.add_attachment(datos, maintype="video", subtype="mp4", filename=nombre)
     if imagen:
         msg.add_attachment(imagen[0], maintype="image", subtype="jpeg", filename=imagen[1])
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=120) as smtp:
-        smtp.login(usuario, clave)
-        smtp.send_message(msg)
+    # Gmail a veces responde 421 "Temporary System Problem" o corta la conexión: es pasajero, y perder un video ya hecho por eso no vale la pena.
+    for intento, espera in enumerate(ESPERAS_REINTENTO + (None,)):
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=120) as smtp:
+                smtp.login(usuario, clave)
+                smtp.send_message(msg)
+            return
+        except (smtplib.SMTPResponseException, smtplib.SMTPServerDisconnected, OSError) as error:
+            pasajero = not isinstance(error, smtplib.SMTPResponseException) or 400 <= error.smtp_code < 500
+            if espera is None or not pasajero:
+                raise
+            print(f"[Correo] fallo pasajero ({str(error)[:80]}); reintento {intento + 1} en {espera} s")
+            time.sleep(espera)
 
 
 def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
