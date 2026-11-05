@@ -247,8 +247,11 @@ def dirigir(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, pro
     for i, esc in escenas.items():
         e = p["escenas"][i]
         e["prim"], e["origen"], e["html"], e["revision"] = esc, "historia", "", []
-    p["avisos"] += [f"tiene la escena {i + 1} como tarjeta de texto (no se logró un objeto fiable que concuerde con la voz)" for i in indices if not any(
-        c["tipo"] in ("sprite",) for c in p["escenas"][i]["prim"]["capas"])]
+    texto = [i for i in indices if not any(c["tipo"] == "sprite" for c in p["escenas"][i]["prim"]["capas"])]
+    if len(texto) > len(indices) // 2:
+        p["avisos"].insert(0, f"tiene {len(texto)} de {len(indices)} escenas como tarjeta de texto: el tema es muy abstracto para mostrarlo con objetos "
+                              "(conviene otro tema o reescribir el guion con cosas concretas)")
+    p["avisos"] += [f"tiene la escena {i + 1} como tarjeta de texto (no se logró un objeto fiable que concuerde con la voz)" for i in texto]
     p["estado"] = "animado"
     avisar(1, "Historia lista")
     return guardar(p)

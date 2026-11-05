@@ -16,7 +16,6 @@ from typing import Callable, Optional
 from src import animador, control, emojis, historia, objetos, objetos_ia, prim
 from src.llm import LLMRouter
 
-MAX_ESCENAS_SIN_OBJETO = 3  # escenas que pueden quedar como tarjeta de texto; con más, la dirección se rehace
 
 PROMPT_DIRECTOR = """Eres director de animación de un video corto explicativo hecho con objetos planos en movimiento (dibujo vectorial, sin fotos).
 Cuenta en imágenes lo que dice la voz: lo que se ve debe ser lo que se escucha. Una historia, no una colección de diapositivas.
@@ -275,7 +274,4 @@ def dirigir(router: LLMRouter, p: dict, indices: list[int], carpeta: Path, color
     for i, motivo in control.revisar(router, p, indices, escenas, rotulos, carpeta, avisar).items():   # control final sobre lo que se ve
         avisar(f"escena {i + 1} no pasó el control final ({motivo}): se muestra como texto")
         escenas[i] = prim.escena_frase(p["escenas"][i]["voz"], "oscuro", color, indices.index(i), animador.duracion_estimada(p["escenas"][i]["voz"]))
-    sin_objeto = sum(1 for i in indices if not any(c["tipo"] == "sprite" for c in escenas[i]["capas"]))
-    if sin_objeto > max(MAX_ESCENAS_SIN_OBJETO, len(indices) // 4):
-        raise RuntimeError(f"{sin_objeto} de {len(indices)} escenas sin objeto fiable: el video no tendría historia")
-    return escenas
+    return escenas  # las escenas sin objeto fiable ya son tarjetas de texto; quien llama avisa cuántas (el video se entrega igual)
