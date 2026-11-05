@@ -92,9 +92,12 @@ def _normalizar(t: str) -> str:
 
 
 def proponer_tema(router: LLMRouter, nicho: dict, usados: list[str]) -> str:
-    """Tema nuevo para el nicho. Con IA si hay; si no, una idea del banco que no se haya usado."""
+    """Tema nuevo para el nicho: primero una idea del banco del nicho (config/nichos.yaml) que no se haya usado, porque son temas reales,
+    concretos y verificables; la IA solo propone cuando el banco se acabó (sus temas libres salían abstractos o con premisas inventadas)."""
     vistos = {_normalizar(u) for u in usados}
     libres = [i for i in nicho.get("ideas", []) if _normalizar(i) not in vistos]
+    if libres:
+        return random.choice(libres)
     if router.has_any:
         try:
             texto, _ = router.complete_any(PROMPT_TEMA.format(

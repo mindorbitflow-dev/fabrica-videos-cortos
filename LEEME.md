@@ -111,6 +111,7 @@ Secrets necesarios (Settings → Secrets and variables → Actions):
 
 - Lanzarlo a mano: pestaña **Actions → Fábrica de videos → Run workflow** (puedes elegir el nicho).
 - Limitar los nichos: variable `NICHOS_AUTO` (ej. `cotidiano,ciencia`).
+- Los temas salen primero de la lista `ideas:` de cada nicho (`config/nichos.yaml`): son reales, concretos y verificables. Cuando se acaban, la IA propone. Agrega ideas propias en la pestaña 🧭 Nichos.
 - Los nichos con `auto: false` en `config/nichos.yaml` (hoy `dinero` y `mente`, demasiado abstractos para ilustrarlos con objetos) no entran en la rotación automática; siguen disponibles a mano.
 - Cambiar la frecuencia: línea `cron` del workflow (hora UTC). Cambiar cuántos videos por ejecución: `python run.py --auto --cantidad N` (o el campo
   *cantidad* al lanzarlo a mano); cada ejecución aguanta unos 3 videos antes del límite de 90 minutos.
