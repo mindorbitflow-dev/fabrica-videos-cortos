@@ -111,8 +111,9 @@ def temas_usados(nicho: Optional[str] = None) -> list[str]:
 
 
 def elegir_nicho(permitidos: Optional[list[str]] = None) -> str:
-    """El nicho que lleva más tiempo sin video (los nunca usados primero)."""
-    claves = [n for n in (permitidos or list(cargar_nichos())) if n in cargar_nichos()]
+    """El nicho que lleva más tiempo sin video (los nunca usados primero). Sin `permitidos` se saltan los nichos con `auto: false`."""
+    nichos = cargar_nichos()
+    claves = [n for n in (permitidos or [k for k, c in nichos.items() if c.get("auto", True)]) if n in nichos]
     if not claves:
         raise ValueError("Ninguno de los nichos indicados existe en config/nichos.yaml")
     ultimo = {h["nicho"]: h["fecha"] for h in sorted(leer_historial(), key=lambda h: h["fecha"])}
