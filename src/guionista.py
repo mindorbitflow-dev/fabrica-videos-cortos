@@ -27,8 +27,9 @@ Reglas:
   (nada de "hoy te voy a contar"). Máximo 22 palabras.
 - Cada escena explica UNA sola idea que se pueda mostrar con un objeto concreto y reconocible haciendo algo (ver "visual").
   Frases de 12 a 25 palabras. Evita ideas que solo se puedan mostrar con formas abstractas o metáforas.
-- Usa al menos una cifra concreta y verificable ("60 veces más larga", "26 horas"). Nombra un estudio (revista y año)
-  SOLO si es muy conocido y estás seguro de él; si no, no menciones ninguno.
+- Cifras: SOLO las que son definiciones o hechos físicos universalmente conocidos (el agua se congela a 0 °C, un carro mide unos 4 m).
+  NUNCA inventes porcentajes, resultados de experimentos ni estudios, ni nombres de investigadores: si no estás 100 % seguro de una cifra,
+  dilo sin número ("la mayoría", "mucho más rápido"). Una frase sin cifra es mejor que una cifra dudosa. No menciones estudios ni autores.
 - Solo hechos ampliamente aceptados. No inventes cifras, fechas, estudios ni récords; si dudas de un dato, no lo uses.
 - La última escena cierra con una consecuencia concreta o un dato práctico. NO pidas que te sigan, comenten
   o den like (la tarjeta final para seguir la página la agrega el sistema), y no termines con preguntas al público.
@@ -36,8 +37,7 @@ Reglas:
   (después de la invitación a seguir la página) y que quedan SIN TERMINAR: acaban en una palabra como "que", "porque", "cuando", "y",
   "de", "el" o "la". La PRIMERA frase del video (el gancho) debe completar ese enlace con sentido, como si fuera una sola frase.
   Ej.: enlace "Y recuerda que" + gancho "pisar el freno a fondo bloquea las llantas". El gancho debe poder leerse como continuación.
-- Escribe como alguien que sabe del tema y lo cuenta directo, con datos concretos (cifras, nombres de partes,
-  causas). PROHIBIDO usar estas muletillas que hacen sonar genérico el video: {prohibidas}.
+- Escribe como alguien que sabe del tema y lo cuenta directo, con datos concretos (nombres de partes, causas, qué pasa primero y qué después). PROHIBIDO usar estas muletillas que hacen sonar genérico el video: {prohibidas}.
 - "visual": UNA frase con lo que se VE literalmente en la ilustración de esa escena: el objeto, animal o parte del cuerpo
   y lo que hace. Ej.: "un pie pisando fuerte el pedal del freno de un carro"; "primer plano de una lengua con capa blanca".
   Nunca engranajes, chips, partículas ni células de adorno: solo lo que la voz dice en esa escena.
@@ -170,7 +170,8 @@ def problemas_guion(g: dict) -> list[str]:
 PROMPT_VERIFICAR = """Eres verificador de datos científicos para videos de divulgación. Revisa este guion (portada incluida)
 y señala SOLO afirmaciones falsas, mitos populares presentados como ciertos, o exageraciones que engañen.
 Señala también errores de gramática u ortografía en la PORTADA (concordancia, tildes).
-No señales simplificaciones razonables ni cuestiones de estilo.
+No señales simplificaciones razonables, cifras redondeadas o aproximadas, ni cuestiones de estilo: solo lo CLARAMENTE falso, los mitos y las
+cifras o estudios inventados sin base.
 
 {guion}
 

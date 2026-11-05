@@ -247,7 +247,7 @@ def dirigir(p: dict, router: LLMRouter, indices: Optional[list[int]] = None, pro
     for i, esc in escenas.items():
         e = p["escenas"][i]
         e["prim"], e["origen"], e["html"], e["revision"] = esc, "historia", "", []
-    p["avisos"] += [f"escena {i + 1} sin objeto fiable, se muestra como texto" for i in indices if not any(
+    p["avisos"] += [f"tiene la escena {i + 1} como tarjeta de texto (no se logró un objeto fiable que concuerde con la voz)" for i in indices if not any(
         c["tipo"] in ("sprite",) for c in p["escenas"][i]["prim"]["capas"])]
     p["estado"] = "animado"
     avisar(1, "Historia lista")
@@ -379,22 +379,13 @@ def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "
     avisar = progreso or (lambda f, m: print(f"[{f:4.0%}] {m}"))
     if not router.has_any:
         raise RuntimeError("La fabricación automática necesita una clave de IA (Ajustes en la barra lateral).")
-    elegir = not tema or tema.lower() == "aleatorio"
-    descartados: list[str] = []
-    for intento in range(2):
-        if elegir:
-            avisar(0, "Eligiendo tema...")
-            tema = guionista.proponer_tema(router, cargar_nichos()[nicho], temas_usados(nicho) + descartados)
-        p = nuevo_proyecto(nicho, tema)
-        avisar(0.02, f"Escribiendo guion: {tema}")
-        escribir_guion(p, router)
-        dudosos = [a for a in p["avisos"] if "dato dudoso" in a]
-        if not dudosos:
-            break
-        eliminar(p["id"])  # un guion con un dato falso no se entrega: se descarta (y se prueba otro tema si era aleatorio)
-        descartados.append(tema)
-        avisar(0, f"Guion descartado: {dudosos[0]}")
-        if not elegir or intento == 1:
-            raise RuntimeError(f"El guion de «{tema}» tiene datos dudosos y se descartó: {'; '.join(dudosos)}")
+    if not tema or tema.lower() == "aleatorio":
+        avisar(0, "Eligiendo tema...")
+        tema = guionista.proponer_tema(router, cargar_nichos()[nicho], temas_usados(nicho))
+    p = nuevo_proyecto(nicho, tema)
+    avisar(0.02, f"Escribiendo guion: {tema}")
+    escribir_guion(p, router)
+    for aviso in p["avisos"]:  # los datos dudosos NO descartan el video: llega con el aviso (⚠️ en el correo) para que lo corrija una persona
+        avisar(0.02, f"Aviso del guion (se entrega igual): {aviso[:160]}")
     dirigir(p, router, progreso=lambda f, m: avisar(0.05 + 0.45 * f, m))
     return renderizar(p, musica=musica, progreso=lambda f, m: avisar(0.5 + 0.5 * f, m))
