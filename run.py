@@ -27,7 +27,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 RAIZ = os.path.dirname(os.path.abspath(__file__))
-LIMITE_AUTO_MIN = 50  # por video (dibujante hasta 30 + render); el job de GitHub se corta a los 90 (ver fabrica.yml)
+LIMITE_AUTO_MIN = 85  # por video (dibujante hasta 50 + render); el job de GitHub se corta a los 120 (ver fabrica.yml)
 os.chdir(RAIZ)  # .env, config y proyectos se resuelven desde aquí
 sys.path.insert(0, RAIZ)
 

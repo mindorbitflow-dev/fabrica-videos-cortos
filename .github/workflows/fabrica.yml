@@ -29,7 +29,7 @@ concurrency:
 jobs:
   video:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     env:
       PYTHONIOENCODING: utf-8
       PYTHONUNBUFFERED: "1"   # ver el avance en vivo en el registro

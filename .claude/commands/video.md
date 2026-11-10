@@ -12,16 +12,37 @@ tema, con un personaje u objeto reconocible que se mantiene igual en todo el vid
 rótulos pequeños. Nunca emojis, íconos genéricos ni tarjetas de solo texto. Ejemplo completo para imitar: `ejemplos/pulpo/`.
 
 ## 1. Guion (`proyectos/guion_nuevo.json`)
-- Formato: `{tema, titulo, portada: {texto, destacado, sub}, escenas: [{voz, visual}], caption, hashtags}` (ver `ejemplos/pulpo/guion.json`).
-- 9-13 escenas, 140-220 palabras en total (55-90 s). Frases cortas, una idea por escena, en español neutro.
-- Escena 1 = gancho: un hecho concreto que contradice lo que la gente cree, dicho en una sola frase. Sin "sabías que", "increíble",
-  "secreto", "descubre" ni preguntas retóricas.
-- Portada: 2-5 palabras en mayúsculas que chocan con lo esperado ("NO X: Y", "SIN X Y SIGUE", "TU X HACE Y"), `destacado` = la parte
-  del giro (debe ser un trozo literal de `texto`), `sub` = línea corta que lo completa.
+- Formato: `{tema, titulo, portada: {texto, destacado, sub}, escenas: [{rol, voz, visual}], caption, hashtags}` (ver
+  `ejemplos/pulpo/guion.json`; ese ejemplo es más corto que lo que se pide aquí).
+- **Duración: 90-150 s = 16-24 escenas y 260-380 palabras.** Frases de 6-14 palabras, una idea por escena, en segunda persona
+  cuando se pueda ("tu cuerpo", "lo que ves"), español neutro.
+- Antes de escribir, busca el ÁNGULO: dentro del tema, el dato más contraintuitivo o el que más toca al espectador. El video se
+  construye alrededor de ese dato, no de una explicación de enciclopedia.
+
+### Arquitectura de retención (el `rol` de cada escena, en este orden)
+1. `gancho` (escena 1, máx. 14 palabras, se oye en los primeros 3 s): afirmación concreta que contradice lo que la gente cree o
+   que le pasa al espectador. Nada de introducciones. El visual ya se mueve desde el primer cuadro.
+2. `pregunta` (1 escena): abre el bucle: deja planteada la pregunta que el video va a responder ("¿entonces por qué...?" dicho
+   como afirmación: "La razón está escondida en ..."), sin dar la respuesta.
+3. `contexto` (1-2): la situación cotidiana o la escena del animal en la que el espectador se reconoce.
+4. `mecanismo` (8-14): la explicación en 3-4 pasos. Cada paso termina en una mini-revelación. Cada 4-5 escenas va un
+   `reenganche`: contraste ("pero"), número que sorprende, comparación de escala con algo humano o cotidiano (como "orca vs.
+   mujer"), o "y aquí viene lo raro". Nunca dos escenas seguidas con la misma idea.
+5. `revelacion` (hacia el 70 % del video): el dato más fuerte, guardado hasta aquí. Responde de verdad la pregunta.
+6. `consecuencia` (1-2): qué cambia para el espectador, o qué va a notar ahora en su vida.
+7. `remate` (1): frase corta y memorable que cierra el bucle. Que enlace con la escena 1, para que al repetirse el video en bucle
+   se oiga continuo.
+8. `cierre` (última): exactamente la frase `cierre` del nicho ("Síguenos para más biología.").
+
+### Reglas
+- Sin "sabías que", "increíble", "secreto", "descubre", "en este video" ni preguntas retóricas sueltas.
+- Portada: 2-5 palabras en mayúsculas que chocan con lo esperado ("NO X: Y", "SIN X Y SIGUE", "TU X HACE Y"), `destacado` = la
+  parte del giro (trozo literal de `texto`), `sub` = línea corta que lo completa. `titulo`: máx. 60 caracteres, con el giro.
+- `caption`: la primera línea es otro gancho (distinto del título) y termina con una pregunta que invite a comentar; 2-3 líneas.
+  `hashtags`: 3-5 específicos del tema (nada de #viral, #fyp, #parati).
 - Cada dato debe ser cierto y verificable; si dudas de uno, cámbialo por otro del que estés seguro. Nada de cifras inventadas.
-- Cada escena debe poder DIBUJARSE: en `visual` escribe qué se ve y qué se mueve (objeto, acción, acercamiento). Si una frase
-  no se puede mostrar, reescríbela.
-- Última escena: la frase `cierre` del nicho ("Síguenos para más biología.").
+- Cada escena debe poder DIBUJARSE: en `visual` escribe qué se ve y qué se mueve (objeto, acción, plano). Si una frase no se puede
+  mostrar, reescríbela.
 
 ## 2. Proyecto
 `python run.py --nicho <nicho> --guion proyectos/guion_nuevo.json` imprime el id y la ruta de `proyectos/<id>/escenas.js`, que debes escribir.
@@ -36,6 +57,10 @@ rótulos pequeños. Nunca emojis, íconos genéricos ni tarjetas de solo texto. 
   Constrúyelo con formas orgánicas (`K.curva`, `K.extremidad`, degradados, manchas, brillo, sombra propia), no con círculos y
   rectángulos sueltos. Siempre algo en movimiento: respiración, latido, partículas, cámara.
 - Encadena las escenas: que la siguiente empiece con la cámara donde terminó la anterior (el motor funde 0,35 s entre escenas).
+- Variedad de planos para sostener la atención: alterna plano general, primer plano, corte interior (el "rayos X" del ejemplo),
+  comparación lado a lado y dato visual (barras, contador, línea de tiempo). Cada 3-4 escenas cambia algo grande (escenario,
+  escala o color). En `reenganche` y `revelacion` el visual debe ser el más llamativo del video (zoom fuerte, cambio de color,
+  algo que aparece o se detiene).
 - Composición: lo importante entre y=300 y y=1200 y entre x=80 y x=940. La portada tapa y=860-1240 durante la escena 1 (pon al
   protagonista arriba) y los subtítulos ocupan y=1260-1440 en las demás. Debajo de y=1440 solo fondo.
 - Rótulos: pocos, cortos, en mayúsculas, de 32 px o más (`K.rotulo`, `K.pastilla`). Nombran lo que se ve; no repiten la voz.

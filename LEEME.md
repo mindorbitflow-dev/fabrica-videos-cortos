@@ -31,7 +31,9 @@ claude -p "/video biologia --correo" --permission-mode acceptEdits   # sin super
 **Automático (GitHub Actions, sin el PC encendido):** `run.py --auto` usa el dibujante (`src/autor.py`) cuando encuentra el
 programa `claude`. En GitHub se instala solo y se autentica con el secret `CLAUDE_CODE_OAUTH_TOKEN`: el token de tu suscripción de
 Claude (se genera con `claude setup-token`; no es una API key y no tiene cobro aparte, pero cada video gasta del límite de uso
-del plan). Sin ese secret, la fábrica vuelve al método anterior.
+del plan). Sin ese secret, el dibujante usa **Gemini gratis** (`GEMINI_API_KEY`): escribe el guion y el código de las
+escenas con el kit y el ejemplo del pulpo como guía, mira sus hojas de contacto con visión y corrige (hasta 3 rondas). Si
+el dibujo sigue con errores de código, el video no se entrega y llega el correo de error.
 
 El resto de este documento describe la fábrica automática anterior (IA gratuita + objetos planos), que sigue funcionando pero
 no alcanza esa calidad.

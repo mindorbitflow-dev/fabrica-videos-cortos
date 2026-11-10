@@ -20,7 +20,7 @@ Progreso = Optional[Callable[[float, str], None]]
 LUFS = -14            # volumen de referencia de TikTok, Reels y Shorts
 MAX_MB_CORREO = 20    # Gmail: 25 MB contando la codificación del adjunto
 MAX_KBPS_VIDEO = 1800  # tope de tasa del video; el de videos largos baja según la duración
-MAX_SEGUNDOS = 150    # Reels, TikTok y Shorts admiten hasta 3 min; las historias duran 80-135 s
+MAX_SEGUNDOS = 175    # Reels, TikTok y Shorts admiten hasta 3 min; los guiones piden 90-150 s
 
 
 def _medir_volumen(wav: Path, total: float) -> dict:

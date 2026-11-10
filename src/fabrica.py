@@ -352,10 +352,11 @@ def componer_html(p: dict) -> str:
     fa, fb, fc = pal["fondo"]
     r, g, b = (int(pal["principal"][i:i + 2], 16) for i in (1, 3, 5))
     css = (PLANTILLA / "base.css").read_text(encoding="utf-8")
-    js = "\n".join((PLANTILLA / f).read_text(encoding="utf-8") for f in ("primitivas.js", "motor.js"))
-    if p.get("autor"):  # las escenas de autor se cargan antes que el motor
+    scripts = [(PLANTILLA / f).read_text(encoding="utf-8") for f in ("primitivas.js", "motor.js")]
+    if p.get("autor"):  # las escenas de autor van antes que el motor, cada una en su <script>: un error de sintaxis no tumba el motor
         estilo = "autor"
-        js = "\n".join([(PLANTILLA / "kit.js").read_text(encoding="utf-8"), escenas_js(p).read_text(encoding="utf-8"), js])
+        scripts[:0] = [(PLANTILLA / "kit.js").read_text(encoding="utf-8"), escenas_js(p).read_text(encoding="utf-8")]
+    js = "".join("<script>" + s.replace("</script", "<\\/script") + "</script>\n" for s in scripts)
     iconos = (PLANTILLA / "iconos.svg").read_text(encoding="utf-8")
     secciones = "\n".join(
         f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{_json_prim(p, e)}{e.get("html") or ""}\n'
@@ -368,7 +369,7 @@ def componer_html(p: dict) -> str:
 </head><body class="estilo-{estilo}"><div id="lienzo">
 {iconos}
 {secciones}
-</div><script>{js}</script></body></html>"""
+</div>{js}</body></html>"""
 
 
 def elegir_musica(opcion: str) -> Optional[Path]:
@@ -408,18 +409,18 @@ def texto_publicacion(p: dict) -> str:
 def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "aleatoria", progreso=None) -> dict:
     """Todo el proceso de un video: tema (o aleatorio) → guion → animación → MP4."""
     avisar = progreso or (lambda f, m: print(f"[{f:4.0%}] {m}"))
-    if not router.has_any and not autor.disponible():
+    if not router.has_any and not autor.disponible(router):
         raise RuntimeError("La fabricación automática necesita una clave de IA (Ajustes en la barra lateral).")
     if not tema or tema.lower() == "aleatorio":
         avisar(0, "Eligiendo tema...")
         tema = guionista.proponer_tema(router, cargar_nichos()[nicho], temas_usados(nicho))
-    if autor.disponible():  # camino de calidad: el dibujante escribe el guion y dibuja cada escena a medida
-        p = cargar(autor.dibujar(nicho, tema, lambda m: avisar(0.05, m)))
+    if autor.disponible(router):  # camino de calidad: el dibujante escribe el guion y dibuja cada escena a medida
+        p = cargar(autor.dibujar(nicho, tema, router, lambda m: avisar(0.05, m)))
         _, errores = hoja(p, por_escena=2)
         if errores:  # una escena con error saldría en negro
             raise RuntimeError("el dibujo tiene errores: " + "; ".join(errores)[:400])
         return renderizar(p, musica=musica, progreso=lambda f, m: avisar(0.5 + 0.5 * f, m))
-    avisar(0.02, "Sin el dibujante (programa `claude`): se usa el método anterior de objetos planos")
+    avisar(0.02, "Sin dibujante (ni `claude` ni GEMINI_API_KEY): se usa el método anterior de objetos planos")
     p = nuevo_proyecto(nicho, tema)
     avisar(0.02, f"Escribiendo guion: {tema}")
     escribir_guion(p, router)

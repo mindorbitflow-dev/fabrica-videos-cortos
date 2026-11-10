@@ -19,6 +19,9 @@
   // Escenas de autor (proyectos/<id>/escenas.js): window.ESCENAS[i] = (ctx, t, dur, K, T) => {...} dibuja la escena i a medida.
   const autor = (window.ESCENAS || []).slice();
   window.__errores = [];
+  if (window.K && !window.ESCENAS) window.__errores.push('escenas.js no definió window.ESCENAS (¿error de sintaxis?)');
+  else if (window.ESCENAS && autor.length !== escenas.length)
+    window.__errores.push(`window.ESCENAS tiene ${autor.length} funciones y el guion ${escenas.length} escenas`);
   let canvas = null, buffer = null, escenaPrevia = -1;
   if ((prims.some(Boolean) && window.Primitivas) || autor.some(Boolean)) {
     canvas = document.createElement('canvas');
