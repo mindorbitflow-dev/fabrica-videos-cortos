@@ -16,7 +16,7 @@ from typing import Optional
 
 import yaml
 
-from src import animador, director, guionista, prim, render, revisor
+from src import animador, autor, director, guionista, prim, render, revisor
 from src import prim as prim_mod
 from src.llm import LLMRouter
 
@@ -181,8 +181,32 @@ def estilo_de(p: dict) -> str:
     return cargar_nichos()[p["nicho"]].get("estilo", "plano")
 
 
+def escenas_js(p: dict) -> Path:
+    """Escenas de autor: un archivo por video con window.ESCENAS = [(ctx, t, dur, K, T) => {...}, ...] (una función por escena del guion)."""
+    return carpeta(p) / "escenas.js"
+
+
 def escena_lista(p: dict, i: int) -> bool:
-    return bool(p["escenas"][i].get("prim"))
+    return bool(p["escenas"][i].get("prim")) or bool(p.get("autor"))
+
+
+def nuevo_de_autor(nicho: str, guion: dict) -> dict:
+    """Proyecto a partir de un guion ya escrito ({tema, titulo, portada, escenas: [{voz}], caption, hashtags}) cuyas escenas se dibujan
+    a medida en escenas.js. El guion pasa la misma comprobación de muletillas que los de la IA; lo que falle queda como aviso."""
+    p = nuevo_proyecto(nicho, guion["tema"])
+    p.update({k: guion[k] for k in ("titulo", "portada", "caption", "hashtags") if guion.get(k)})
+    p["escenas"] = [{"voz": e["voz"].strip(), "visual": e.get("visual", ""), "html": "", "origen": "autor"} for e in guion["escenas"]]
+    p["avisos"] = guionista.muletillas_en({**guion, "escenas": guion["escenas"][:-1]})  # la última escena pide seguir la página
+    p["autor"], p["estado"] = True, "guion"
+    return guardar(p)
+
+
+def hoja(p: dict, por_escena: int = 3) -> tuple[list[Path], list[str]]:
+    """Hojas de contacto del video (varios cuadros por escena, sin voz) para revisar el dibujo antes de renderizar.
+    Devuelve (imágenes, errores de JavaScript de las escenas)."""
+    html = carpeta(p) / "video.html"
+    html.write_text(componer_html(p), encoding="utf-8")
+    return render.hoja_contacto(html, carpeta(p) / "hojas", por_escena)
 
 
 def _paleta_dibujo(p: dict) -> dict:
@@ -329,6 +353,9 @@ def componer_html(p: dict) -> str:
     r, g, b = (int(pal["principal"][i:i + 2], 16) for i in (1, 3, 5))
     css = (PLANTILLA / "base.css").read_text(encoding="utf-8")
     js = "\n".join((PLANTILLA / f).read_text(encoding="utf-8") for f in ("primitivas.js", "motor.js"))
+    if p.get("autor"):  # las escenas de autor se cargan antes que el motor
+        estilo = "autor"
+        js = "\n".join([(PLANTILLA / "kit.js").read_text(encoding="utf-8"), escenas_js(p).read_text(encoding="utf-8"), js])
     iconos = (PLANTILLA / "iconos.svg").read_text(encoding="utf-8")
     secciones = "\n".join(
         f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{_json_prim(p, e)}{e.get("html") or ""}\n'
@@ -381,11 +408,18 @@ def texto_publicacion(p: dict) -> str:
 def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "aleatoria", progreso=None) -> dict:
     """Todo el proceso de un video: tema (o aleatorio) → guion → animación → MP4."""
     avisar = progreso or (lambda f, m: print(f"[{f:4.0%}] {m}"))
-    if not router.has_any:
+    if not router.has_any and not autor.disponible():
         raise RuntimeError("La fabricación automática necesita una clave de IA (Ajustes en la barra lateral).")
     if not tema or tema.lower() == "aleatorio":
         avisar(0, "Eligiendo tema...")
         tema = guionista.proponer_tema(router, cargar_nichos()[nicho], temas_usados(nicho))
+    if autor.disponible():  # camino de calidad: el dibujante escribe el guion y dibuja cada escena a medida
+        p = cargar(autor.dibujar(nicho, tema, lambda m: avisar(0.05, m)))
+        _, errores = hoja(p, por_escena=2)
+        if errores:  # una escena con error saldría en negro
+            raise RuntimeError("el dibujo tiene errores: " + "; ".join(errores)[:400])
+        return renderizar(p, musica=musica, progreso=lambda f, m: avisar(0.5 + 0.5 * f, m))
+    avisar(0.02, "Sin el dibujante (programa `claude`): se usa el método anterior de objetos planos")
     p = nuevo_proyecto(nicho, tema)
     avisar(0.02, f"Escribiendo guion: {tema}")
     escribir_guion(p, router)

@@ -1,0 +1,20 @@
+{
+  "tema": "El pulpo tiene tres corazones y sangre azul",
+  "titulo": "Al pulpo se le detiene un corazón cada vez que nada",
+  "portada": {"texto": "NADAR LE DETIENE EL CORAZÓN", "destacado": "EL CORAZÓN", "sub": "y aun así le quedan dos"},
+  "escenas": [
+    {"voz": "Cuando un pulpo nada, uno de sus corazones deja de latir.", "visual": "pulpo nadando a chorro por el mar"},
+    {"voz": "Sí, uno. Porque tiene tres.", "visual": "el pulpo se endereza, el manto se vuelve transparente y aparecen tres corazones"},
+    {"voz": "Dos son pequeños y hacen un solo trabajo: empujar la sangre por las branquias para cargarla de oxígeno.", "visual": "acercamiento al manto: corazones branquiales y sangre que cambia de color al pasar por la branquia"},
+    {"voz": "El tercero, el más grande, recibe esa sangre y la reparte por todo el cuerpo, hasta la punta de los ocho brazos.", "visual": "corazón sistémico resaltado; la cámara se aleja y la sangre recorre los brazos"},
+    {"voz": "Y esa sangre no es roja. Es azul.", "visual": "una gota de sangre roja que se llena de azul"},
+    {"voz": "La tuya lleva el oxígeno con hierro. La del pulpo lo lleva con cobre, en una proteína llamada hemocianina.", "visual": "dos moléculas lado a lado: hierro (rojo) y cobre (azul) atrapando oxígeno"},
+    {"voz": "El cobre trabaja mejor que el hierro en agua fría y con poco oxígeno, justo donde vive el pulpo.", "visual": "fondo marino oscuro, termómetro que baja a 4 grados, pulpo en el fondo"},
+    {"voz": "Pero carga mucho menos oxígeno. Por eso necesita tres corazones bombeando a presión.", "visual": "barras hierro contra cobre y tres corazones latiendo"},
+    {"voz": "Y aquí viene el problema. Cuando nada a chorro, el corazón grande se detiene.", "visual": "pulpo nadando con los corazones a la vista; el grande se apaga y el trazo del pulso queda plano"},
+    {"voz": "Se agota en segundos. Por eso el pulpo casi nunca nada: prefiere caminar por el fondo.", "visual": "pulpo caminando sobre la arena con los brazos"},
+    {"voz": "Síguenos para más biología.", "visual": "pulpo flotando de frente con tres corazones encima"}
+  ],
+  "caption": "El pulpo tiene tres corazones y sangre azul, y el más grande se detiene cada vez que nada. Por eso casi siempre camina.",
+  "hashtags": ["#pulpo", "#biologia", "#animales", "#ciencia", "#oceano"]
+}

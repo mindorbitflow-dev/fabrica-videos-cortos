@@ -13,6 +13,29 @@ python run.py --nicho dinero --lote 5            # 5 videos con temas nuevos, si
 python run.py --check                            # diagnóstico: ffmpeg, Chromium, voz, IA
 ```
 
+## Videos de autor (la calidad de referencia)
+Los videos que funcionan en redes (1Cell1Life y similares) son ilustración vectorial dibujada por código **a medida para cada tema**.
+Eso no lo logra una IA gratuita rellenando plantillas, así que el camino de calidad es otro: Claude Code escribe el guion y el
+dibujo de cada escena, mira el resultado y lo corrige antes de renderizar.
+
+```bash
+claude "/video biologia"                               # un video completo (tema de la lista de ideas del nicho)
+claude "/video cuerpo Por qué bostezamos --correo"     # tema propio y envío por correo
+claude -p "/video biologia --correo" --permission-mode acceptEdits   # sin supervisión (para programarlo)
+```
+- `.claude/commands/video.md`: el procedimiento completo (guion → dibujo → revisión visual → MP4).
+- `plantilla/kit.js`: utilidades de dibujo (cámara, curvas, extremidades, rutas, rótulos, grano).
+- `proyectos/<id>/escenas.js`: una función de dibujo por escena. Ejemplo completo en `ejemplos/pulpo/`.
+- `python run.py --hoja ID` (hojas de contacto para revisar) y `python run.py --render ID [--correo]`.
+
+**Automático (GitHub Actions, sin el PC encendido):** `run.py --auto` usa el dibujante (`src/autor.py`) cuando encuentra el
+programa `claude`. En GitHub se instala solo y se autentica con el secret `CLAUDE_CODE_OAUTH_TOKEN`: el token de tu suscripción de
+Claude (se genera con `claude setup-token`; no es una API key y no tiene cobro aparte, pero cada video gasta del límite de uso
+del plan). Sin ese secret, la fábrica vuelve al método anterior.
+
+El resto de este documento describe la fábrica automática anterior (IA gratuita + objetos planos), que sigue funcionando pero
+no alcanza esa calidad.
+
 ## Flujo en la interfaz
 **🎬 Crear**: nicho → tema (o 🎲) → ✍️ Guion con IA (o 📝 manual) → revisa y edita → 🎨 Animar
 → vista previa → 🎞️ Renderizar MP4 → copia el texto de publicación.
@@ -99,14 +122,14 @@ src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter �
 - Falta Chromium → `python -m playwright install chromium`
 - Música: por defecto una pista aleatoria de `assets/musica/` (hay un ambiente incluido); para usar otra, pon .mp3 sin copyright ahí y elígela en la app, o `--musica ninguna`
 
-## 🤖 Automático en GitHub Actions (2 videos cada 3 horas, por correo)
-`.github/workflows/fabrica.yml` corre cada 3 horas (21:17, 0:17, 3:17 … 18:17, hora de Colombia) y fabrica 2 videos por ejecución: 16 al día en
-teoría (GitHub se salta parte de las ejecuciones programadas, así que el número real es menor). Rota el nicho
+## 🤖 Automático en GitHub Actions (3 videos al día, por correo)
+`.github/workflows/fabrica.yml` corre a las 9:17, 14:17 y 19:17 (hora de Colombia) y fabrica 1 video por ejecución con el dibujante
+(GitHub puede retrasar o saltarse alguna ejecución programada). Rota el nicho
 (el que lleva más tiempo sin video), fabrica un video con tema nuevo y te lo envía a Gmail con el texto
 para publicar. Si falla, te llega un correo con el error. El video también queda 7 días en Actions.
 
 Secrets necesarios (Settings → Secrets and variables → Actions):
-`GEMINI_API_KEY`, `GROQ_API_KEY`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY`,
+`CLAUDE_CODE_OAUTH_TOKEN` (dibujante, ver arriba), `GEMINI_API_KEY` (voz), `GROQ_API_KEY`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY`,
 `GMAIL_USUARIO`, `GMAIL_CLAVE_APP` (contraseña de aplicación: myaccount.google.com/apppasswords), `CORREO_DESTINO` (opcional).
 
 - Lanzarlo a mano: pestaña **Actions → Fábrica de videos → Run workflow** (puedes elegir el nicho).

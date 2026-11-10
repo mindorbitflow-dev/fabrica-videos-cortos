@@ -155,3 +155,47 @@ def renderizar(html: Path, mp4: Path, voz: str, velocidad: str = "+8%", musica: 
 def miniatura(mp4: Path, destino: Path, segundo: float = 2.0, ancho: int = 360) -> None:
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(segundo), "-i", str(mp4), "-frames:v", "1",
                     "-q:v", "2", "-vf", f"scale={ancho}:-1", str(destino)], check=True)
+
+
+async def _hoja_contacto(html: Path, destino: Path, por_escena: int) -> tuple[list[Path], list[str]]:
+    from io import BytesIO
+    from PIL import Image
+    destino.mkdir(parents=True, exist_ok=True)
+    for viejo in destino.glob("hoja_*.jpg"):
+        viejo.unlink()
+    errores: list[str] = []
+    async with async_playwright() as pw:
+        nav = await pw.chromium.launch()
+        try:
+            pag = await nav.new_page(viewport={"width": 1080, "height": 1920}, device_scale_factor=1)
+            pag.on("pageerror", lambda e: errores.append(str(e)))
+            await pag.goto(html.resolve().as_uri() + "?render=1")
+            await pag.evaluate("document.fonts.ready")
+            await pag.evaluate("window.__imagenesListas")
+            plan = await pag.evaluate("__estimar()")
+            await pag.evaluate("p => __preparar(p)", plan)
+            cuadros = []
+            for i, esc in enumerate(plan):
+                for n in range(por_escena):
+                    local = max(0.4, esc["dur"] * (0.12 + 0.8 * n / max(1, por_escena - 1)))
+                    await pag.evaluate("t => __seek(t)", esc["inicio"] + min(local, esc["dur"] - 0.02))
+                    cuadros.append((i, Image.open(BytesIO(await pag.screenshot(type="jpeg", quality=80)))))
+            errores += await pag.evaluate("window.__errores || []")
+        finally:
+            await nav.close()
+    ancho, alto, columnas, filas = 300, 533, 6, 2
+    hojas = []
+    for h in range(0, len(cuadros), columnas * filas):
+        lote = cuadros[h:h + columnas * filas]
+        hoja = Image.new("RGB", (ancho * columnas, alto * math.ceil(len(lote) / columnas)), "#000")
+        for k, (i, img) in enumerate(lote):
+            hoja.paste(img.resize((ancho, alto)), ((k % columnas) * ancho, (k // columnas) * alto))
+        ruta = destino / f"hoja_{len(hojas) + 1:02d}_escenas_{lote[0][0] + 1}-{lote[-1][0] + 1}.jpg"
+        hoja.save(ruta, quality=85)
+        hojas.append(ruta)
+    return hojas, errores
+
+
+def hoja_contacto(html: Path, destino: Path, por_escena: int = 3) -> tuple[list[Path], list[str]]:
+    """Varios cuadros por escena (tiempos estimados, sin voz) en hojas de 6 columnas: para revisar el dibujo antes de renderizar."""
+    return asyncio.run(_hoja_contacto(Path(html), Path(destino), por_escena))

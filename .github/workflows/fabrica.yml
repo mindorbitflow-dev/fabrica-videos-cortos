@@ -1,12 +1,11 @@
-# Crea 2 videos cada 3 horas (16 al día en teoría) y los envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
+# Crea 3 videos al día (9:17, 14:17 y 19:17 hora de Colombia) con el dibujante (Claude Code) y los envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
 name: Fábrica de videos
 
 on:
   schedule:
-    # Cada 3 horas, 2 videos por ejecución (16 al día en teoría; GitHub se salta parte de las ejecuciones programadas, así que
-    # varios videos por ejecución son más fiables que un cron más frecuente). Hora UTC: 2,5,8,...,23 UTC = 21:17, 0:17, 3:17, ..., 18:17 en Colombia (UTC-5).
-    # GitHub puede retrasar las tareas programadas unos minutos en horas de mucha demanda.
-    - cron: "17 2-23/3 * * *"
+    # Un video por ejecución: cada uno gasta parte del límite de uso del plan de Claude (el mismo de las conversaciones).
+    # Hora UTC: 14, 19 y 0 = 9:17, 14:17 y 19:17 en Colombia (UTC-5). GitHub puede retrasarlas unos minutos o saltarse alguna.
+    - cron: "17 0,14,19 * * *"
   workflow_dispatch:
     inputs:
       nicho:
@@ -18,7 +17,7 @@ on:
         description: Videos en esta ejecución (cada uno por correo)
         type: choice
         options: ["1", "2", "3"]
-        default: "2"
+        default: "1"
 
 permissions:
   contents: write   # guardar state/historial.json para no repetir temas
@@ -34,6 +33,7 @@ jobs:
     env:
       PYTHONIOENCODING: utf-8
       PYTHONUNBUFFERED: "1"   # ver el avance en vivo en el registro
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}   # dibujante: token de la suscripción (`claude setup-token`), no es API key
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       CUSTOM_LLM_BASE_URL: ${{ secrets.CUSTOM_LLM_BASE_URL }}
@@ -66,8 +66,12 @@ jobs:
       - name: Instalar Chromium
         run: python -m playwright install --with-deps chromium
 
+      - name: Instalar el dibujante (Claude Code)
+        if: env.CLAUDE_CODE_OAUTH_TOKEN != ''   # sin el token la fábrica usa el método anterior
+        run: npm install -g @anthropic-ai/claude-code
+
       - name: Fabricar y enviar por correo
-        run: python run.py --auto --cantidad "${{ inputs.cantidad || 2 }}" --nicho "${{ inputs.nicho || 'rotar' }}"
+        run: python run.py --auto --cantidad "${{ inputs.cantidad || 1 }}" --nicho "${{ inputs.nicho || 'rotar' }}"
 
       - name: Guardar el video en Actions (respaldo, 7 días)
         if: always()
@@ -77,6 +81,8 @@ jobs:
           path: |
             proyectos/*/video.mp4
             proyectos/*/proyecto.json
+            proyectos/*/escenas.js
+            proyectos/*/hojas/*.jpg
           retention-days: 7
           if-no-files-found: ignore
 

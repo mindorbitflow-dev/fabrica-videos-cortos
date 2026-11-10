@@ -9,6 +9,12 @@ Uso:
   python run.py --auto --nicho ciencia               -> Igual, con un nicho fijo
   python run.py --auto --cantidad 2                  -> Dos videos seguidos, cada uno por correo
   python run.py --check                              -> Diagnóstico (ffmpeg, Chromium, IA, voz)
+
+Videos de autor (escenas dibujadas a medida en proyectos/<id>/escenas.js; ver .claude/commands/video.md):
+  python run.py --nicho biologia --guion guion.json  -> Crea el proyecto con ese guion e imprime su id
+  python run.py --hoja ID                            -> Hojas de contacto para revisar el dibujo (y errores de las escenas)
+  python run.py --render ID [--correo]               -> Voz + MP4 (y lo envía por correo)
+Con el programa `claude` instalado, --auto y --nicho usan solos este camino (src/autor.py).
 """
 
 import argparse
@@ -21,7 +27,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 RAIZ = os.path.dirname(os.path.abspath(__file__))
-LIMITE_AUTO_MIN = 35  # por video; el job de GitHub se corta a los 90 (ver fabrica.yml)
+LIMITE_AUTO_MIN = 50  # por video (dibujante hasta 30 + render); el job de GitHub se corta a los 90 (ver fabrica.yml)
 os.chdir(RAIZ)  # .env, config y proyectos se resuelven desde aquí
 sys.path.insert(0, RAIZ)
 
@@ -105,6 +111,40 @@ def auto(nicho: str | None, musica: str, cantidad: int = 1) -> None:
         os._exit(1)  # sin esperar hilos colgados (una llamada de red atascada impediría terminar)
 
 
+def autor(args) -> None:
+    """Pasos de un video de autor: crear el proyecto desde un guion, revisar el dibujo y renderizar."""
+    import json
+    from src import correo, fabrica
+    from src.env import load_env
+    load_env()
+    if args.guion:
+        if args.nicho not in fabrica.cargar_nichos():
+            sys.exit(f"--guion necesita --nicho. Disponibles: {', '.join(fabrica.cargar_nichos())}")
+        with open(args.guion, encoding="utf-8") as f:
+            p = fabrica.nuevo_de_autor(args.nicho, json.load(f))
+        for aviso in p["avisos"]:
+            print(f"Aviso del guion: {aviso}")
+        print(f"Proyecto: {p['id']}\nEscenas: {fabrica.escenas_js(p)}")
+        return
+    p = fabrica.cargar(args.hoja or args.render)
+    if args.hoja:
+        hojas, errores = fabrica.hoja(p)
+        print("\n".join(str(h) for h in hojas))
+        if errores:
+            sys.exit("ERRORES EN LAS ESCENAS:\n" + "\n".join(errores))
+        return
+    _, errores = fabrica.hoja(p, por_escena=2)  # una escena con error saldría en negro: no se renderiza
+    if errores:
+        sys.exit("ERRORES EN LAS ESCENAS (no se renderiza):\n" + "\n".join(errores))
+    p = fabrica.renderizar(p, musica=args.musica)
+    print(f"Listo: {fabrica.mp4(p)} ({p['duracion']} s, voz {p['voz_usada']})")
+    for problema in p["verificacion"]:
+        print(f"Aviso del MP4: {problema}")
+    if args.correo:
+        correo.enviar_video(p)
+        print("Correo enviado.")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Fábrica de Videos Cortos Explicativos")
     ap.add_argument("--nicho", help="Clave del nicho (config/nichos.yaml)")
@@ -115,6 +155,10 @@ def main() -> None:
     ap.add_argument("--auto", action="store_true", help="Videos con nicho rotativo y envío por correo (ver --cantidad)")
     ap.add_argument("--cantidad", type=int, default=1, help="Con --auto: cuántos videos fabricar en esta ejecución")
     ap.add_argument("--puerto", default="8502")
+    ap.add_argument("--guion", help="Archivo JSON con un guion ya escrito: crea un proyecto de autor (requiere --nicho)")
+    ap.add_argument("--hoja", metavar="ID", help="Hojas de contacto de un proyecto")
+    ap.add_argument("--render", metavar="ID", help="Renderiza un proyecto ya dibujado")
+    ap.add_argument("--correo", action="store_true", help="Con --render: envía el video por correo")
     args = ap.parse_args()
 
     if args.check:
@@ -123,6 +167,8 @@ def main() -> None:
         from src.env import load_env
         load_env()
         return auto(args.nicho, args.musica, max(1, args.cantidad))
+    if args.hoja or args.render or args.guion:
+        return autor(args)
     if not args.nicho:
         subprocess.run([sys.executable, "-m", "streamlit", "run", os.path.join("src", "ui.py"),
                         "--server.port", args.puerto, "--browser.gatherUsageStats", "false"])
