@@ -28,7 +28,7 @@ VOCES = {
     "gemini:Puck": "🎙️ Puck · Gemini · animado",
     "gemini:Fenrir": "🎙️ Fenrir · Gemini · emocionado",
     "gemini:Achird": "🎙️ Achird · Gemini · amigable",
-    "gemini:Charon": "🎙️ Charon · Gemini · narrador grave",
+    "gemini:Charon": "🎙️ Charon · Gemini · informativa",
     "en-US-BrianMultilingualNeural": "🎙️ Brian · Microsoft · conversacional",
 }
 RESPALDO = "en-US-BrianMultilingualNeural"
