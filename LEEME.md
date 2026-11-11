@@ -13,6 +13,15 @@ python run.py --nicho dinero --lote 5            # 5 videos con temas nuevos, si
 python run.py --check                            # diagnóstico: ffmpeg, Chromium, voz, IA
 ```
 
+## Sombra de Evidencia (lo que fabrica el automático)
+Desde 2026-11-10 el automático solo fabrica el nicho `misterios`: casos cortos de ficción (inventados o inspirados en leyendas)
+que investiga el detective Sombra, en caricatura blanco y negro de los años 30.
+- `plantilla/sombra.js`: el detective (mascota fija), luna, olas, niebla, ojos de pastel cortado, película vieja e iris.
+- Marca (`marca: sombra` en el nicho): sello con el número de caso, portada serif y cierre con el logo (`assets/marca/sombra.jpg`).
+- Voz: Gemini Charon con `estilo_voz` (en inglés, "Say in a ... voice"; solo el modelo 2.5 lo aplica sin leerlo en voz alta).
+- Ejemplo completo: `ejemplos/misterio/` ("El faro que se enciende solo"). Las ideas de casos están en `config/nichos.yaml`.
+- Música: pon pistas de suspenso sin derechos de autor en `assets/musica/` (hoy solo hay un ambiente).
+
 ## Videos de autor (la calidad de referencia)
 Los videos que funcionan en redes (1Cell1Life y similares) son ilustración vectorial dibujada por código **a medida para cada tema**.
 Eso no lo logra una IA gratuita rellenando plantillas, así que el camino de calidad es otro: Claude Code escribe el guion y el

@@ -28,15 +28,17 @@ VOCES = {
     "gemini:Puck": "🎙️ Puck · Gemini · animado",
     "gemini:Fenrir": "🎙️ Fenrir · Gemini · emocionado",
     "gemini:Achird": "🎙️ Achird · Gemini · amigable",
+    "gemini:Charon": "🎙️ Charon · Gemini · narrador grave",
     "en-US-BrianMultilingualNeural": "🎙️ Brian · Microsoft · conversacional",
 }
 RESPALDO = "en-US-BrianMultilingualNeural"
 MODELOS_GEMINI = ("gemini-3.8-flash-tts", "gemini-2.5-flash-preview-tts", "gemini-3.1-flash-tts-preview")
+MODELO_ESTILO = "gemini-2.5-flash-preview-tts"  # el único que aplica una indicación de estilo sin leerla en voz alta
 PAUSA = 0.3        # silencio entre escenas con Edge (s)
 PAUSA_FINAL = 0.6  # cola al final del video (s): corta, para que no quede sonido suelto
 COBERTURA_MIN = 0.85  # fracción del guion que Whisper debe reconocer en el audio de Gemini
 PALABRAS_DE_MAS_MAX = 1.12  # Whisper puede partir/unir palabras; más que esto es lectura repetida
-SEG_POR_PALABRA_MAX = 0.75  # una escena más lenta que esto está mal alineada
+SEG_POR_PALABRA_MAX = 0.95  # una escena más lenta que esto está mal alineada (el narrador de misterios llega a ~0,8)
 
 Aviso = Callable[[str], None]
 _whisper = None
@@ -129,7 +131,7 @@ def _narrar_edge(textos: list[str], voz: str, velocidad: str, tmp: Path) -> tupl
 
 
 # ---------------- Gemini TTS ----------------
-def _gemini_pcm(texto: str, voz: str) -> bytes:
+def _gemini_pcm(texto: str, voz: str, estilo: str = "") -> bytes:
     from google import genai
     from google.genai import types
     clave = os.getenv("GEMINI_API_KEY", "").strip()
@@ -140,9 +142,13 @@ def _gemini_pcm(texto: str, voz: str) -> bytes:
     for espera in (0, 10, 25):
         if espera:
             time.sleep(espera)
-        for modelo in MODELOS_GEMINI:  # 429 (cupo de ese modelo) o 503 (saturado): siguiente modelo
+        # El estilo ("Say in a ... voice: <texto>") solo lo entiende el modelo 2.5: probado el 2026-11-10, los demás leen la
+        # indicación en voz alta y no aceptan instrucción de sistema. Si el 2.5 falla, los demás narran sin estilo.
+        intentos = [(m, f"{estilo}: {texto}" if estilo and m == MODELO_ESTILO else texto)
+                    for m in ((MODELO_ESTILO,) + tuple(x for x in MODELOS_GEMINI if x != MODELO_ESTILO) if estilo else MODELOS_GEMINI)]
+        for modelo, contenido in intentos:  # 429 (cupo de ese modelo) o 503 (saturado): siguiente modelo
             try:
-                r = cliente.models.generate_content(model=modelo, contents=texto, config=types.GenerateContentConfig(
+                r = cliente.models.generate_content(model=modelo, contents=contenido, config=types.GenerateContentConfig(
                     response_modalities=["AUDIO"],
                     speech_config=types.SpeechConfig(voice_config=types.VoiceConfig(
                         prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voz)))))
@@ -173,13 +179,13 @@ def _factor_velocidad(velocidad: str) -> float:
         return 1.0
 
 
-def _narrar_gemini(textos: list[str], voz: str, velocidad: str, tmp: Path) -> tuple[Path, list[dict]]:
+def _narrar_gemini(textos: list[str], voz: str, velocidad: str, tmp: Path, estilo: str = "") -> tuple[Path, list[dict]]:
     crudo = tmp / "gemini.wav"
     with wave.open(str(crudo), "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(24000)
-        w.writeframes(_gemini_pcm("\n\n".join(textos), voz))
+        w.writeframes(_gemini_pcm("\n\n".join(textos), voz, estilo))
     # Gemini no acepta velocidad: se ajusta el tempo (sin cambiar el tono) antes de medir los tiempos.
     voz_wav = tmp / "voz.wav"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(crudo), "-af",
@@ -215,14 +221,15 @@ def _narrar_gemini(textos: list[str], voz: str, velocidad: str, tmp: Path) -> tu
     return voz_wav, plan
 
 
-def narrar(textos: list[str], voz: str, velocidad: str, tmp: Path, avisar: Aviso = print) -> tuple[Path, list[dict], str]:
+def narrar(textos: list[str], voz: str, velocidad: str, tmp: Path, avisar: Aviso = print,
+           estilo: str = "") -> tuple[Path, list[dict], str]:
     """Devuelve (audio de voz, plan de escenas, voz realmente usada)."""
     tmp.mkdir(parents=True, exist_ok=True)
     if voz.startswith("gemini:"):
         for intento in range(2):  # la repetición de Gemini es aleatoria: un segundo intento suele salir bien
             try:
                 avisar(f"Voz {voz[7:]} (Gemini, intento {intento + 1})...")
-                return (*_narrar_gemini(textos, voz[7:], velocidad, tmp), voz)
+                return (*_narrar_gemini(textos, voz[7:], velocidad, tmp, estilo), voz)
             except Exception as error:
                 avisar(f"Gemini no sirvió: {str(error)[:100]}")
         avisar(f"Uso la voz de respaldo {nombre_voz(RESPALDO)}")

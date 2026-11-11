@@ -198,6 +198,8 @@ def nuevo_de_autor(nicho: str, guion: dict) -> dict:
     p["escenas"] = [{"voz": e["voz"].strip(), "visual": e.get("visual", ""), "html": "", "origen": "autor"} for e in guion["escenas"]]
     p["avisos"] = guionista.muletillas_en({**guion, "escenas": guion["escenas"][:-1]})  # la última escena pide seguir la página
     p["autor"], p["estado"] = True, "guion"
+    if cargar_nichos()[nicho].get("marca"):  # número de caso correlativo dentro del nicho
+        p["caso"] = sum(h.get("nicho") == nicho for h in leer_historial()) + 1
     return guardar(p)
 
 
@@ -344,10 +346,27 @@ def _json_prim(p: dict, escena: dict) -> str:
     return f'<script type="application/json" class="prim">{datos}</script>\n'
 
 
+MARCA = RAIZ / "assets" / "marca"
+
+
+def _html_marca(p: dict, marca: str, ultima: bool) -> str:
+    """Capa de la marca sobre cada escena: sello con el número de caso; en la última, la tarjeta de cierre con el logo."""
+    logo = "data:image/jpeg;base64," + base64.b64encode((MARCA / f"{marca}.jpg").read_bytes()).decode()
+    conf = cargar_nichos()[p["nicho"]]
+    if ultima:
+        lema = htmlmod.escape(str(conf.get("lema", "")))
+        return (f'<div class="marca-cierre"><div class="caso">CASO CERRADO</div><img src="{logo}" alt="">'
+                f'<div class="lema">{lema}</div></div>')
+    caso = f'CASO Nº {p["caso"]:03d}' if p.get("caso") else ""
+    return f'<div class="sello"><img src="{logo}" alt=""><span>{caso}</span></div>'
+
+
 def componer_html(p: dict) -> str:
     """Documento autocontenido (CSS y motor en línea): sirve para la vista previa y para el render."""
-    pal = cargar_nichos()[p["nicho"]]["paleta"]
+    conf = cargar_nichos()[p["nicho"]]
+    pal = conf["paleta"]
     estilo = estilo_de(p)
+    marca = conf.get("marca") if p.get("autor") else None
     portada = html_portada(p.get("portada"))
     fa, fb, fc = pal["fondo"]
     r, g, b = (int(pal["principal"][i:i + 2], 16) for i in (1, 3, 5))
@@ -355,13 +374,16 @@ def componer_html(p: dict) -> str:
     scripts = [(PLANTILLA / f).read_text(encoding="utf-8") for f in ("primitivas.js", "motor.js")]
     if p.get("autor"):  # las escenas de autor van antes que el motor, cada una en su <script>: un error de sintaxis no tumba el motor
         estilo = "autor"
-        scripts[:0] = [(PLANTILLA / "kit.js").read_text(encoding="utf-8"), escenas_js(p).read_text(encoding="utf-8")]
+        scripts[:0] = [(PLANTILLA / f).read_text(encoding="utf-8") for f in ("kit.js", "sombra.js")] + [escenas_js(p).read_text(encoding="utf-8")]
     js = "".join("<script>" + s.replace("</script", "<\\/script") + "</script>\n" for s in scripts)
     iconos = (PLANTILLA / "iconos.svg").read_text(encoding="utf-8")
+    n = len(p["escenas"])
     secciones = "\n".join(
         f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{_json_prim(p, e)}{e.get("html") or ""}\n'
-        f'{portada if i == 0 else ""}</section>'
+        f'{_html_marca(p, marca, i == n - 1) if marca else ""}{portada if i == 0 else ""}</section>'
         for i, e in enumerate(p["escenas"]))
+    if marca:
+        estilo += f" marca-{marca}"
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><title>{htmlmod.escape(p['titulo'])}</title>
 <style>{css}
@@ -390,7 +412,8 @@ def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, m
     html = carpeta(p) / "video.html"
     html.write_text(componer_html(p), encoding="utf-8")
     p["voz"] = voz or p.get("voz") or cargar_nichos()[p["nicho"]]["voz"]
-    duracion, p["voz_usada"] = render.renderizar(html, mp4(p), p["voz"], velocidad, elegir_musica(musica), progreso)
+    duracion, p["voz_usada"] = render.renderizar(html, mp4(p), p["voz"], velocidad, elegir_musica(musica), progreso,
+                                                 cargar_nichos()[p["nicho"]].get("estilo_voz", ""))
     p["duracion"] = round(duracion, 1)
     p["verificacion"] = render.verificar_mp4(mp4(p))  # dimensiones, códecs, peso y final en silencio
     render.miniatura(mp4(p), miniatura(p), min(2.0, p["duracion"] / 2))

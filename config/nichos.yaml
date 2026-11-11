@@ -2,15 +2,56 @@
 # (o cualquier voz de Edge-TTS). Puedes editarlos aquí o en la pestaña 🧭 Nichos.
 # cierre: frase final que pide seguir la página (la última escena la agrega el código, no la IA).
 # estilo: plano (diagramas sobre cuadrícula) o ilustracion (diagramas sobre fondo cálido con grano).
+# formato: relato = historia con personajes; marca: capa de marca (assets/marca/<marca>.jpg); estilo_voz: cómo narra Gemini.
 # auto: false = no entra en la rotación automática de GitHub (se puede usar a mano desde la app o con --nicho).
 # paleta: colores del fondo (centro, medio, borde), acento (títulos y palabra resaltada)
 #         y colores que la IA usa para dibujar (principal, secundario, peligro, ok).
+
+misterios:
+  nombre: 🔍 Sombra de Evidencia
+  descripcion: Casos de misterio cortos, inventados o inspirados en leyendas reales, que investiga el detective Sombra en animación de los años 30.
+  tono: Narrador de radioteatro de suspenso, frases cortas, pistas que se acumulan y un giro final con un toque fantástico o de humor.
+  formato: relato   # historia con personajes (reglas de relato en .claude/commands/video.md), no explicación
+  marca: sombra     # sello con número de caso, portada serif y cierre con el logo (assets/marca/sombra.jpg)
+  voz: "gemini:Charon"
+  estilo_voz: "Say in a deep, slow, suspenseful 1930s radio-drama mystery narrator voice, with a hint of complicity"   # en inglés y con "Say in": así lo entiende Gemini sin leerlo
+  estilo: ilustracion
+  cierre: "Síguenos: cada sombra tiene su evidencia."
+  lema: "Cada sombra tiene su evidencia"
+  paleta: {fondo: ["#1b1916", "#0f0e0c", "#050505"], acento: "#D4B47A", principal: "#efe7d6", secundario: "#8a8278", peligro: "#C2503A", ok: "#D4B47A"}
+  ideas:
+    - El faro abandonado que se enciende solo cada noche a las 3:33
+    - El reloj de la plaza que atrasa a todo el pueblo una hora cada luna llena
+    - La biblioteca donde los libros amanecen en otro estante
+    - El tren que llega a una estación que no existe en ningún mapa
+    - El espantapájaros que cada mañana aparece en otro campo
+    - La pianola que toca sola una canción que nadie conoce
+    - Inspirado en la leyenda del Holandés Errante: el barco que nunca llega a puerto
+    - Inspirado en la leyenda de La Llorona: el llanto junto al río que solo oyen los niños
+    - Inspirado en el misterio del Mary Celeste: el barco encontrado intacto y sin tripulación
+    - Inspirado en las luces de Hessdalen: las esferas que flotan sobre un valle
+    - El sombrero que vuelve solo a la cabeza de su dueño
+    - La carta que llega cada año a una casa vacía
+    - El pozo que devuelve los deseos al revés
+    - El circo que llega a la ciudad sin que nadie lo haya anunciado
+    - La estatua del parque que cambia de pose cuando nadie mira
+    - El hotel con una habitación 13 que solo aparece en noches de tormenta
+    - Inspirado en la leyenda del Silbón: el silbido que suena lejos cuando está cerca
+    - Inspirado en el misterio de Roanoke: el pueblo que desapareció dejando una sola palabra
+    - El ascensor que se detiene en un piso que el edificio no tiene
+    - El cartero que entrega cartas escritas por los propios destinatarios, con fecha de mañana
+    - El paraguas que solo se abre cuando va a pasar algo malo
+    - La radio que transmite las noticias del día siguiente
+    - Inspirado en la leyenda del Kraken: el pueblo pesquero donde las redes vuelven cortadas
+    - El gato que aparece en todas las fotos antiguas del pueblo
+    - El tranvía nocturno que lleva pasajeros que nadie ve subir
 
 biologia:
   nombre: 🧬 Biología que no te contaron
   descripcion: Datos reales del cuerpo y los animales que contradicen lo que la gente cree, con giro sorprendente.
   tono: Directo y sorprendente desde la primera frase, frases cortas, revela el giro rápido y lo explica simple.
   voz: "gemini:Fenrir"
+  auto: false   # desde 2026-11-10 el automático fabrica solo misterios (marca Sombra de Evidencia)
   estilo: ilustracion
   cierre: "Síguenos para más biología."
   paleta: {fondo: ["#3b2a24", "#221713", "#0d0907"], acento: "#5BE37D", principal: "#E8B18F", secundario: "#B5654B", peligro: "#D64545", ok: "#5BE37D"}
@@ -31,6 +72,7 @@ cotidiano:
   descripcion: Objetos y detalles cotidianos que todos ven y nadie sabe para qué sirven.
   tono: Curioso, cercano, con sorpresa en el gancho y explicación clara paso a paso.
   voz: "gemini:Puck"
+  auto: false   # desde 2026-11-10 el automático fabrica solo misterios (marca Sombra de Evidencia)
   estilo: plano
   cierre: "Síguenos para entender las cosas de todos los días."
   paleta: {fondo: ["#12305a", "#0a1628", "#05080f"], acento: "#FFD23F", principal: "#7FD1FF", secundario: "#3BA7FF", peligro: "#e63946", ok: "#2ecc71"}
@@ -49,6 +91,7 @@ ciencia:
   descripcion: Fenómenos de física, química y naturaleza explicados con diagramas simples.
   tono: Asombrado pero preciso, usa comparaciones fáciles.
   voz: "gemini:Fenrir"
+  auto: false   # desde 2026-11-10 el automático fabrica solo misterios (marca Sombra de Evidencia)
   estilo: plano
   cierre: "Síguenos para más ciencia."
   paleta: {fondo: ["#1f1147", "#120a2e", "#07040f"], acento: "#00E5FF", principal: "#B388FF", secundario: "#00E5FF", peligro: "#FF4D6D", ok: "#69F0AE"}
@@ -67,6 +110,7 @@ cuerpo:
   descripcion: Cómo funciona el cuerpo humano, con diagramas de órganos y procesos.
   tono: Cercano y sorprendente, sin dar consejos médicos.
   voz: "gemini:Achird"
+  auto: false   # desde 2026-11-10 el automático fabrica solo misterios (marca Sombra de Evidencia)
   estilo: ilustracion
   cierre: "Síguenos para conocer tu cuerpo por dentro."
   paleta: {fondo: ["#4a1020", "#2a0812", "#120307"], acento: "#FFB703", principal: "#FF8FA3", secundario: "#FFC2D1", peligro: "#ff3b3b", ok: "#80ED99"}
@@ -84,6 +128,7 @@ tecnologia:
   descripcion: Máquinas y tecnología del día a día explicadas por dentro.
   tono: Didáctico y dinámico, como un ingeniero que explica a un amigo.
   voz: "en-US-BrianMultilingualNeural"
+  auto: false   # desde 2026-11-10 el automático fabrica solo misterios (marca Sombra de Evidencia)
   estilo: plano
   cierre: "Síguenos para saber cómo funcionan las cosas."
   paleta: {fondo: ["#0f3d3e", "#08201f", "#030b0b"], acento: "#F9C74F", principal: "#4CC9F0", secundario: "#90E0EF", peligro: "#F94144", ok: "#43AA8B"}

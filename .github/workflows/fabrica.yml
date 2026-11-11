@@ -11,7 +11,7 @@ on:
       nicho:
         description: Nicho (rotar = el que lleva más tiempo sin video)
         type: choice
-        options: [rotar, biologia, cotidiano, ciencia, cuerpo, tecnologia, dinero, mente]
+        options: [rotar, misterios, biologia, cotidiano, ciencia, cuerpo, tecnologia, dinero, mente]
         default: rotar
       cantidad:
         description: Videos en esta ejecución (cada uno por correo)

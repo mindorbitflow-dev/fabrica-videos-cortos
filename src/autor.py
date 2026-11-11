@@ -17,7 +17,6 @@ from src.llm import LLMRouter, is_auth_error
 
 RAIZ = Path(__file__).resolve().parent.parent
 REGLAS = RAIZ / ".claude" / "commands" / "video.md"
-EJEMPLO = RAIZ / "ejemplos" / "pulpo"
 KIT = RAIZ / "plantilla" / "kit.js"
 LIMITE_MIN = 50  # guiones de 16-24 escenas: escribir, mirar las hojas y corregir
 # Claude Code: solo lo que el procedimiento necesita (leer el kit y el ejemplo, escribir el guion y las escenas, pasos de run.py).
@@ -125,7 +124,7 @@ continuo y cámara que se acerca o se aleja. Nada de emojis, íconos genéricos 
 
 {reglas}
 
-### Kit disponible como K (plantilla/kit.js, ya cargado; úsalo, no lo copies)
+### Kit disponible como K (plantilla/kit.js) y, en relatos, S30 (plantilla/sombra.js): ya cargados; úsalos, no los copies
 ```js
 {kit}
 ```
@@ -169,10 +168,15 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
     from src.guionista import leer_json
     conf = fabrica.cargar_nichos()[nicho]
     md = REGLAS.read_text(encoding="utf-8")
+    relato = conf.get("formato") == "relato"
+    ejemplo = RAIZ / "ejemplos" / ("misterio" if relato else "pulpo")
+    kit = KIT.read_text(encoding="utf-8")
+    if relato:
+        kit += "\n" + (RAIZ / "plantilla" / "sombra.js").read_text(encoding="utf-8")
     avisar(f"El dibujante (Gemini) escribe el guion: {tema}")
     guion = leer_json(_gemini(router, [PROMPT_GUION.format(
         nombre=conf["nombre"], descripcion=conf["descripcion"], tono=conf["tono"], tema=tema, cierre=conf.get("cierre", ""),
-        reglas=_seccion(md, "## 1.", "## 2."), ejemplo=(EJEMPLO / "guion.json").read_text(encoding="utf-8"))], json_mode=True))
+        reglas=_seccion(md, "## 1.", "## 2."), ejemplo=(ejemplo / "guion.json").read_text(encoding="utf-8"))], json_mode=True))
     guion["tema"] = tema
     p = fabrica.nuevo_de_autor(nicho, guion)
     n = len(p["escenas"])
@@ -180,9 +184,9 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
 
     avisar(f"El dibujante (Gemini) dibuja {n} escenas...")
     codigo = _codigo(_gemini(router, [PROMPT_ESCENAS.format(
-        reglas=_seccion(md, "## 3.", "## 4."), kit=KIT.read_text(encoding="utf-8"),
-        guion_ejemplo=(EJEMPLO / "guion.json").read_text(encoding="utf-8"),
-        escenas_ejemplo=(EJEMPLO / "escenas.js").read_text(encoding="utf-8"), n=n, guion=guion_txt)]))
+        reglas=_seccion(md, "## 3.", "## 4."), kit=kit,
+        guion_ejemplo=(ejemplo / "guion.json").read_text(encoding="utf-8"),
+        escenas_ejemplo=(ejemplo / "escenas.js").read_text(encoding="utf-8"), n=n, guion=guion_txt)]))
     lista = _seccion(md, "## 4.", "## 5.").split("\n", 2)[2]
     for ronda in range(1, RONDAS_GEMINI + 1):
         fabrica.escenas_js(p).write_text(codigo, encoding="utf-8")

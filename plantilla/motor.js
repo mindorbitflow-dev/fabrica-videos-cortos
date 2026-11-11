@@ -115,7 +115,7 @@
   }
 
   // El render espera a que los sprites (ilustraciones recortadas) de las escenas estén decodificados.
-  window.__imagenesListas = Promise.all([window.Primitivas ? Primitivas.precargar(prims) : null, window.K ? K.listo : null]);
+  window.__imagenesListas = Promise.all([window.Primitivas ? Primitivas.precargar(prims) : null, window.K ? K.listo : null, window.S30 ? S30.listo : null]);
   window.__estimar = estimar;
   window.__textos = () => escenas.map(e => e.dataset.voz.trim());
   window.__preparar = preparar;

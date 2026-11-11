@@ -74,7 +74,7 @@ def verificar_mp4(mp4: Path) -> list[str]:
 
 
 async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: Optional[Path],
-                      progreso: Progreso) -> tuple[float, str]:
+                      progreso: Progreso, estilo_voz: str = "") -> tuple[float, str]:
     avisar = progreso or (lambda f, m: print(f"[{f:4.0%}] {m}"))
     tmp = mp4.parent / "tmp_audio"
     tmp.mkdir(parents=True, exist_ok=True)
@@ -92,7 +92,7 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
             # En otro hilo (Edge usa su propio bucle asyncio); los avisos se muestran al volver,
             # porque la interfaz solo se puede actualizar desde el hilo principal.
             mensajes: list[str] = []
-            voz_wav, plan, voz_usada = await asyncio.to_thread(voces.narrar, textos, voz, velocidad, tmp, mensajes.append)
+            voz_wav, plan, voz_usada = await asyncio.to_thread(voces.narrar, textos, voz, velocidad, tmp, mensajes.append, estilo_voz)
             for m in mensajes:
                 avisar(0.1, m)
             total = await pag.evaluate("p => __preparar(p)", plan)
@@ -147,9 +147,9 @@ async def _renderizar(html: Path, mp4: Path, voz: str, velocidad: str, musica: O
 
 
 def renderizar(html: Path, mp4: Path, voz: str, velocidad: str = "+8%", musica: Optional[Path] = None,
-               progreso: Progreso = None) -> tuple[float, str]:
-    """Genera el MP4 y devuelve (duración en segundos, voz realmente usada)."""
-    return asyncio.run(_renderizar(Path(html), Path(mp4), voz, velocidad, musica, progreso))
+               progreso: Progreso = None, estilo_voz: str = "") -> tuple[float, str]:
+    """Genera el MP4 y devuelve (duración en segundos, voz realmente usada). `estilo_voz`: cómo debe narrar Gemini."""
+    return asyncio.run(_renderizar(Path(html), Path(mp4), voz, velocidad, musica, progreso, estilo_voz))
 
 
 def miniatura(mp4: Path, destino: Path, segundo: float = 2.0, ancho: int = 360) -> None:

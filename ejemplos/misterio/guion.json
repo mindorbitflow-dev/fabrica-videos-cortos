@@ -1,0 +1,20 @@
+{
+  "tema": "El faro abandonado que se enciende solo cada noche a las 3:33",
+  "titulo": "El faro que se enciende solo a las 3:33",
+  "portada": {"texto": "EL FARO SE ENCIENDE SOLO", "destacado": "SOLO", "sub": "y nadie lo sube hace cuarenta años"},
+  "escenas": [
+    {"rol": "gancho", "voz": "En el pueblo de Bruma, un faro abandonado se enciende cada noche a las tres y treinta y tres.", "visual": "noche, luna con cara, faro sobre el acantilado que se enciende; reloj 3:33"},
+    {"rol": "pregunta", "voz": "Nadie lo sube desde hace cuarenta años. La puerta sigue cerrada con candado.", "visual": "primer plano de la puerta del faro: candado, cadenas y telarañas"},
+    {"rol": "contexto", "voz": "Así que el pueblo llamó al detective Sombra.", "visual": "el detective Sombra entra caminando por el camino del acantilado"},
+    {"rol": "mecanismo", "voz": "Primera pista: huellas pequeñas en la arena. Suben hacia el faro, y ninguna baja.", "visual": "huellas de patitas que aparecen una a una subiendo; el detective las mira con la lupa"},
+    {"rol": "mecanismo", "voz": "Segunda pista: arriba, la lámpara brilla sin una mota de polvo. Y a su lado, un pelo negro.", "visual": "la gran lámpara reluciente con destellos; la lupa encuentra un pelo negro rizado"},
+    {"rol": "reenganche", "voz": "A las tres y treinta y tres, la luz se encendió. Sombra subió la escalera corriendo.", "visual": "escalera de caracol; el detective sube corriendo; reloj 3:33"},
+    {"rol": "revelacion", "voz": "Arriba no había nadie. Solo dos ojos en la oscuridad: un gato negro, junto a la lámpara.", "visual": "oscuridad total, se abren dos ojos; la luz revela a un gato negro"},
+    {"rol": "revelacion", "voz": "El gato miró al detective, empujó la palanca con la pata, y el faro empezó a girar.", "visual": "el gato empuja la palanca, el haz gira; el detective salta del susto"},
+    {"rol": "consecuencia", "voz": "Esa misma noche, un barco perdido en la niebla encontró el puerto gracias a esa luz.", "visual": "mar con niebla, un barco avanza hacia el haz del faro"},
+    {"rol": "remate", "voz": "Caso cerrado. Aunque nadie sabe quién le enseñó al gato a encender un faro.", "visual": "el detective se rasca la cabeza, el gato le guiña un ojo; cierre de iris sobre el gato"},
+    {"rol": "cierre", "voz": "Síguenos: cada sombra tiene su evidencia.", "visual": "fondo negro con el logo"}
+  ],
+  "caption": "Un faro abandonado se enciende solo cada noche a las 3:33. El detective Sombra subió a averiguar quién lo enciende. ¿Tú lo habrías adivinado?\nUn caso de ficción de Sombra de Evidencia.",
+  "hashtags": ["#misterio", "#historiasanimadas", "#detective", "#faro", "#caricaturaclasica"]
+}
