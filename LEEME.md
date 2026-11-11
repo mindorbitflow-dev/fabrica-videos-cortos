@@ -14,12 +14,15 @@ python run.py --check                            # diagnóstico: ffmpeg, Chromiu
 ```
 
 ## Sombra de Evidencia (lo que fabrica el automático)
-Desde 2026-11-10 el automático solo fabrica el nicho `misterios`: casos cortos de ficción (inventados o inspirados en leyendas)
-que investiga el detective Sombra, en caricatura blanco y negro de los años 30.
-- `plantilla/sombra.js`: el detective (mascota fija), luna, olas, niebla, ojos de pastel cortado, película vieja e iris.
-- Marca (`marca: sombra` en el nicho): sello con el número de caso, portada serif y cierre con el logo (`assets/marca/sombra.jpg`).
-- Voz: Gemini Charon con `estilo_voz` (en inglés, "Say in a ... voice"; solo el modelo 2.5 lo aplica sin leerlo en voz alta).
-- Ejemplo completo: `ejemplos/misterio/` ("El faro que se enciende solo"). Las ideas de casos están en `config/nichos.yaml`.
+Desde 2026-11-10 el automático solo fabrica el nicho `evidencia`: el cerdito Tito llega a la oficina del detective Sombra con
+algo cotidiano y Sombra le revela su origen oculto (historias reales y documentadas de negocios, publicidad, dinero y psicología,
+contadas como una conspiración), en caricatura blanco y negro de los años 30 con ambiente noir. 22-32 escenas rápidas, 70-100 s.
+- `plantilla/sombra.js`: personajes fijos (detective Sombra, cerdito Tito, gente de época), oficina noir, luna, olas, niebla,
+  película vieja e iris.
+- Marca (`marca: sombra` en el nicho): portada serif y cierre con el logo (`assets/marca/sombra.jpg`).
+- Voz normal (Gemini Charon). `estilo_voz` en el nicho es opcional (en inglés, "Say in a ... voice"; solo el modelo 2.5 lo aplica
+  sin leerlo en voz alta).
+- Ejemplo completo: `ejemplos/evidencia/` ("Tu diamante es publicidad"); `ejemplos/misterio/` es un relato anterior con más piezas.
 - Música: pon pistas de suspenso sin derechos de autor en `assets/musica/` (hoy solo hay un ambiente).
 
 ## Videos de autor (la calidad de referencia)

@@ -198,8 +198,6 @@ def nuevo_de_autor(nicho: str, guion: dict) -> dict:
     p["escenas"] = [{"voz": e["voz"].strip(), "visual": e.get("visual", ""), "html": "", "origen": "autor"} for e in guion["escenas"]]
     p["avisos"] = guionista.muletillas_en({**guion, "escenas": guion["escenas"][:-1]})  # la última escena pide seguir la página
     p["autor"], p["estado"] = True, "guion"
-    if cargar_nichos()[nicho].get("marca"):  # número de caso correlativo dentro del nicho
-        p["caso"] = sum(h.get("nicho") == nicho for h in leer_historial()) + 1
     return guardar(p)
 
 
@@ -350,15 +348,12 @@ MARCA = RAIZ / "assets" / "marca"
 
 
 def _html_marca(p: dict, marca: str, ultima: bool) -> str:
-    """Capa de la marca sobre cada escena: sello con el número de caso; en la última, la tarjeta de cierre con el logo."""
+    """Capa de la marca: solo en la última escena, la tarjeta de cierre con el logo y el lema del nicho."""
+    if not ultima:
+        return ""
     logo = "data:image/jpeg;base64," + base64.b64encode((MARCA / f"{marca}.jpg").read_bytes()).decode()
-    conf = cargar_nichos()[p["nicho"]]
-    if ultima:
-        lema = htmlmod.escape(str(conf.get("lema", "")))
-        return (f'<div class="marca-cierre"><div class="caso">CASO CERRADO</div><img src="{logo}" alt="">'
-                f'<div class="lema">{lema}</div></div>')
-    caso = f'CASO Nº {p["caso"]:03d}' if p.get("caso") else ""
-    return f'<div class="sello"><img src="{logo}" alt=""><span>{caso}</span></div>'
+    lema = htmlmod.escape(str(cargar_nichos()[p["nicho"]].get("lema", "")))
+    return f'<div class="marca-cierre"><img src="{logo}" alt=""><div class="lema">{lema}</div></div>'
 
 
 def componer_html(p: dict) -> str:

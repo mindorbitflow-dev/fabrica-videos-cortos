@@ -102,18 +102,13 @@ svg * { transform-box: fill-box; transform-origin: center; }
 /* ---- Escenas de autor (body.estilo-autor): el dibujo ocupa todo el cuadro; subtítulo más discreto ---- */
 .estilo-autor #subtitulo { font-size: 62px; top: 1260px; }
 
-/* ---- Marca "Sombra de Evidencia" (body.marca-sombra): sello con número de caso, portada serif y cierre con el logo ---- */
+/* ---- Marca "Sombra de Evidencia" (body.marca-sombra): portada serif y cierre con el logo ---- */
 .marca-sombra #subtitulo .actual { color: #D4B47A; }
-.sello { position: absolute; left: 70px; top: 262px; z-index: 6; display: flex; align-items: center; gap: 18px; }
-.sello img { width: 86px; height: 86px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(212,180,122,.55); }
-.sello span { font-family: 'Cinzel', serif; font-weight: 600; font-size: 30px; letter-spacing: 8px; color: #D4B47A;
-  text-shadow: 0 2px 8px #000; }
 .marca-sombra .portada { font-family: 'Cormorant Garamond', serif; }
 .marca-sombra .portada .linea { font-size: 128px; line-height: .95; color: #efe7d6; text-shadow: 0 6px 24px #000, 0 3px 0 #000; }
 .marca-sombra .portada .destacado { color: #D4B47A; }
 .marca-sombra .portada .sub { color: #e2d8c4; text-shadow: 0 2px 8px #000; }
-.marca-cierre { position: absolute; left: 70px; width: 870px; top: 330px; z-index: 6; display: flex; flex-direction: column;
+.marca-cierre { position: absolute; left: 70px; width: 870px; top: 380px; z-index: 6; display: flex; flex-direction: column;
   align-items: center; gap: 34px; text-align: center; }
-.marca-cierre .caso { font-family: 'Cinzel', serif; font-weight: 600; font-size: 40px; letter-spacing: 14px; color: #D4B47A; }
 .marca-cierre img { width: 520px; height: 520px; border-radius: 50%; box-shadow: 0 0 120px rgba(212,180,122,.25); }
 .marca-cierre .lema { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 76px; line-height: 1; color: #efe7d6; }

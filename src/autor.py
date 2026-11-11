@@ -124,7 +124,7 @@ continuo y cámara que se acerca o se aleja. Nada de emojis, íconos genéricos 
 
 {reglas}
 
-### Kit disponible como K (plantilla/kit.js) y, en relatos, S30 (plantilla/sombra.js): ya cargados; úsalos, no los copies
+### Kit disponible como K (plantilla/kit.js) y, en historias, S30 (plantilla/sombra.js): ya cargados; úsalos, no los copies
 ```js
 {kit}
 ```
@@ -168,8 +168,8 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
     from src.guionista import leer_json
     conf = fabrica.cargar_nichos()[nicho]
     md = REGLAS.read_text(encoding="utf-8")
-    relato = conf.get("formato") == "relato"
-    ejemplo = RAIZ / "ejemplos" / ("misterio" if relato else "pulpo")
+    relato = conf.get("formato") == "historia"
+    ejemplo = RAIZ / "ejemplos" / ("evidencia" if relato else "pulpo")
     kit = KIT.read_text(encoding="utf-8")
     if relato:
         kit += "\n" + (RAIZ / "plantilla" / "sombra.js").read_text(encoding="utf-8")

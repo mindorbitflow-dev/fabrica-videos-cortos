@@ -44,18 +44,28 @@ rótulos pequeños. Nunca emojis, íconos genéricos ni tarjetas de solo texto. 
 - Cada escena debe poder DIBUJARSE: en `visual` escribe qué se ve y qué se mueve (objeto, acción, plano). Si una frase no se puede
   mostrar, reescríbela.
 
-### Si el nicho tiene `formato: relato` (misterios de Sombra de Evidencia)
-Es una HISTORIA, no una explicación. Mismo esqueleto de retención, contado como un caso del detective Sombra:
-- **11-16 escenas y 130-200 palabras** (el narrador es pausado: eso da 80-140 s). Narrador en tercera persona, tiempo pasado, frases cortas.
-- `gancho` = el hecho imposible ("un faro abandonado se enciende solo cada noche"); `pregunta` = por qué nadie lo explica;
-  `contexto` = llaman al detective Sombra (siempre es él quien investiga); `mecanismo` = 2-3 pistas concretas y visuales
-  ("Primera pista: ...", "Segunda pista: ..."), cada una dibujable; `reenganche` = el momento de tensión (la hora, la
-  oscuridad, un ruido); `revelacion` = la explicación inesperada, fantástica o con humor, nunca violenta ni gore;
-  `consecuencia` = qué cambió; `remate` = "Caso cerrado." más un último detalle que deja una duda o una sonrisa.
-- Toma la premisa del tema. Si dice "inspirado en", parte de esa leyenda o misterio real, pero cuenta un caso propio.
-- Todo es ficción: el `caption` termina con la línea "Un caso de ficción de Sombra de Evidencia." Nunca afirmes que pasó de verdad.
-- Pocos personajes: el detective y como mucho 1-2 más (un animal, un objeto con vida, un vecino). Lugares sencillos.
-- La portada ya la pone la marca: `texto` 3-5 palabras en mayúsculas con el hecho imposible y `sub` con el detalle inquietante.
+### Si el nicho tiene `formato: historia` (Sombra de Evidencia)
+Siempre los mismos dos personajes: **Tito**, un cerdito curioso, llega a la oficina del **detective Sombra** con algo cotidiano
+(un foco fundido, un anillo, una factura, la leche al fondo del súper...) y Sombra le revela su ORIGEN OCULTO: quién lo decidió, cuándo
+y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evidencia/`.
+- **Se cuenta como una historia, no como un dato**: tono informal, como si se lo contaras a un amigo ("Resulta que...",
+  "Y aquí viene lo bueno", "Imagínate"). Palabras de todos los días; nada de términos técnicos (si hace falta uno, explícalo con
+  algo cotidiano). Pocas cifras: solo las 2-3 que de verdad sorprenden, redondeadas ("casi todos", "unos 15 años"). Los años y
+  nombres van mejor en los rótulos del dibujo que en la voz. Los diálogos entre Tito y Sombra suenan naturales y con emoción.
+- **Hechos 100 % reales y documentados**: años, empresas, cifras y frases tal como pasaron. El tono es de conspiración; el contenido
+  no. Nada de teorías falsas, nada de salud o medicina, nada que acuse a una persona viva de un delito. Si un dato no es seguro,
+  quítalo. Nada de esto es ficción: no pongas avisos de ficción.
+- **Rápido**: 22-32 escenas de 1 frase corta cada una (5-14 palabras), 220-300 palabras en total (80-110 s). Nada de pausas.
+- Estructura (`rol`): `gancho` (Tito llega con el objeto y su pregunta o una afirmación inocente; la primera frase ya choca) →
+  `pregunta` (Sombra responde corto e inquietante: "Porque así lo decidieron hace cien años.") → `mecanismo` (flashback a la
+  historia real en 10-18 escenas rápidas: el problema que tenían, quiénes se reunieron, qué acordaron o inventaron, cómo lo
+  ocultaron, con un `reenganche` cada 4-5 escenas: una cifra, una frase textual, un "pero") → `revelacion` (lo más oscuro o
+  sorprendente, guardado hasta aquí) → `consecuencia` (de vuelta en la oficina: "y sigue pasando", qué ves hoy por eso) →
+  `remate` (la lección de Sombra en una frase memorable; Tito reacciona) → `cierre` (frase `cierre` del nicho).
+- Años y cifras siempre con dígitos (1938, 9 de cada 10, 1.000 horas): así coinciden con lo que oye el reconocedor de voz y
+  se leen mejor en los subtítulos.
+- Diálogos dentro de la narración, con raya o comillas ("Gasté dos sueldos en este anillo", dijo Tito). Un solo narrador lee todo.
+- Portada: 3-5 palabras que acusan ("TU DIAMANTE ES PUBLICIDAD") y `sub` con el dato que lo prueba.
 
 ## 2. Proyecto
 `python run.py --nicho <nicho> --guion proyectos/guion_nuevo.json` imprime el id y la ruta de `proyectos/<id>/escenas.js`, que debes escribir.
@@ -79,19 +89,21 @@ Es una HISTORIA, no una explicación. Mismo esqueleto de retención, contado com
 - Rótulos: pocos, cortos, en mayúsculas, de 32 px o más (`K.rotulo`, `K.pastilla`). Nombran lo que se ve; no repiten la voz.
 - Termina cada escena con `K.acabado(ctx, T)` (grano y viñeta).
 
-### Si el nicho tiene `formato: relato`: caricatura de los años 30
-Ejemplo completo para imitar: `ejemplos/misterio/` (léelo entero antes de dibujar). Usa `S30` (`plantilla/sombra.js`):
-- Blanco y negro con tinte sepia; el único color es el oro de la marca (`S30.C.oro`) para la luz, las pistas y los detalles.
-  Contornos negros gruesos, formas redondas, brazos y piernas de manguera (`S30.manguera`), ojos de pastel cortado (`S30.ojo`),
-  guantes blancos (`S30.guante`). Los objetos pueden tener cara (la luna de `S30.luna`).
-- El detective es SIEMPRE `S30.detective(ctx, x, y, escala, {T, paso, corre, lupa, susto, rasca, mira, boca, dir})`: no lo
-  redibujes. Los demás personajes y objetos los defines tú en ese mismo estilo (mira `gato()`, `faro()` y `barco()` del ejemplo).
-- Movimiento constante de caricatura: rebote al caminar, cosas que se balancean, parpadeos, olas, niebla, estrellas.
-- Cada escena empieza con `S30.vaiven(ctx, T)` y termina con `S30.pelicula(ctx, T)` (en vez de `K.acabado`). Para cerrar
-  la historia usa `S30.iris(ctx, k, x, y)` en la escena del remate.
-- La marca agrega sola el sello con el número de caso (arriba a la izquierda, y=262-350: no pongas nada importante ahí) y, en la
-  última escena, "CASO CERRADO" con el logo: esa escena solo lleva fondo negro con un halo dorado (como el ejemplo).
-- Rótulos de pistas con `K.pastilla` (fondo papel o dorado) y títulos con `S30.titulo` (Cinzel dorada).
+### Si el nicho tiene `formato: historia`: caricatura de los años 30, noir
+Ejemplo completo para imitar: `ejemplos/evidencia/` (léelo entero antes de dibujar; `ejemplos/misterio/` tiene más piezas). Usa
+`S30` (`plantilla/sombra.js`):
+- Blanco y negro con tinte sepia; el único color es el oro de la marca (`S30.C.oro`) para la luz, el dinero, los datos clave.
+  Contornos negros gruesos, formas redondas, brazos de manguera (`S30.manguera`), ojos de pastel cortado (`S30.ojo`), guantes.
+- Personajes fijos, nunca los redibujes: `S30.detective(...)` (Sombra) y `S30.tito(...)` (el cerdito: `boca`, `orejas`, `objeto`
+  para lo que trae en las manos). Para la gente del flashback (empresarios, obreros, público) usa `S30.hombre(...)` con distintas
+  `semilla`. Las escenas de oficina usan `S30.oficina(ctx, T)` y `S30.escritorio(ctx, T)` (encima del que está sentado detrás).
+- El flashback es donde está la riqueza visual: edificios, fábricas, salas de juntas, anuncios de época, máquinas, contadores,
+  gráficas, mapas. Cada escena con fondo completo (nada de fondos vacíos), un elemento principal grande y movimiento.
+- Ritmo rápido: cada escena dura 2-4 s; que algo pase desde el primer cuadro (zoom de cámara con `K.camara`, objeto que entra,
+  número que cuenta, sello que golpea). No repitas el mismo plano dos escenas seguidas.
+- Cada escena empieza con `S30.vaiven(ctx, T)` y termina con `S30.pelicula(ctx, T)`. En el `remate` puedes cerrar con `S30.iris`.
+- La marca solo pone el logo en la última escena: esa escena lleva fondo negro con un halo dorado (como los ejemplos).
+- Rótulos con `K.pastilla` (fondo papel o dorado) y títulos o años con `S30.titulo` (Cinzel dorada).
 
 ## 4. Revisión con tus propios ojos (obligatoria)
 `python run.py --hoja <id>` genera `proyectos/<id>/hojas/hoja_*.jpg` (3 cuadros por escena) y lista los errores de JavaScript.

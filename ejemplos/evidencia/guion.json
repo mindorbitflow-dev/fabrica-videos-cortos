@@ -1,0 +1,154 @@
+{
+  "tema": "Tu anillo de diamante es publicidad - De Beers y \"un diamante es para siempre\"",
+  "titulo": "Tu anillo de diamante lo diseñó una agencia de publicidad",
+  "portada": {
+    "texto": "TU DIAMANTE ES PUBLICIDAD",
+    "destacado": "PUBLICIDAD",
+    "sub": "y los \"dos sueldos\" también"
+  },
+  "escenas": [
+    {
+      "rol": "gancho",
+      "voz": "Tito llegó a la oficina feliz, con una cajita de terciopelo en las manos.",
+      "visual": "Tito en primer plano, orgulloso, con la cajita"
+    },
+    {
+      "rol": "gancho",
+      "voz": "—¡Me gasté dos sueldos en este anillo! Así se hace, ¿no?",
+      "visual": "Tito abre la cajita: el anillo brilla"
+    },
+    {
+      "rol": "pregunta",
+      "voz": "Sombra se rió bajito. —Eso no lo decidiste tú, Tito.",
+      "visual": "Sombra detrás del escritorio, Tito enfrente"
+    },
+    {
+      "rol": "pregunta",
+      "voz": "—Te lo decidieron hace casi 100 años.",
+      "visual": "primer plano de Sombra bajo el foco"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Resulta que en Sudáfrica encontraron unas minas enormes de diamantes.",
+      "visual": "mina a cielo abierto con obreros; 1870"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Tantos, que si los sacaban todos, iban a valer casi nada.",
+      "visual": "montaña de diamantes y gráfica del precio cayendo"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Entonces a una empresa se le ocurrió algo: comprar todas las minas que pudiera.",
+      "visual": "minas que se sellan una a una"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Esa empresa se llamaba De Beers.",
+      "visual": "fachada con el nombre DE BEERS"
+    },
+    {
+      "rol": "reenganche",
+      "voz": "Y lo logró: casi todos los diamantes del mundo pasaban por sus manos.",
+      "visual": "diez diamantes, nueve se vuelven dorados"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Su truco era sencillo: guardarlos bajo llave y sacar poquitos.",
+      "visual": "bóveda llena; salen pocos diamantes"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Así parecían escasos... aunque tenían bodegas llenas.",
+      "visual": "arriba una vitrina con un diamante, abajo una bodega repleta"
+    },
+    {
+      "rol": "reenganche",
+      "voz": "Pero llegó un momento en que la gente simplemente dejó de comprar.",
+      "visual": "joyería vacía, 1938"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Así que hicieron lo que haría un villano de película: contrataron publicistas.",
+      "visual": "sala de juntas con publicistas"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "La idea era meterte en la cabeza que el amor se demuestra con un diamante.",
+      "visual": "un corazón que se convierte en diamante"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Les prestaban joyas a las estrellas de cine para que salieran brillando en pantalla.",
+      "visual": "cámara de cine, reflector y una estrella con un anillo"
+    },
+    {
+      "rol": "reenganche",
+      "voz": "Y un día, a una publicista se le ocurrió una frase.",
+      "visual": "máquina de escribir tecleando"
+    },
+    {
+      "rol": "revelacion",
+      "voz": "«Un diamante es para siempre».",
+      "visual": "la frase en grande, dorada"
+    },
+    {
+      "rol": "revelacion",
+      "voz": "Suena romántico, ¿verdad? Pero el mensaje escondido era otro: nunca lo vendas.",
+      "visual": "el anillo en un cajón que se cierra con candado"
+    },
+    {
+      "rol": "revelacion",
+      "voz": "Porque si todo el mundo intentara revenderlos, el precio se iría al piso.",
+      "visual": "multitud con anillos hacia una tienda; flecha que cae"
+    },
+    {
+      "rol": "revelacion",
+      "voz": "Por eso hoy, si intentas vender el tuyo, te ofrecen mucho menos de lo que pagaste.",
+      "visual": "etiqueta de precio que se parte"
+    },
+    {
+      "rol": "consecuencia",
+      "voz": "—¿Y lo de los dos sueldos? —preguntó Tito, ya nervioso.",
+      "visual": "Tito pregunta en la oficina"
+    },
+    {
+      "rol": "consecuencia",
+      "voz": "—Eso también salió de uno de sus anuncios, Tito.",
+      "visual": "anuncio de periódico: ¿dos meses de sueldo?"
+    },
+    {
+      "rol": "consecuencia",
+      "voz": "Y funcionó en todas partes. En Japón, casi nadie usaba anillo de diamante...",
+      "visual": "veinte anillos, solo uno dorado; 1967"
+    },
+    {
+      "rol": "consecuencia",
+      "voz": "...y en unos 15 años, ya lo tenía la mayoría de las novias.",
+      "visual": "doce de veinte anillos dorados; 1981"
+    },
+    {
+      "rol": "remate",
+      "voz": "—El amor no cambió, Tito. Lo que cambió fue la publicidad.",
+      "visual": "Sombra se inclina sobre el escritorio; Tito baja las orejas"
+    },
+    {
+      "rol": "remate",
+      "voz": "Tito cerró la cajita sin decir nada.",
+      "visual": "Tito cierra la cajita; cierre de iris"
+    },
+    {
+      "rol": "cierre",
+      "voz": "Síguenos: cada sombra tiene su evidencia.",
+      "visual": "fondo negro con el logo"
+    }
+  ],
+  "caption": "Tito llegó feliz con su anillo de compromiso... y Sombra le contó de dónde salió esa costumbre. ¿Tú también creías que lo de los dos sueldos era tradición?",
+  "hashtags": [
+    "#diamantes",
+    "#publicidad",
+    "#historia",
+    "#debeers",
+    "#negocios"
+  ]
+}
