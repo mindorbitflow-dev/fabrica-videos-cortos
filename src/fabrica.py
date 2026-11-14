@@ -376,16 +376,17 @@ def _json_prim(p: dict, escena: dict) -> str:
 MARCA = RAIZ / "assets" / "marca"
 
 
-def _html_marca(p: dict, marca: str, ultima: bool) -> str:
+def _html_marca(p: dict, marca: Optional[str], ultima: bool) -> str:
     """Capa de la marca: solo en la última escena, la tarjeta de cierre con el logo y el lema del nicho. Con `final: pregunta`
     (Sombra de Evidencia), en vez del lema va en grande la pregunta para comentar que dice la voz, sin subtítulo encima."""
     if not ultima:
         return ""
-    logo = "data:image/jpeg;base64," + base64.b64encode((MARCA / f"{marca}.jpg").read_bytes()).decode()
+    logo = ("data:image/jpeg;base64," + base64.b64encode((MARCA / f"{marca}.jpg").read_bytes()).decode()) if marca else ""
     conf = cargar_nichos()[p["nicho"]]
     if conf.get("final") == "pregunta" and p.get("escenas"):
         pregunta = htmlmod.escape(p["escenas"][-1]["voz"].lstrip("—-– ").strip())
-        return (f'<div class="marca-cierre con-pregunta sin-subtitulo"><img src="{logo}" alt="">'
+        img = f'<img src="{logo}" alt="">' if logo else ""
+        return (f'<div class="marca-cierre con-pregunta sin-subtitulo{"" if logo else " sin-logo"}">{img}'
                 f'<div class="pregunta-final">{pregunta}</div></div>')
     lema = htmlmod.escape(str(conf.get("lema", "")))
     return f'<div class="marca-cierre"><img src="{logo}" alt=""><div class="lema">{lema}</div></div>'
@@ -404,13 +405,14 @@ def componer_html(p: dict) -> str:
     scripts = [(PLANTILLA / f).read_text(encoding="utf-8") for f in ("primitivas.js", "motor.js")]
     if p.get("autor"):  # las escenas de autor van antes que el motor, cada una en su <script>: un error de sintaxis no tumba el motor
         estilo = "autor"
-        scripts[:0] = [(PLANTILLA / f).read_text(encoding="utf-8") for f in ("kit.js", "sombra.js")] + [escenas_js(p).read_text(encoding="utf-8")]
+        base = ["kit.js", "sombra.js"] + (["vendor/three.min.js", "taller3d.js"] if conf.get("motor") == "3d" else [])
+        scripts[:0] = [(PLANTILLA / f).read_text(encoding="utf-8") for f in base] + [escenas_js(p).read_text(encoding="utf-8")]
     js = "".join("<script>" + s.replace("</script", "<\\/script") + "</script>\n" for s in scripts)
     iconos = (PLANTILLA / "iconos.svg").read_text(encoding="utf-8")
     n = len(p["escenas"])
     secciones = "\n".join(
         f'<section class="escena" data-voz="{htmlmod.escape(e["voz"], quote=True)}">\n{_json_prim(p, e)}{e.get("html") or ""}\n'
-        f'{_html_marca(p, marca, i == n - 1) if marca else ""}{portada if i == 0 else ""}</section>'
+        f'{_html_marca(p, marca, i == n - 1) if marca or conf.get("final") == "pregunta" else ""}{portada if i == 0 else ""}</section>'
         for i, e in enumerate(p["escenas"]))
     if marca:
         estilo += f" marca-{marca}"

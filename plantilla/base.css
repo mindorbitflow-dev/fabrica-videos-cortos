@@ -115,4 +115,7 @@ svg * { transform-box: fill-box; transform-origin: center; }
 .marca-cierre.con-pregunta img { width: 300px; height: 300px; }
 .marca-cierre .pregunta-final { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 92px; line-height: 1.02;
   color: #D4B47A; text-shadow: 0 4px 18px #000; }
+.marca-cierre.sin-logo { top: 420px; }
+.marca-cierre.sin-logo .pregunta-final { font-family: inherit; font-weight: 900; font-size: 96px; color: #fff;
+  text-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 30px rgba(0,0,0,.35); }
 .marca-cierre .lema { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 76px; line-height: 1; color: #efe7d6; }

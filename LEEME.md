@@ -30,6 +30,16 @@ contadas como una conspiración), en caricatura blanco y negro de los años 30 c
 - Ejemplo completo: `ejemplos/evidencia/` ("Tu diamante es publicidad"); `ejemplos/misterio/` es un relato anterior con más piezas.
 - Música: pon pistas de suspenso sin derechos de autor en `assets/musica/` (hoy solo hay un ambiente).
 
+## Taller 3D (nicho `taller`, en pruebas)
+Cómo funciona una máquina armándola desde cero en un mundo 3D: empieza terminada, se reduce a lo mínimo y cada pieza aparece
+porque sin ella algo falla a la vista (no se levanta, da una maroma, derrapa, choca). 18-24 escenas, 90-130 s.
+- `plantilla/taller3d.js` (`T3`): three.js en modo inmediato (sin estado) sobre el mismo canvas de las escenas de autor. Mundo
+  (pasto, muro, árboles, pista), cámara, piezas (caja, cilindro, tubo, hélice con disco borroso, rueda, flecha de fuerza, viento,
+  polvo) y el piloto de la página (un patito de hule provisional). three.js va en `plantilla/vendor/` (licencia MIT).
+- Ejemplo completo: `ejemplos/taller/` ("Cómo vuela un avión"). Reglas del guion y del dibujo en `.claude/commands/video.md`.
+- `auto: false` hasta aprobar el primer video; para activarlo en GitHub, cambia a `auto: true` en `config/nichos.yaml`.
+- Render: unos 0,5 s por cuadro en GitHub (WebGL por software), es decir ~25 min para un video de 100 s.
+
 ## Videos de autor (la calidad de referencia)
 Los videos que funcionan en redes (1Cell1Life y similares) son ilustración vectorial dibujada por código **a medida para cada tema**.
 Eso no lo logra una IA gratuita rellenando plantillas, así que el camino de calidad es otro: Claude Code escribe el guion y el

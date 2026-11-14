@@ -169,10 +169,13 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
     conf = fabrica.cargar_nichos()[nicho]
     md = REGLAS.read_text(encoding="utf-8")
     relato = conf.get("formato") == "historia"
-    ejemplo = RAIZ / "ejemplos" / ("evidencia" if relato else "pulpo")
+    tres_d = conf.get("motor") == "3d"
+    ejemplo = RAIZ / "ejemplos" / ("taller" if tres_d else "evidencia" if relato else "pulpo")
     kit = KIT.read_text(encoding="utf-8")
     if relato:
         kit += "\n" + (RAIZ / "plantilla" / "sombra.js").read_text(encoding="utf-8")
+    if tres_d:
+        kit += "\n" + (RAIZ / "plantilla" / "taller3d.js").read_text(encoding="utf-8")
     avisar(f"El dibujante (Gemini) escribe el guion: {tema}")
     guion = leer_json(_gemini(router, [PROMPT_GUION.format(
         nombre=conf["nombre"], descripcion=conf["descripcion"], tono=conf["tono"], tema=tema,

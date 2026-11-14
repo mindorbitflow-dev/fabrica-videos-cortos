@@ -1,0 +1,35 @@
+{
+  "tema": "Cómo vuela un avión",
+  "titulo": "Armé un avión desde cero y así aprendió a volar",
+  "portada": {
+    "texto": "UN AVIÓN DESDE CERO",
+    "destacado": "DESDE CERO",
+    "sub": "pieza por pieza, con física de verdad"
+  },
+  "escenas": [
+    {"rol": "gancho", "voz": "Esta avioneta pesa lo mismo que un carro, y aun así se sostiene en el aire.", "visual": "la avioneta completa pasa volando sobre la cámara, que la mira desde el pasto"},
+    {"rol": "pregunta", "voz": "Para entender cómo, vamos a desarmarla y armarla desde cero.", "visual": "en la pista, las piezas saltan una a una hasta que solo queda el tubo"},
+    {"rol": "mecanismo", "voz": "Empecemos con lo mínimo: un tubo, un motor y una hélice.", "visual": "el tubo rebota en la pista; aparecen el motor y la hélice"},
+    {"rol": "mecanismo", "voz": "La hélice empuja el aire hacia atrás, y el tubo sale disparado hacia adelante.", "visual": "la hélice acelera, líneas de viento hacia atrás, flecha de EMPUJE, el tubo arranca"},
+    {"rol": "reenganche", "voz": "Corre rapidísimo… pero no se levanta ni un centímetro.", "visual": "cámara que lo persigue por la pista a toda velocidad; NO SE LEVANTA"},
+    {"rol": "mecanismo", "voz": "Le falta lo más importante: algo que empuje el aire hacia abajo.", "visual": "el tubo quieto, flecha de PESO hacia abajo y un signo de pregunta"},
+    {"rol": "mecanismo", "voz": "Le ponemos dos tablas planas. Cortan el aire de lado, y casi no pasa nada.", "visual": "aparecen las alas planas; el viento pasa derecho; CASI NADA"},
+    {"rol": "mecanismo", "voz": "Pero si las inclinamos un poquito, el aire choca por debajo y se va hacia abajo.", "visual": "vista de lado: el ala se inclina y las líneas de viento salen dobladas hacia abajo"},
+    {"rol": "revelacion", "voz": "Y si el ala empuja el aire hacia abajo, el aire empuja el ala hacia arriba.", "visual": "flechas de aire hacia abajo y una flecha grande de SUSTENTACIÓN hacia arriba"},
+    {"rol": "reenganche", "voz": "¡Despegamos! Durante tres segundos.", "visual": "la avioneta sin cola despega y sube; ¡VUELA!"},
+    {"rol": "mecanismo", "voz": "La nariz se levanta, se levanta más… y el avión da una maroma.", "visual": "la nariz sube sin control, da la vuelta y cae al pasto con polvo; ¡MAROMA!"},
+    {"rol": "mecanismo", "voz": "Para eso está esta alita de atrás: si la nariz sube, la cola la vuelve a bajar.", "visual": "aparece el estabilizador; la nariz oscila y vuelve a quedar derecha; flecha en la cola"},
+    {"rol": "reenganche", "voz": "Ahora vuela derecho… hasta que una ráfaga lo empuja de lado y empieza a derrapar.", "visual": "viento de lado; la avioneta gira sobre sí misma y derrapa; DERRAPA"},
+    {"rol": "mecanismo", "voz": "Esta aleta vertical funciona como las plumas de una flecha: siempre lo endereza contra el viento.", "visual": "aparece la deriva; la avioneta oscila y vuelve a apuntar recto"},
+    {"rol": "reenganche", "voz": "Perfecto. Solo hay un problema: no puede girar. Y viene un árbol.", "visual": "la avioneta va directo hacia un árbol gigante; el piloto se asusta"},
+    {"rol": "mecanismo", "voz": "En las puntas de las alas van los alerones: uno sube, el otro baja, y el avión se inclina.", "visual": "vista desde atrás: un alerón sube, el otro baja y la avioneta se ladea"},
+    {"rol": "mecanismo", "voz": "Atrás, el timón y el elevador mueven la cola. Así gira, sube o baja.", "visual": "primer plano de la cola moviéndose; la avioneta esquiva el árbol"},
+    {"rol": "reenganche", "voz": "Aterrizar es otra historia: si va lento se cae, y si va rápido llega como un misil.", "visual": "la avioneta baja muy rápido y rebota de panza en la pista con polvo"},
+    {"rol": "mecanismo", "voz": "Por eso las alas se estiran hacia abajo: los flaps. Dan más sustentación a poca velocidad.", "visual": "primer plano del ala: los flaps bajan; la flecha hacia arriba crece"},
+    {"rol": "mecanismo", "voz": "Y abajo, unas ruedas, para no aterrizar de panza.", "visual": "sale el tren de aterrizaje; toca la pista suave y rueda"},
+    {"rol": "remate", "voz": "Tubo, motor, alas, cola, alerones, flaps y ruedas. Ya tienes un avión.", "visual": "la avioneta completa despega y pasa sobre la cámara, como al principio"},
+    {"rol": "cierre", "voz": "¿Qué máquina armamos después? Escríbela en los comentarios.", "visual": "la avioneta da vueltas a lo lejos; la pregunta en grande"}
+  ],
+  "caption": "Armamos una avioneta desde cero: cada pieza existe porque sin ella algo sale muy mal. ¿Qué máquina armamos después? Escríbela en los comentarios.",
+  "hashtags": ["#aviones", "#fisica", "#comofunciona", "#ingenieria", "#3d"]
+}
