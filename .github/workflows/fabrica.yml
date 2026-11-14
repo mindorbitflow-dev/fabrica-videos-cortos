@@ -1,9 +1,10 @@
-# Crea 3 videos al día (9:17, 14:17 y 19:17 hora de Colombia) con el dibujante (Claude Code) y los envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
+# Crea 2 videos (y sus posts) por ejecución, en 3 horarios al día (9:17, 14:17 y 19:17 hora de Colombia): unos 4-6 al día, porque
+# GitHub se salta o retrasa parte de las ejecuciones programadas. Los envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
 name: Fábrica de videos
 
 on:
   schedule:
-    # Un video por ejecución: cada uno gasta parte del límite de uso del plan de Claude (el mismo de las conversaciones).
+    # 2 videos por ejecución (decisión del usuario, 2026-11-13): cada uno gasta parte del límite de uso del plan de Claude.
     # Hora UTC: 14, 19 y 0 = 9:17, 14:17 y 19:17 en Colombia (UTC-5). GitHub puede retrasarlas unos minutos o saltarse alguna.
     - cron: "17 0,14,19 * * *"
   workflow_dispatch:
@@ -17,7 +18,7 @@ on:
         description: Videos en esta ejecución (cada uno por correo)
         type: choice
         options: ["1", "2", "3"]
-        default: "1"
+        default: "2"
 
 permissions:
   contents: write   # guardar state/historial.json para no repetir temas
@@ -29,7 +30,7 @@ concurrency:
 jobs:
   video:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 200   # 2 videos: dibujante hasta 50 min + render, cada uno
     env:
       PYTHONIOENCODING: utf-8
       PYTHONUNBUFFERED: "1"   # ver el avance en vivo en el registro
@@ -71,7 +72,7 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
 
       - name: Fabricar y enviar por correo
-        run: python run.py --auto --cantidad "${{ inputs.cantidad || 1 }}" --nicho "${{ inputs.nicho || 'rotar' }}"
+        run: python run.py --auto --cantidad "${{ inputs.cantidad || 2 }}" --nicho "${{ inputs.nicho || 'rotar' }}"
 
       - name: Guardar el video en Actions (respaldo, 7 días)
         if: always()

@@ -140,7 +140,7 @@ src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter �
 - Falta Chromium → `python -m playwright install chromium`
 - Música: por defecto una pista aleatoria de `assets/musica/` (hay un ambiente incluido); para usar otra, pon .mp3 sin copyright ahí y elígela en la app, o `--musica ninguna`
 
-## 🤖 Automático en GitHub Actions (3 videos al día, por correo)
+## 🤖 Automático en GitHub Actions (2 videos por ejecución, unos 4 al día, por correo)
 `.github/workflows/fabrica.yml` corre a las 9:17, 14:17 y 19:17 (hora de Colombia) y fabrica 1 video por ejecución con el dibujante
 (GitHub puede retrasar o saltarse alguna ejecución programada). Rota el nicho
 (el que lleva más tiempo sin video), fabrica un video con tema nuevo y te lo envía a Gmail con el texto
