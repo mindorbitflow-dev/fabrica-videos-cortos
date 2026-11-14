@@ -92,6 +92,8 @@ def auto(nicho: str | None, musica: str, cantidad: int = 1) -> None:
             print(f"Listo: {fabrica.mp4(p)} ({p['duracion']} s, voz {p['voz_usada']})")
             correo.enviar_video(p, enlace)
             print("Correo enviado.")
+            if correo.enviar_post(p):
+                print("Post enviado.")
         except Exception as error:
             fallidos += 1
             detalle = f"{type(error).__name__}: {error}"
@@ -143,6 +145,8 @@ def autor(args) -> None:
     if args.correo:
         correo.enviar_video(p)
         print("Correo enviado.")
+        if correo.enviar_post(p):
+            print("Post enviado.")
 
 
 def main() -> None:
@@ -158,7 +162,8 @@ def main() -> None:
     ap.add_argument("--guion", help="Archivo JSON con un guion ya escrito: crea un proyecto de autor (requiere --nicho)")
     ap.add_argument("--hoja", metavar="ID", help="Hojas de contacto de un proyecto")
     ap.add_argument("--render", metavar="ID", help="Renderiza un proyecto ya dibujado")
-    ap.add_argument("--correo", action="store_true", help="Con --render: envía el video por correo")
+    ap.add_argument("--correo", action="store_true", help="Con --render o --personajes: lo envía por correo")
+    ap.add_argument("--personajes", action="store_true", help="Imágenes de los personajes (posts y recortes) en salida/personajes")
     args = ap.parse_args()
 
     if args.check:
@@ -167,6 +172,16 @@ def main() -> None:
         from src.env import load_env
         load_env()
         return auto(args.nicho, args.musica, max(1, args.cantidad))
+    if args.personajes:
+        from src import correo, personajes
+        from src.env import load_env
+        load_env()
+        rutas = personajes.generar()
+        print("\n".join(str(r) for r in rutas))
+        if args.correo:
+            correo.enviar_personajes(rutas)
+            print("Correo enviado.")
+        return
     if args.hoja or args.render or args.guion:
         return autor(args)
     if not args.nicho:

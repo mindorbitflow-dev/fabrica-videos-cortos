@@ -82,6 +82,7 @@ jobs:
             proyectos/*/video.mp4
             proyectos/*/proyecto.json
             proyectos/*/escenas.js
+            proyectos/*/post.jpg
             proyectos/*/hojas/*.jpg
           retention-days: 7
           if-no-files-found: ignore

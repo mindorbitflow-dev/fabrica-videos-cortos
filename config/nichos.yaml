@@ -19,31 +19,45 @@ evidencia:
   lema: "Cada sombra tiene su evidencia"
   paleta: {fondo: ["#1b1916", "#0f0e0c", "#050505"], acento: "#D4B47A", principal: "#efe7d6", secundario: "#8a8278", peligro: "#C2503A", ok: "#D4B47A"}
   ideas:
-    - Tu anillo de diamante es publicidad - De Beers y "un diamante es para siempre"
-    - Por qué los focos se funden - el cártel Phoebus y las 1000 horas
+    # en orden: de más a menos viral (la fábrica toma la primera que no se haya usado)
+    - McDonald's gana más con terrenos que con hamburguesas
+    - La bóveda de Disney - escondían sus películas para que las compraras con prisa
+    - Apple y los iPhone que se volvían lentos (2017)
+    - Coca-Cola y Santa Claus - lo que sí y lo que no inventaron sus anuncios de 1931
+    - Las máquinas de peluches están programadas para que casi nunca ganes
+    - El botón de cerrar puertas del ascensor muchas veces no hace nada
+    - Los botones del semáforo peatonal que no hacen nada - el caso de Nueva York
+    - Amazon Prime y el laberinto para cancelarlo - la demanda del gobierno de Estados Unidos
+    - Las palomitas del cine - donde el cine gana de verdad
+    - Por qué las aerolíneas venden más boletos que asientos
     - El desayuno con huevos y tocino lo inventó un publicista - Edward Bernays
+    - Los gimnasios ganan más con los que nunca van
+    - La creadora del Día de la Madre pasó su vida intentando eliminarlo - Anna Jarvis
+    - El inventor del scroll infinito se arrepintió de crearlo
     - Las "antorchas de la libertad" - cómo convencieron a las mujeres de fumar en 1929
-    - La industria del azúcar pagó a científicos para culpar a la grasa (1967)
-    - Por qué la leche siempre está al fondo del supermercado
-    - Los casinos no tienen relojes ni ventanas
-    - Por qué los precios terminan en 99
+    - Por qué los focos se funden - el cártel Phoebus y las 1000 horas
     - La impresora barata y la tinta carísima - el modelo de la cuchilla de Gillette
-    - Por qué el agua embotellada cuesta más que la gasolina
-    - Menos producto por el mismo precio - la reduflación
+    - Black Friday - muchas ofertas cuestan lo mismo o menos otros días del año
+    - Las fechas de "consumir preferentemente" que te hacen botar comida buena
+    - Los casinos no tienen relojes ni ventanas
+    - Por qué la leche siempre está al fondo del supermercado
+    - Por qué los precios terminan en 99
     - Las apps gratis no son gratis - tú eres el producto
     - Por qué es tan difícil cancelar una suscripción - los patrones oscuros
-    - El plato caro del menú que nadie pide - el efecto ancla
-    - Los dulces junto a la caja del supermercado
-    - Apple y los iPhone que se volvían lentos (2017)
-    - La fiebre de los tulipanes - la primera burbuja financiera (1637)
-    - Por qué los cereales infantiles tienen la mascota mirando hacia abajo
-    - El olor a pan recién hecho en el supermercado
-    - Las tarjetas de puntos y millas - por qué te las regalan
-    - McDonald's gana más con terrenos que con hamburguesas
-    - Por qué los supermercados cambian los productos de lugar
+    - Menos producto por el mismo precio - la reduflación
     - Monopoly nació como una crítica a los monopolios
+    - Los dulces junto a la caja del supermercado
+    - El olor a pan recién hecho en el supermercado
+    - La fiebre de los tulipanes - la primera burbuja financiera (1637)
     - El primer "Black Friday" y por qué se llama así
     - Por qué la música de las tiendas es lenta
+    - Tu anillo de diamante es publicidad - De Beers y "un diamante es para siempre"
+    - La industria del azúcar pagó a científicos para culpar a la grasa (1967)
+    - Por qué el agua embotellada cuesta más que la gasolina
+    - El plato caro del menú que nadie pide - el efecto ancla
+    - Por qué los cereales infantiles tienen la mascota mirando hacia abajo
+    - Las tarjetas de puntos y millas - por qué te las regalan
+    - Por qué los supermercados cambian los productos de lugar
 
 biologia:
   nombre: 🧬 Biología que no te contaron

@@ -140,6 +140,10 @@ def portada_jpg(p: dict) -> Path:
     return carpeta(p) / "portada.jpg"
 
 
+def post_jpg(p: dict) -> Path:
+    return carpeta(p) / "post.jpg"
+
+
 # ---------- pasos ----------
 FIGURA_CIERRE = {"biologia": "celula", "cuerpo": "corazon", "ciencia": "planeta", "cotidiano": "gota",
                  "tecnologia": "engranaje", "dinero": "moneda", "mente": "neurona"}
@@ -194,7 +198,7 @@ def nuevo_de_autor(nicho: str, guion: dict) -> dict:
     """Proyecto a partir de un guion ya escrito ({tema, titulo, portada, escenas: [{voz}], caption, hashtags}) cuyas escenas se dibujan
     a medida en escenas.js. El guion pasa la misma comprobación de muletillas que los de la IA; lo que falle queda como aviso."""
     p = nuevo_proyecto(nicho, guion["tema"])
-    p.update({k: guion[k] for k in ("titulo", "portada", "caption", "hashtags") if guion.get(k)})
+    p.update({k: guion[k] for k in ("titulo", "portada", "caption", "hashtags", "post") if guion.get(k)})
     p["escenas"] = [{"voz": e["voz"].strip(), "visual": e.get("visual", ""), "html": "", "origen": "autor"} for e in guion["escenas"]]
     p["avisos"] = guionista.muletillas_en({**guion, "escenas": guion["escenas"][:-1]})  # la última escena pide seguir la página
     p["autor"], p["estado"] = True, "guion"
@@ -414,6 +418,12 @@ def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, m
     render.miniatura(mp4(p), miniatura(p), min(2.0, p["duracion"] / 2))
     render.miniatura(mp4(p), portada_jpg(p), 0.5, ancho=1080)  # miniatura para subir al reel
     shutil.rmtree(carpeta(p) / "tmp_audio", ignore_errors=True)
+    if (p.get("post") or {}).get("pregunta") and cargar_nichos()[p["nicho"]].get("marca"):
+        try:  # el post es un extra: si falla, el video se entrega igual
+            from src import personajes
+            personajes.post(p["post"], carpeta(p))
+        except Exception as error:
+            p.setdefault("avisos", []).append(f"no se pudo dibujar el post: {error}")
     p["estado"] = "listo"
     guardar(p)
     registrar_historial(p)

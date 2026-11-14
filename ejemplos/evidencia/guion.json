@@ -150,5 +150,16 @@
     "#historia",
     "#debeers",
     "#negocios"
-  ]
+  ],
+  "post": {
+    "pregunta": "¡Gasté *dos sueldos* en este anillo! Así se hace, ¿no?",
+    "respuesta": "Esa regla no es tradición, Tito. Salió de los *anuncios de De Beers*, la empresa que controlaba casi todos los diamantes del mundo.",
+    "caption": "¿De dónde salió eso de gastar dos sueldos en un anillo? Spoiler: no fue del amor. ¿Tú también lo creías? Etiqueta a quien está por comprar uno.\nEl video completo está en la página.",
+    "hashtags": [
+      "#diamantes",
+      "#debeers",
+      "#publicidad",
+      "#historia"
+    ]
+  }
 }

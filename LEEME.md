@@ -22,6 +22,10 @@ contadas como una conspiración), en caricatura blanco y negro de los años 30 c
 - Marca (`marca: sombra` en el nicho): portada serif y cierre con el logo (`assets/marca/sombra.jpg`).
 - Voz normal (Gemini Charon). `estilo_voz` en el nicho es opcional (en inglés, "Say in a ... voice"; solo el modelo 2.5 lo aplica
   sin leerlo en voz alta).
+- **Post del mismo tema**: el guion trae `post` (pregunta de Tito, revelación de Sombra, texto); la fábrica dibuja una viñeta de
+  dos cuadros de 1080x1350 (`src/personajes.py`) y la envía en un correo aparte, junto con cada video.
+- Paquete de personajes para publicaciones propias: `python run.py --personajes --correo` (posts y recortes PNG sin fondo).
+- Los temas salen de `ideas:` en orden (de más a menos viral): los primeros son los de marcas conocidas y los que tocan el bolsillo.
 - Ejemplo completo: `ejemplos/evidencia/` ("Tu diamante es publicidad"); `ejemplos/misterio/` es un relato anterior con más piezas.
 - Música: pon pistas de suspenso sin derechos de autor en `assets/musica/` (hoy solo hay un ambiente).
 

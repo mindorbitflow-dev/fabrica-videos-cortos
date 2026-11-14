@@ -66,6 +66,19 @@ y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evi
   se leen mejor en los subtítulos.
 - Diálogos dentro de la narración, con raya o comillas ("Gasté dos sueldos en este anillo", dijo Tito). Un solo narrador lee todo.
 - Portada: 3-5 palabras que acusan ("TU DIAMANTE ES PUBLICIDAD") y `sub` con el dato que lo prueba.
+- **Para que se comparta** (la meta es viralidad):
+  - Si el tema tiene una marca o persona famosa, nómbrala en `titulo`, portada y primera escena (McDonald's, Disney, Apple,
+    Coca-Cola...). Las marcas conocidas multiplican los clics.
+  - La primera frase toca al espectador: su dinero, su comida, su teléfono, su tiempo ("Tito pagó 5 dólares por unas palomitas...").
+  - Un dato "imposible de creer pero cierto" antes del segundo 15, y la revelación más fuerte guardada para el final.
+  - `titulo` de máx. 60 caracteres que acusa o revela ("Disney escondía sus películas a propósito"), nunca descriptivo.
+  - `caption`: primera línea = gancho distinto al título; termina con una pregunta que provoque opinar o etiquetar a alguien
+    ("¿Tú también caíste? Etiqueta a quien necesita saberlo").
+- **Post del mismo tema** (`post` en el guion, para la imagen de dos viñetas que se publica aparte):
+  `{"pregunta": "lo que dice Tito, máx. 16 palabras", "respuesta": "la revelación de Sombra, máx. 28 palabras",
+  "caption": "2-3 líneas con gancho y pregunta; termina con 'El video completo está en la página.'", "hashtags": [3-5]}`.
+  En `pregunta` y `respuesta` marca entre *asteriscos* las 2-4 palabras clave (salen en dorado). La respuesta debe entenderse sola,
+  sin haber visto el video, y dejar ganas de verlo.
 
 ## 2. Proyecto
 `python run.py --nicho <nicho> --guion proyectos/guion_nuevo.json` imprime el id y la ruta de `proyectos/<id>/escenas.js`, que debes escribir.

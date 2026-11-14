@@ -8,6 +8,7 @@ Necesita en .env o en los secrets de GitHub:
 
 from __future__ import annotations
 
+import mimetypes
 import os
 import smtplib
 import time
@@ -23,8 +24,8 @@ def configurado() -> bool:
     return bool(os.getenv("GMAIL_USUARIO", "").strip() and os.getenv("GMAIL_CLAVE_APP", "").strip())
 
 
-def _enviar(asunto: str, cuerpo: str, adjunto: tuple[bytes, str] | None = None,
-            imagen: tuple[bytes, str] | None = None) -> None:
+def _enviar(asunto: str, cuerpo: str, adjuntos: list[tuple[bytes, str]] = ()) -> None:
+    """adjuntos = [(datos, nombre de archivo)]; el tipo se deduce de la extensión."""
     usuario = os.getenv("GMAIL_USUARIO", "").strip()
     clave = os.getenv("GMAIL_CLAVE_APP", "").replace(" ", "").strip()
     if not (usuario and clave):
@@ -34,11 +35,9 @@ def _enviar(asunto: str, cuerpo: str, adjunto: tuple[bytes, str] | None = None,
     msg["To"] = os.getenv("CORREO_DESTINO", "").strip() or usuario
     msg["Subject"] = asunto
     msg.set_content(cuerpo)
-    if adjunto:
-        datos, nombre = adjunto
-        msg.add_attachment(datos, maintype="video", subtype="mp4", filename=nombre)
-    if imagen:
-        msg.add_attachment(imagen[0], maintype="image", subtype="jpeg", filename=imagen[1])
+    for datos, nombre in adjuntos:
+        tipo, subtipo = (mimetypes.guess_type(nombre)[0] or "application/octet-stream").split("/")
+        msg.add_attachment(datos, maintype=tipo, subtype=subtipo, filename=nombre)
     # Gmail a veces responde 421 "Temporary System Problem" o corta la conexión: es pasajero, y perder un video ya hecho por eso no vale la pena.
     for intento, espera in enumerate(ESPERAS_REINTENTO + (None,)):
         try:
@@ -69,9 +68,9 @@ def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
         for problema in e.get("revision") or []:
             avisos.append(f"Escena {i + 1}: {problema}.")
     avisos += [f"MP4: {problema}." for problema in p.get("verificacion") or []]
-    adjunto = None
+    adjuntos = []
     if video.stat().st_size <= MAX_ADJUNTO:
-        adjunto = (video.read_bytes(), f"{p['id']}.mp4")
+        adjuntos.append((video.read_bytes(), f"{p['id']}.mp4"))
     else:
         avisos.append(f"El video pesa demasiado para adjuntarlo. Descárgalo aquí: {enlace_respaldo or '(sin enlace)'}")
     nicho = fabrica.cargar_nichos().get(p["nicho"], {}).get("nombre", p["nicho"])
@@ -87,8 +86,34 @@ def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
         "Antes de publicar, revisa que los datos del video sean correctos.",
     ])
     portada = fabrica.portada_jpg(p)
-    imagen = (portada.read_bytes(), f"portada_{p['id']}.jpg") if portada.exists() else None
-    _enviar(f"🎬 {p['titulo']}", cuerpo, adjunto, imagen)
+    if portada.exists():
+        adjuntos.append((portada.read_bytes(), f"portada_{p['id']}.jpg"))
+    _enviar(f"🎬 {p['titulo']}", cuerpo, adjuntos)
+
+
+def enviar_post(p: dict) -> bool:
+    """Correo aparte con el post del mismo tema (imagen 1080x1350 + texto). Devuelve False si el video no trae post."""
+    imagen, post = fabrica.post_jpg(p), p.get("post") or {}
+    if not imagen.exists():
+        return False
+    texto = "\n\n".join(x for x in (post.get("caption", "").strip(), " ".join(post.get("hashtags", []))) if x)
+    cuerpo = "\n".join([
+        "Post listo para publicar 🖼️ (mismo tema que el video de hoy)", "",
+        "──── TEXTO PARA PUBLICAR (cópialo) ────", texto, "",
+        "Publícalo unas horas antes o después del video: lleva a la gente al video completo.",
+    ])
+    _enviar(f"🖼️ Post: {p['titulo']}", cuerpo, [(imagen.read_bytes(), f"post_{p['id']}.jpg")])
+    return True
+
+
+def enviar_personajes(rutas: list) -> None:
+    """Paquete de imágenes de los personajes (posts y recortes PNG sin fondo)."""
+    cuerpo = "\n".join([
+        "Imágenes de Sombra y Tito para tus publicaciones 🔍🐷", "",
+        "post_*.jpg → listas para publicar (1080x1350).",
+        "recorte_*.png → personajes sin fondo, para armar tus propias piezas.",
+    ])
+    _enviar("🖼️ Personajes de Sombra de Evidencia", cuerpo, [(r.read_bytes(), r.name) for r in rutas])
 
 
 def enviar_error(detalle: str, enlace: str = "") -> None:
