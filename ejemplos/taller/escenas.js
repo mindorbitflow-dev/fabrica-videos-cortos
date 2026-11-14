@@ -83,11 +83,17 @@
   const mundo = { muro: true, pista: true };
 
   window.ESCENAS = [
-    // 1. Gancho: la avioneta completa pasa sobre la cámara (arriba de la portada).
+    // 1. Gancho: vuela completa, se le desprende la aleta de la cola y se va en picada girando (todo arriba de la portada).
     (ctx, t, d, K, T) => {
-      const x = lerp(-15, 15, t / Math.max(d, 4)), y = 5.2 + Math.sin(T * .8) * .25;
-      T3.cuadro(ctx, T, { camara: { desde: [x * .3, 1.3, 17], hacia: [x * .6, 2.6, 0], fov: 50 }, mundo }, P =>
-        avion(P, { ...COMPLETO, pos: [x, y, 0], rot: [Math.sin(T * .9) * .12, 0, .05], helice: T * 60, rapida: 1, T }));
+      const suelta = d * .3, u = Math.max(0, t - suelta), x = -6 + t * 5, y = Math.max(PANZA + .3, 6.2 - u * u * 2.2), suelo = prog(y, PANZA + .9, PANZA + .3);
+      const rumbo = u * u * 1.8, alabeo = u * 2.2, cab = -Math.min(u, 1.6) * .5;
+      T3.cuadro(ctx, T, { camara: { desde: [x * .5 - 1, 2.6 + (6.2 - y) * 1.1, 18], hacia: [x * .7, y - 2.6, 0], fov: 50 }, mundo }, P => {
+        avion(P, { ...COMPLETO, colaV: t < suelta ? 1 : 0, pos: [x, y, 0], rot: [alabeo, rumbo, cab], helice: T * 60, rapida: 1, susto: u > 0 ? 1 : 0, T });
+        if (u > 0) P.grupo({ pos: [x - 3.4 - u * 2, 6.6 + u * 1.5 - u * u * 2, u * 1.2], rot: [u * 5, u * 3, u * 4] }, () => {
+          P.caja({ pos: [0, .62, 0], tam: [1.0, 1.25, .07], color: C.ala }); P.caja({ pos: [0, 1.2, 0], tam: [1.02, .14, .09], color: C.rojo });
+        });
+        P.polvo({ pos: [x, 0, 0], k: suelo > 0 ? Math.min(.99, (u - Math.sqrt((6.2 - PANZA - .3) / 2.2)) / 1.2 + .05) : 0, r: 3, n: 12 });
+      }, (c, P) => rot(c, P, '¡SE SOLTÓ!', [x - 3.4 - u * 2, 8.4 + u, 0], prog(t, suelta + .1, suelta + .4), 'falla', 0));
     },
     // 2. Se desarma: las piezas saltan una a una hasta que queda el tubo.
     (ctx, t, d, K, T) => {

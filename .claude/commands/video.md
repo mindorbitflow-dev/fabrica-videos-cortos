@@ -102,9 +102,16 @@ y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evi
 
 ### Si el nicho tiene `formato: construccion` (Taller 3D)
 Cómo funciona una máquina, armándola desde cero en un mundo 3D. Ejemplo completo: `ejemplos/taller/` (léelo entero).
-- **La estructura es la de "construir desde la falla"**: `gancho` (la máquina terminada funcionando, con una frase que choca:
-  "Esta avioneta pesa lo mismo que un carro, y aun así se sostiene en el aire.") → `pregunta` ("vamos a desarmarla y armarla
-  desde cero") → ciclos de `mecanismo` y `reenganche`: **lo mínimo** (la versión más simple que podría funcionar) → **falla a la
+- **El gancho es una consecuencia, no un tema.** En los primeros 2 segundos se VE algo salir mal y la voz pone en juego algo:
+  "Si le quitas una sola pieza a este avión, se estrella." (y en pantalla se le cae una pieza y se va en picada). Prohibido
+  abrir con el tema o el plan: nada de "cómo funciona...", "un avión desde cero", "vamos a armar/desarmar", "hoy veremos".
+  Otras fórmulas que sirven: "Esta pieza de 10 centímetros es lo único que evita que la bici te tire.", "Sin este tubito, el
+  helicóptero gira como trompo.", "Le quitamos las ruedas a un carro a 100 km/h. Mira." La escena 2 sube la apuesta y abre el
+  bucle sin explicar ("Así que se las quitamos todas, a ver cuál hace qué."). La revelación de la pieza del gancho se guarda.
+- Portada: 3-5 palabras con la consecuencia o la apuesta, nunca el tema ("SIN ESTA PIEZA SE ESTRELLA", "LA BICI TE TIRARÍA",
+  "GIRA COMO TROMPO"), con el `destacado` en la consecuencia y `sub` que provoca ("y no es la que crees").
+- **La estructura es la de "construir desde la falla"**: `gancho` (la consecuencia, arriba) → `pregunta` (sube la apuesta) →
+  ciclos de `mecanismo` y `reenganche`: **lo mínimo** (la versión más simple que podría funcionar) → **falla a la
   vista** (no se levanta, gira sin control, se voltea, choca) → **la pieza que lo arregla, y por qué** (una idea física, en
   palabras de todos los días) → la siguiente falla… → `revelacion` en la pieza más sorprendente → `remate` (la máquina completa
   otra vez, igual que en la escena 1, para que el video quede en bucle: "Ya tienes un avión.") → `cierre`.
@@ -115,7 +122,6 @@ Cómo funciona una máquina, armándola desde cero en un mundo 3D. Ejemplo compl
 - Tono casual, como un amigo que arma la máquina contigo, en segunda persona o "nosotros". Física real: nada de mitos (el ala
   no funciona "porque el aire de arriba llega al mismo tiempo"; empuja aire hacia abajo). Nombres técnicos solo cuando la pieza
   aparece, y explicados con lo que hace ("los alerones: uno sube, el otro baja, y el avión se inclina").
-- Portada: 2-5 palabras con la máquina y el giro ("UN AVIÓN DESDE CERO", "LA BICI NO SE CAE SOLA") y `sub` corto.
 - `cierre`: la pregunta para comentar del nicho (`final: pregunta`): "¿Qué máquina armamos después? Escríbela en los comentarios.".
 - `caption`: primera línea = gancho; termina con la misma pregunta del cierre.
 
@@ -184,6 +190,9 @@ imitar: `ejemplos/taller/escenas.js`.
   verde para lo que funciona ("¡VUELA!"), blanco para nombrar piezas. La última escena no lleva texto: la pregunta la pone el
   sistema arriba; deja la máquina abajo o a un lado.
 - No uses `S30.vaiven`, `S30.pelicula` ni `K.acabado` en este formato.
+- **Ahorro (la página saca varios videos al día):** escribe `escenas.js` de una vez, reutilizando la función de la máquina y
+  los planos del ejemplo; no leas otros archivos que el kit, el ejemplo y tu proyecto. La hoja trae 2 cuadros por escena: si no
+  hay errores de JavaScript y todo se ve, UNA revisión basta (esto reemplaza el "repite al menos una vez" del paso 4).
 
 ## 4. Revisión con tus propios ojos (obligatoria)
 `python run.py --hoja <id>` genera `proyectos/<id>/hojas/hoja_*.jpg` (3 cuadros por escena) y lista los errores de JavaScript.

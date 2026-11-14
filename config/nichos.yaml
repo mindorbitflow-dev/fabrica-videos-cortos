@@ -61,7 +61,7 @@ evidencia:
     - Por qué los supermercados cambian los productos de lugar
 
 taller:
-  nombre: 🔧 Taller 3D
+  nombre: 🔧 Así se fabrica
   descripcion: Cómo funciona una máquina, armándola desde cero en un mundo 3D con física. Empieza con la máquina terminada, la reduce a lo mínimo y cada pieza aparece porque sin ella algo falla a la vista.
   tono: Casual y con humor, como un amigo que arma la máquina contigo. Frases cortas; cada falla es un chiste visual y cada pieza la arregla. Física real, sin mitos.
   formato: construccion   # empieza terminado → lo mínimo → falla → pieza que lo arregla → terminado (reglas en .claude/commands/video.md)
@@ -69,8 +69,11 @@ taller:
   final: pregunta         # la última escena es una pregunta para comentar
   voz: "gemini:Puck"
   auto: false             # se activa en la rotación cuando apruebes el primer video
+  modelo: sonnet          # modelo de Claude Code para este nicho: gasta menos del límite del plan que Opus
+  texto: oscuro           # cielo y pasto claros: subtítulos, portada y pregunta final en letras oscuras
   estilo: ilustracion
   cierre: "Síguenos para armar la próxima máquina."
+  lema: "Así se fabrica"
   paleta: {fondo: ["#bfe2f2", "#9fd0e6", "#6fb0cf"], acento: "#FFD23A", principal: "#F5A623", secundario: "#5B5F66", peligro: "#E5484D", ok: "#5FA64A"}
   ideas:
     - Cómo vuela un avión

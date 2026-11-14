@@ -230,9 +230,11 @@ def _avisos_historia(guion: dict) -> list[str]:
     return avisos
 
 
-def hoja(p: dict, por_escena: int = 3) -> tuple[list[Path], list[str]]:
+def hoja(p: dict, por_escena: Optional[int] = None) -> tuple[list[Path], list[str]]:
     """Hojas de contacto del video (varios cuadros por escena, sin voz) para revisar el dibujo antes de renderizar.
     Devuelve (imágenes, errores de JavaScript de las escenas)."""
+    if por_escena is None:   # 3D: inicio y final de cada escena bastan (menos imágenes que revisar = menos uso del plan)
+        por_escena = 2 if cargar_nichos()[p["nicho"]].get("motor") == "3d" else 3
     html = carpeta(p) / "video.html"
     html.write_text(componer_html(p), encoding="utf-8")
     return render.hoja_contacto(html, carpeta(p) / "hojas", por_escena)
@@ -386,8 +388,9 @@ def _html_marca(p: dict, marca: Optional[str], ultima: bool) -> str:
     if conf.get("final") == "pregunta" and p.get("escenas"):
         pregunta = htmlmod.escape(p["escenas"][-1]["voz"].lstrip("—-– ").strip())
         img = f'<img src="{logo}" alt="">' if logo else ""
+        lema = "" if logo or not conf.get("lema") else f'<div class="lema">{htmlmod.escape(str(conf["lema"]))}</div>'
         return (f'<div class="marca-cierre con-pregunta sin-subtitulo{"" if logo else " sin-logo"}">{img}'
-                f'<div class="pregunta-final">{pregunta}</div></div>')
+                f'<div class="pregunta-final">{pregunta}</div>{lema}</div>')
     lema = htmlmod.escape(str(conf.get("lema", "")))
     return f'<div class="marca-cierre"><img src="{logo}" alt=""><div class="lema">{lema}</div></div>'
 
@@ -416,6 +419,8 @@ def componer_html(p: dict) -> str:
         for i, e in enumerate(p["escenas"]))
     if marca:
         estilo += f" marca-{marca}"
+    if conf.get("texto") == "oscuro":   # fondos claros (cielo, pasto): letras oscuras con borde blanco
+        estilo += " texto-oscuro"
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><title>{htmlmod.escape(p['titulo'])}</title>
 <style>{css}

@@ -118,4 +118,16 @@ svg * { transform-box: fill-box; transform-origin: center; }
 .marca-cierre.sin-logo { top: 420px; }
 .marca-cierre.sin-logo .pregunta-final { font-family: inherit; font-weight: 900; font-size: 96px; color: #fff;
   text-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 30px rgba(0,0,0,.35); }
+.marca-cierre.sin-logo .lema { font-family: inherit; font-weight: 900; font-size: 44px; letter-spacing: 2px; text-transform: uppercase; }
+
+/* ---- Fondos claros (nicho con `texto: oscuro`, p. ej. Así se fabrica): letras oscuras con borde blanco ---- */
+.texto-oscuro #subtitulo { color: #151515;
+  text-shadow: 0 0 6px #fff, 0 5px 0 #fff, 0 -3px 0 #fff, 4px 0 0 #fff, -4px 0 0 #fff, 3px 3px 0 #fff, -3px -3px 0 #fff; }
+.texto-oscuro #subtitulo .actual { color: #d6333a; }
+.texto-oscuro .portada .linea { color: #151515; text-shadow: 0 0 8px #fff, 0 6px 0 #fff, 0 -4px 0 #fff, 5px 0 0 #fff, -5px 0 0 #fff; }
+.texto-oscuro .portada .destacado { color: #d6333a; }
+.texto-oscuro .portada .sub { color: #151515; font-weight: 700; text-shadow: 0 0 6px #fff, 0 0 12px #fff; }
+.texto-oscuro .marca-cierre.sin-logo .pregunta-final,
+.texto-oscuro .marca-cierre.sin-logo .lema { color: #151515; text-shadow: 0 0 8px #fff, 0 6px 0 #fff, 0 -4px 0 #fff, 5px 0 0 #fff, -5px 0 0 #fff; }
+.texto-oscuro .marca-cierre.sin-logo .lema { color: #d6333a; }
 .marca-cierre .lema { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 76px; line-height: 1; color: #efe7d6; }

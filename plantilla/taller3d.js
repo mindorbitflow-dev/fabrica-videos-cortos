@@ -10,21 +10,24 @@
 // pos/rot/esc son [x, y, z]. Todo lo que se dibuja dentro de P.grupo({pos, rot, esc}, () => ...) se mueve con el grupo.
 (() => {
   const ANCHO = 1080, ALTO = 1920;
+  // Calidad del 3D: se dibuja a menor resolución y se escala al lienzo (WebGL va por software en GitHub: es lo que más tarda).
+  const Q = Object.assign({ escala: .75, sombra: 1024, suavizado: true }, window.T3_CALIDAD || {});
+  const AN3 = Math.round(ANCHO * Q.escala), AL3 = Math.round(ALTO * Q.escala);
   let R = null, escena, camara, sol, hemi, mundo = {}, listo = false;
   const geo = {}, mats = new Map(), pools = {}, usados = {};
   let pila = [], gruposPool = [], gruposUsados = 0;
 
   function iniciar() {
     if (R) return;
-    const lienzo = document.createElement('canvas'); lienzo.width = ANCHO; lienzo.height = ALTO;
-    R = new THREE.WebGLRenderer({ canvas: lienzo, antialias: true, preserveDrawingBuffer: true });
-    R.setPixelRatio(1); R.setSize(ANCHO, ALTO, false);
+    const lienzo = document.createElement('canvas'); lienzo.width = AN3; lienzo.height = AL3;
+    R = new THREE.WebGLRenderer({ canvas: lienzo, antialias: Q.suavizado, preserveDrawingBuffer: true });
+    R.setPixelRatio(1); R.setSize(AN3, AL3, false);
     R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
     escena = new THREE.Scene();
     camara = new THREE.PerspectiveCamera(38, ANCHO / ALTO, 0.05, 600);
     hemi = new THREE.HemisphereLight('#ffffff', '#8fae6a', 2.4); escena.add(hemi);
     sol = new THREE.DirectionalLight('#fff6e8', 2.6); sol.position.set(14, 26, 10); sol.castShadow = true;
-    sol.shadow.mapSize.set(2048, 2048); sol.shadow.bias = -0.0004; sol.shadow.normalBias = 0.02;
+    sol.shadow.mapSize.set(Q.sombra, Q.sombra); sol.shadow.bias = -0.0004; sol.shadow.normalBias = 0.02;
     const s = sol.shadow.camera; s.left = -22; s.right = 22; s.top = 22; s.bottom = -22; s.near = 1; s.far = 80;
     escena.add(sol); escena.add(sol.target);
     geo.caja = new THREE.BoxGeometry(1, 1, 1);
@@ -251,7 +254,7 @@
     for (const k in pools) for (let i = usados[k] || 0; i < pools[k].length; i++) pools[k][i].visible = false;
     for (let i = gruposUsados; i < gruposPool.length; i++) gruposPool[i].visible = false;
     R.render(escena, camara);
-    ctx.drawImage(R.domElement, 0, 0, ANCHO, ALTO);
+    ctx.imageSmoothingQuality = 'high'; ctx.drawImage(R.domElement, 0, 0, ANCHO, ALTO);
     if (encima) { ctx.save(); try { encima(ctx, P); } finally { ctx.restore(); } }
   }
   let raizG = null;

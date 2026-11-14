@@ -41,10 +41,11 @@ def dibujar(nicho: str, tema: str, router: LLMRouter, avisar=print) -> str:
 def _con_claude(nicho: str, tema: str, avisar) -> str:
     from src import fabrica
     antes = {p["id"] for p in fabrica.listar()}
-    avisar(f"El dibujante (Claude Code) trabaja en: {tema} (hasta {LIMITE_MIN} min)")
+    modelo = str(fabrica.cargar_nichos().get(nicho, {}).get("modelo", "")).strip()   # p. ej. sonnet: gasta menos del plan
+    avisar(f"El dibujante (Claude Code{' · ' + modelo if modelo else ''}) trabaja en: {tema} (hasta {LIMITE_MIN} min)")
     try:
         r = subprocess.run([shutil.which("claude"), "-p", f"/video {nicho} {tema}", "--allowedTools", HERRAMIENTAS,
-                            "--permission-mode", "acceptEdits"],
+                            "--permission-mode", "acceptEdits", *(["--model", modelo] if modelo else [])],
                            cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=LIMITE_MIN * 60)
     except subprocess.TimeoutExpired:
         raise RuntimeError(f"el dibujante tardó más de {LIMITE_MIN} minutos")
