@@ -102,7 +102,7 @@
       e.getAnimations({ subtree: true }).forEach(a => { a.pause(); a.currentTime = Math.max(0, local) * 1000; });
       if (activa) {
         dibujarPrim(i, local, p.dur, t);
-        if (e.querySelector('.portada')) { if (ultimoSub) { sub.innerHTML = ''; ultimoSub = ''; } }
+        if (e.querySelector('.portada, .sin-subtitulo')) { if (ultimoSub) { sub.innerHTML = ''; ultimoSub = ''; } }
         else subtitular(p, local);
       }
     });

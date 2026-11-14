@@ -32,7 +32,8 @@ rótulos pequeños. Nunca emojis, íconos genéricos ni tarjetas de solo texto. 
 6. `consecuencia` (1-2): qué cambia para el espectador, o qué va a notar ahora en su vida.
 7. `remate` (1): frase corta y memorable que cierra el bucle. Que enlace con la escena 1, para que al repetirse el video en bucle
    se oiga continuo.
-8. `cierre` (última): exactamente la frase `cierre` del nicho ("Síguenos para más biología.").
+8. `cierre` (última): exactamente la frase `cierre` del nicho ("Síguenos para más biología."). En `formato: historia`, no: ahí
+   el cierre es la pregunta para comentar (ver abajo).
 
 ### Reglas
 - Sin "sabías que", "increíble", "secreto", "descubre", "en este video" ni preguntas retóricas sueltas.
@@ -55,28 +56,47 @@ y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evi
 - **Hechos 100 % reales y documentados**: años, empresas, cifras y frases tal como pasaron. El tono es de conspiración; el contenido
   no. Nada de teorías falsas, nada de salud o medicina, nada que acuse a una persona viva de un delito. Si un dato no es seguro,
   quítalo. Nada de esto es ficción: no pongas avisos de ficción.
-- **Rápido**: 22-32 escenas de 1 frase corta cada una (5-14 palabras), 220-300 palabras en total (80-110 s). Nada de pausas.
-- Estructura (`rol`): `gancho` (Tito llega con el objeto y su pregunta o una afirmación inocente; la primera frase ya choca) →
-  `pregunta` (Sombra responde corto e inquietante: "Porque así lo decidieron hace cien años.") → `mecanismo` (flashback a la
-  historia real en 10-18 escenas rápidas: el problema que tenían, quiénes se reunieron, qué acordaron o inventaron, cómo lo
-  ocultaron, con un `reenganche` cada 4-5 escenas: una cifra, una frase textual, un "pero") → `revelacion` (lo más oscuro o
-  sorprendente, guardado hasta aquí) → `consecuencia` (de vuelta en la oficina: "y sigue pasando", qué ves hoy por eso) →
-  `remate` (la lección de Sombra en una frase memorable; Tito reacciona) → `cierre` (frase `cierre` del nicho).
+- **Estas reglas reemplazan la duración, la estructura y el cierre de la parte general.** Meta empuja los Reels de 35-70 s:
+  **14-18 escenas de 1 frase corta (5-14 palabras), 130-170 palabras en total (50-65 s; nunca más de 70 s).** Nada de pausas.
+- **Cada escena empuja la acusación.** Si quitas una escena y el video se entiende igual, quítala. Antes de entregar, cuenta las
+  palabras y recorta hasta que quepa.
+- **El medio se comprime, no se explica.** Cómo se descubrió (un post de Reddit, una prueba, una investigación, un velocímetro,
+  un experimento) cabe en UNA escena de máx. 12 palabras ("Un usuario le cambió la batería y su iPhone volvió a volar.").
+  Nunca dos escenas sobre el mismo paso.
+- **Corta en cuanto se dice la revelación.** Demandas, multas, juicios y "qué pasó después" no son un tramo del video: como mucho
+  una cifra (la más fuerte: "Apple aceptó pagar hasta 500 millones de dólares") en el remate o la pregunta final.
+- **Primero el impacto, después el dato.** La primera frase es emocional y acusa ("Te mintieron 50 años: la grasa no era el
+  enemigo."); nunca empieza con un año, "Antes de...", "En 1967..." ni con contexto. Los años y el "cómo pasó" van después.
+- Estructura (`rol`): `gancho` (1-2 escenas: polémica que toca al espectador, con la marca; la primera frase ya choca, nunca
+  "Tito llegó a la oficina...") → `pregunta` (1 escena: Sombra responde corto e inquietante: "Esa regla la inventó De Beers.") →
+  `mecanismo` (flashback rápido en 7-10 escenas: el problema que tenían, qué hicieron, cómo lo ocultaron; empieza por el
+  momento más fuerte, no por el más antiguo) con un `reenganche` cada 3-4 escenas, que de preferencia es **Tito interrumpiendo**
+  con una frase corta y emocional ("—¿Escasos? ¡Si tenían bodegas llenas!") → `revelacion` (2-3 escenas: lo más oscuro, que toca
+  el bolsillo o la vida del espectador) → `remate` (1 escena: la lección de Sombra o el consejo útil: "Cambia la batería antes
+  de comprar otro.") → `cierre` (1 escena, ver abajo).
+- **Final con pelea (`cierre`)**: la última escena NO es "síguenos" ni el lema: es una pregunta que obliga a comentar algo
+  concreto (un modelo, una cifra, un sí o un no, un nombre), máx. 16 palabras, dicha por la voz. Que sea fácil de contestar
+  y deje espacio para contar más: "¿A ti te pasó? Escribe qué iPhone tenías." / "¿Todavía compras productos 'sin grasa'?
+  Comenta YO y cuéntanos cuál." / "¿Cuántos sueldos costó el anillo en tu casa? Escríbelo.".
+  La marca la pone en grande en pantalla junto al logo; tú solo dibujas el fondo (negro con halo, como el ejemplo).
 - Años y cifras siempre con dígitos (1938, 9 de cada 10, 1.000 horas): así coinciden con lo que oye el reconocedor de voz y
   se leen mejor en los subtítulos.
 - Diálogos dentro de la narración, con raya o comillas ("Gasté dos sueldos en este anillo", dijo Tito). Un solo narrador lee todo.
-- Portada: 3-5 palabras que acusan ("TU DIAMANTE ES PUBLICIDAD") y `sub` con el dato que lo prueba.
+- Portada: 2-5 palabras que acusan o duelen, dirigidas al espectador ("TE ENGAÑARON", "TE MINTIERON 50 AÑOS",
+  "APPLE FRENÓ TU IPHONE", "TU DIAMANTE ES PUBLICIDAD") y `sub` con el dato que lo prueba. Nunca una portada informativa
+  ("CASO REAL 1970", "LA HISTORIA DE...") ni un año en `texto`.
 - **Para que se comparta** (la meta es viralidad):
   - Si el tema tiene una marca o persona famosa, nómbrala en `titulo`, portada y primera escena (McDonald's, Disney, Apple,
     Coca-Cola...). Las marcas conocidas multiplican los clics.
   - La primera frase toca al espectador: su dinero, su comida, su teléfono, su tiempo ("Tito pagó 5 dólares por unas palomitas...").
-  - Un dato "imposible de creer pero cierto" antes del segundo 15, y la revelación más fuerte guardada para el final.
+  - Un dato "imposible de creer pero cierto" antes del segundo 10, y la revelación más fuerte guardada para el final.
   - `titulo` de máx. 60 caracteres que acusa o revela ("Disney escondía sus películas a propósito"), nunca descriptivo.
-  - `caption`: primera línea = gancho distinto al título; termina con una pregunta que provoque opinar o etiquetar a alguien
-    ("¿Tú también caíste? Etiqueta a quien necesita saberlo").
+  - `caption`: primera línea = gancho distinto al título; termina con la MISMA pregunta del cierre, para que los comentarios
+    respondan una sola cosa.
 - **Post del mismo tema** (`post` en el guion, para la imagen de dos viñetas que se publica aparte):
   `{"pregunta": "lo que dice Tito, máx. 16 palabras", "respuesta": "la revelación de Sombra, máx. 28 palabras",
   "caption": "2-3 líneas con gancho y pregunta; termina con 'El video completo está en la página.'", "hashtags": [3-5]}`.
+  La `pregunta` de Tito también va primero con la emoción (indignado, asustado), sin años ni "caso real".
   En `pregunta` y `respuesta` marca entre *asteriscos* las 2-4 palabras clave (salen en dorado). La respuesta debe entenderse sola,
   sin haber visto el video, y dejar ganas de verlo.
 
@@ -110,12 +130,15 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (léelo entero antes de dibu
 - Personajes fijos, nunca los redibujes: `S30.detective(...)` (Sombra) y `S30.tito(...)` (el cerdito: `boca`, `orejas`, `objeto`
   para lo que trae en las manos). Para la gente del flashback (empresarios, obreros, público) usa `S30.hombre(...)` con distintas
   `semilla`. Las escenas de oficina usan `S30.oficina(ctx, T)` y `S30.escritorio(ctx, T)` (encima del que está sentado detrás).
+- **Escena 1: Tito grande y con emoción** (asustado con `susto`, indignado o con la boca en 'o'), arriba de la portada, desde el
+  primer cuadro. Ningún rótulo informativo ("CASO REAL", años) en la escena 1: la portada ya dice la acusación.
 - El flashback es donde está la riqueza visual: edificios, fábricas, salas de juntas, anuncios de época, máquinas, contadores,
   gráficas, mapas. Cada escena con fondo completo (nada de fondos vacíos), un elemento principal grande y movimiento.
 - Ritmo rápido: cada escena dura 2-4 s; que algo pase desde el primer cuadro (zoom de cámara con `K.camara`, objeto que entra,
   número que cuenta, sello que golpea). No repitas el mismo plano dos escenas seguidas.
 - Cada escena empieza con `S30.vaiven(ctx, T)` y termina con `S30.pelicula(ctx, T)`. En el `remate` puedes cerrar con `S30.iris`.
-- La marca solo pone el logo en la última escena: esa escena lleva fondo negro con un halo dorado (como los ejemplos).
+- La marca solo pone el logo y la pregunta final en la última escena: esa escena lleva solo fondo negro con un halo dorado (como
+  los ejemplos); no escribas texto en ella.
 - Rótulos con `K.pastilla` (fondo papel o dorado) y títulos o años con `S30.titulo` (Cinzel dorada).
 
 ## 4. Revisión con tus propios ojos (obligatoria)

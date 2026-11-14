@@ -201,8 +201,33 @@ def nuevo_de_autor(nicho: str, guion: dict) -> dict:
     p.update({k: guion[k] for k in ("titulo", "portada", "caption", "hashtags", "post") if guion.get(k)})
     p["escenas"] = [{"voz": e["voz"].strip(), "visual": e.get("visual", ""), "html": "", "origen": "autor"} for e in guion["escenas"]]
     p["avisos"] = guionista.muletillas_en({**guion, "escenas": guion["escenas"][:-1]})  # la última escena pide seguir la página
+    if cargar_nichos()[nicho].get("formato") == "historia":
+        p["avisos"] += _avisos_historia(guion)
     p["autor"], p["estado"] = True, "guion"
     return guardar(p)
+
+
+def _avisos_historia(guion: dict) -> list[str]:
+    """Lo que aleja un guion de Sombra de Evidencia de lo que Meta empuja (Reels de 35-70 s con final que pide comentar)."""
+    escenas = guion.get("escenas") or []
+    palabras = sum(len(str(e.get("voz", "")).split()) for e in escenas)
+    avisos = []
+    if palabras > 175:
+        avisos.append(f"guion largo: {palabras} palabras (≈{round(palabras / 2.9)} s); lo ideal son 130-170 (50-65 s)")
+    if len(escenas) > 19:
+        avisos.append(f"{len(escenas)} escenas; lo ideal son 14-18")
+    if escenas and len(str(escenas[0].get("voz", "")).split()) > 14:
+        avisos.append("la primera frase pasa de 14 palabras")
+    primera = str(escenas[0].get("voz", "")).strip() if escenas else ""
+    if re.match(r"(en |hace |antes |durante )?(el año )?\d{3,4}\b|antes de|había una vez", primera, re.I):
+        avisos.append("la primera frase arranca con contexto o un año, no con el impacto")
+    portada = str((guion.get("portada") or {}).get("texto", ""))
+    if re.search(r"\b1[89]\d\d\b|\b20\d\d\b|caso real", portada, re.I):
+        avisos.append("la portada es informativa (año o 'caso real'): debe acusar o doler")
+    final = str(escenas[-1].get("voz", "")) if escenas else ""
+    if "?" not in final or re.search(r"\bs[ií]guenos\b", final, re.I):
+        avisos.append("la última escena no es una pregunta para comentar")
+    return avisos
 
 
 def hoja(p: dict, por_escena: int = 3) -> tuple[list[Path], list[str]]:
@@ -352,11 +377,17 @@ MARCA = RAIZ / "assets" / "marca"
 
 
 def _html_marca(p: dict, marca: str, ultima: bool) -> str:
-    """Capa de la marca: solo en la última escena, la tarjeta de cierre con el logo y el lema del nicho."""
+    """Capa de la marca: solo en la última escena, la tarjeta de cierre con el logo y el lema del nicho. Con `final: pregunta`
+    (Sombra de Evidencia), en vez del lema va en grande la pregunta para comentar que dice la voz, sin subtítulo encima."""
     if not ultima:
         return ""
     logo = "data:image/jpeg;base64," + base64.b64encode((MARCA / f"{marca}.jpg").read_bytes()).decode()
-    lema = htmlmod.escape(str(cargar_nichos()[p["nicho"]].get("lema", "")))
+    conf = cargar_nichos()[p["nicho"]]
+    if conf.get("final") == "pregunta" and p.get("escenas"):
+        pregunta = htmlmod.escape(p["escenas"][-1]["voz"].lstrip("—-– ").strip())
+        return (f'<div class="marca-cierre con-pregunta sin-subtitulo"><img src="{logo}" alt="">'
+                f'<div class="pregunta-final">{pregunta}</div></div>')
+    lema = htmlmod.escape(str(conf.get("lema", "")))
     return f'<div class="marca-cierre"><img src="{logo}" alt=""><div class="lema">{lema}</div></div>'
 
 

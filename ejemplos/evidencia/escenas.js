@@ -1,4 +1,4 @@
-// "Tu diamante es publicidad" — Sombra de Evidencia. Tito llega con algo cotidiano y Sombra le revela su origen.
+// "Tu diamante es publicidad" — Sombra de Evidencia (versión corta, ~55 s). Tito llega con algo cotidiano y Sombra le revela su origen.
 // Personajes y oficina fijos de S30 (plantilla/sombra.js); aquí solo las piezas de este tema.
 (() => {
   const { W, H, TAU, clamp, lerp, prog, sale, rebote, hash, azar, alfa, mezcla } = K;
@@ -64,22 +64,15 @@
   const oficinaCon = (ctx, T, fn) => { S30.oficina(ctx, T); fn(); };
 
   window.ESCENAS = [
-    // 1. Tito llega orgulloso con la cajita (la portada va abajo, y=860-1240).
+    // 1. Tito abre la cajita: dos sueldos (la portada va abajo, y=860-1240: Tito arriba, como en la oficina).
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       zoom(ctx, t, d, 540, 900, 1.05, 1.15, () => oficinaCon(ctx, T, () =>
-        S30.tito(ctx, lerp(760, 560, sale(prog(t, 0, d * .6))), 1250, 1.45, { T, dir: -1, paso: t < d * .6 ? T * 2.6 : null, caja: 0, mira: -.4 })));
-      S30.pelicula(ctx, T);
-    },
-    // 2. Abre la cajita: dos sueldos.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      zoom(ctx, t, d, 540, 920, 1.25, 1.55, () => oficinaCon(ctx, T, () =>
-        S30.tito(ctx, 540, 1240, 1.2, { T, caja: prog(t, d * .2, d * .5), boca: 'habla', mira: .2 })));
+        S30.tito(ctx, 560, 1250, 1.45, { T, dir: -1, caja: prog(t, d * .2, d * .5), boca: 'habla', mira: -.4 })));
       pastilla(ctx, '2 SUELDOS', 540, 440, prog(t, d * .45, d * .45 + .3), true);
       S30.pelicula(ctx, T);
     },
-    // 3. Sombra, detrás del escritorio: "eso no lo decidiste tú".
+    // 2. Sombra, detrás del escritorio: "la inventó De Beers".
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       oficinaCon(ctx, T, () => {
@@ -89,17 +82,7 @@
       });
       S30.pelicula(ctx, T);
     },
-    // 4. Primer plano de Sombra bajo el foco.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      zoom(ctx, t, d, 360, 640, 1.9, 2.3, () => oficinaCon(ctx, T, () => {
-        S30.detective(ctx, 330, 1180, 1.02, { T, mira: .9, boca: 'sonrisa' });
-        S30.escritorio(ctx, T, { y: 960 });
-      }));
-      ano(ctx, 'HACE CASI 100 AÑOS', t, 380, 52);
-      S30.pelicula(ctx, T);
-    },
-    // 5. 1870, Sudáfrica: la mina gigante.
+    // 3. 1870, Sudáfrica: la mina gigante.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       pasado(ctx, T, { y: 500 });
@@ -120,62 +103,7 @@
       ano(ctx, '1870 · SUDÁFRICA', t);
       S30.pelicula(ctx, T);
     },
-    // 6. Tantos diamantes que el precio iba a caer.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      const r = azar(7), n = Math.round(lerp(6, 40, prog(t, 0, d * .7)));
-      for (let i = 0; i < 40; i++) {
-        if (i >= n) break;
-        const fila = Math.floor(Math.sqrt(i * 2)), x = 540 + (r() - .5) * (720 - fila * 70), y = 1180 - fila * 62 - r() * 24;
-        diamante(ctx, x, y, 50, T, { brillo: .4 });
-      }
-      const k = prog(t, d * .3, d * .95), pts = [[150, 380], [330, 420], [520, 520], [700, 700], [880, 860]];
-      const vis = K.ruta(pts, 40).slice(0, Math.max(2, Math.round(k * 40)));
-      K.trazo(ctx, vis, C.oro, 12);
-      const [ux, uy] = vis[vis.length - 1];
-      ctx.save(); ctx.translate(ux, uy); ctx.rotate(.75); ctx.fillStyle = C.oro; ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(-14, -22); ctx.lineTo(-14, 22); ctx.fill(); ctx.restore();
-      pastilla(ctx, 'PRECIO', 230, 330, prog(t, .1, .4));
-      S30.pelicula(ctx, T);
-    },
-    // 7. Una sola empresa compra las minas, una a una.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      for (let i = 0; i < 6; i++) {
-        const x = 270 + (i % 2) * 540 * .9, y = 470 + Math.floor(i / 2) * 250, x2 = i % 2 ? 790 : 290;
-        ctx.beginPath(); ctx.ellipse(x2, y + 40, 170, 70, 0, 0, TAU); S30.relleno(ctx, '#4a443c', 5);
-        ctx.beginPath(); ctx.ellipse(x2, y + 50, 100, 38, 0, 0, TAU); S30.relleno(ctx, '#2a2622', 4);
-        S30.titulo(ctx, `MINA ${i + 1}`, x2, y - 60, { tam: 30, color: C.claro });
-        const sello = clamp((t - d * .15 - i * d * .12) / .25);
-        if (sello > 0) {
-          ctx.save(); ctx.translate(x2, y + 30); ctx.rotate(-.2); ctx.scale(lerp(2.2, 1, sale(sello)), lerp(2.2, 1, sale(sello))); ctx.globalAlpha = sello;
-          ctx.strokeStyle = C.oro; ctx.lineWidth = 7; K.redondo(ctx, -110, -34, 220, 68, 10); ctx.stroke();
-          ctx.font = `700 40px Cinzel, serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.oro; ctx.fillText('COMPRADA', 0, 3);
-          ctx.restore();
-        }
-        void x;
-      }
-      S30.pelicula(ctx, T);
-    },
-    // 8. Se llamaba De Beers.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      pasado(ctx, T, { y: 500 });
-      zoom(ctx, t, d, 540, 760, 1.15, 1, () => {
-        ctx.fillStyle = '#5f5850'; ctx.beginPath(); ctx.moveTo(140, 520); ctx.lineTo(540, 380); ctx.lineTo(940, 520); ctx.closePath(); S30.relleno(ctx, '#6f685f', 7);
-        ctx.fillStyle = '#4a443c'; ctx.fillRect(160, 520, 760, 70); ctx.strokeStyle = C.tinta; ctx.lineWidth = 6; ctx.strokeRect(160, 520, 760, 70);
-        for (let i = 0; i < 6; i++) { const cx = 210 + i * 132; ctx.fillStyle = C.claro; ctx.fillRect(cx, 590, 56, 420); ctx.strokeRect(cx, 590, 56, 420); }
-        ctx.fillStyle = '#3a352f'; ctx.fillRect(140, 1010, 800, 40); ctx.strokeRect(140, 1010, 800, 40);
-        S30.hombre(ctx, 420, 1210, .8, { T, semilla: 3, gesto: 'apreton', cara: 'sonrisa' });
-        S30.hombre(ctx, 660, 1210, .8, { T, semilla: 8, dir: -1, gesto: 'apreton', cara: 'sonrisa' });
-      });
-      const a = prog(t, .1, .5);
-      ctx.save(); ctx.globalAlpha = a; ctx.font = '700 120px "Cormorant Garamond", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 20; ctx.fillStyle = C.oro; ctx.fillText('DE BEERS', 540, 330); ctx.restore();
-      S30.pelicula(ctx, T);
-    },
-    // 9. Nueve de cada diez diamantes.
+    // 4. Nueve de cada diez diamantes.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       pasado(ctx, T);
@@ -183,28 +111,7 @@
       pastilla(ctx, '9 DE CADA 10', 540, 420, prog(t, d * .65, d * .65 + .3), true);
       S30.pelicula(ctx, T);
     },
-    // 10. La bóveda: guardar muchos, soltar pocos.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      ctx.fillStyle = '#26221d'; ctx.fillRect(140, 380, 800, 760);
-      for (let f = 0; f < 4; f++) {
-        ctx.fillStyle = C.tinta; ctx.fillRect(160, 520 + f * 170, 760, 14);
-        for (let i = 0; i < 9; i++) diamante(ctx, 210 + i * 84, 496 + f * 170, 26, T, { brillo: .3 });
-      }
-      const abre = sale(prog(t, 0, d * .5));
-      ctx.save(); ctx.translate(140, 760); ctx.scale(lerp(1, .12, abre), 1);
-      ctx.beginPath(); ctx.arc(400, 0, 390, 0, TAU); S30.relleno(ctx, '#6f685f', 10);
-      ctx.beginPath(); ctx.arc(400, 0, 300, 0, TAU); S30.relleno(ctx, '#5f5850', 6);
-      ctx.save(); ctx.translate(400, 0); ctx.rotate(T * .8); ctx.strokeStyle = C.tinta; ctx.lineWidth = 16;
-      for (let i = 0; i < 3; i++) { ctx.rotate(Math.PI / 3); ctx.beginPath(); ctx.moveTo(-120, 0); ctx.lineTo(120, 0); ctx.stroke(); }
-      ctx.beginPath(); ctx.arc(0, 0, 40, 0, TAU); ctx.fillStyle = C.oro; ctx.fill(); ctx.restore();
-      ctx.restore();
-      for (let i = 0; i < 2; i++) { const k = clamp((t - d * .55 - i * .4) / .7); if (k > 0) diamante(ctx, 540 + i * 70, lerp(1100, 1210, sale(k)), 30, T); }
-      pastilla(ctx, 'SOLO UNOS POCOS', 540, 330, prog(t, d * .6, d * .6 + .3), true);
-      S30.pelicula(ctx, T);
-    },
-    // 11. Escasos en la vitrina, abundantes en la bodega.
+    // 5. Escasos en la vitrina, abundantes en la bodega.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       pasado(ctx, T);
@@ -223,26 +130,17 @@
       pastilla(ctx, 'BODEGA', 540, 770, prog(t, d * .4, d * .4 + .3));
       S30.pelicula(ctx, T);
     },
-    // 12. 1938: casi nadie compraba.
+    // 6. Tito interrumpe: "¿escasos?".
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      zoom(ctx, t, d, 540, 860, 1.1, 1, () => {
-        S30.hombre(ctx, 540, 1150, .95, { T, semilla: 12 });
-        ctx.fillStyle = '#3d362f'; ctx.fillRect(100, 900, 880, 40); ctx.fillStyle = '#231f1b'; ctx.fillRect(100, 940, 880, 260);
-        ctx.strokeStyle = C.tinta; ctx.lineWidth = 6; ctx.strokeRect(100, 900, 880, 300);
-        ctx.fillStyle = 'rgba(207,198,180,.15)'; ctx.fillRect(160, 960, 760, 120);
-        ctx.save(); ctx.translate(800, 560 + Math.sin(T * 1.5) * 4); ctx.rotate(Math.sin(T * 1.5) * .06);
-        ctx.strokeStyle = C.tinta; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-60, -120); ctx.lineTo(0, -60); ctx.lineTo(60, -120); ctx.stroke();
-        ctx.fillStyle = C.papel; ctx.fillRect(-110, -60, 220, 90); ctx.strokeRect(-110, -60, 220, 90);
-        ctx.font = '700 40px Cinzel, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.tinta; ctx.fillText('VACÍO', 0, -14);
-        ctx.restore();
-        for (let i = 0; i < 3; i++) { const x = 160 + ((T * 30 + i * 300) % 760); ctx.fillStyle = 'rgba(207,198,180,.25)'; ctx.beginPath(); ctx.arc(x, 1250 - i * 6, 18, 0, TAU); ctx.fill(); }
+      oficinaCon(ctx, T, () => {
+        S30.detective(ctx, 290, 1180, 1.02, { T, mira: .7 });
+        S30.escritorio(ctx, T, { y: 960 });
+        S30.tito(ctx, 790, 1240, 1.0, { T, dir: -1, caja: 1, boca: 'habla', mira: -.7 });
       });
-      ano(ctx, '1938', t, 400, 90);
       S30.pelicula(ctx, T);
     },
-    // 13. La agencia de publicidad.
+    // 7. La agencia de publicidad.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       pasado(ctx, T, { y: 520 });
@@ -260,21 +158,7 @@
       pastilla(ctx, 'AGENCIA DE PUBLICIDAD', 540, 300, prog(t, .1, .4), true);
       S30.pelicula(ctx, T);
     },
-    // 14. El amor medido en diamantes: el corazón se transforma.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      const k = sale(prog(t, d * .25, d * .75)), lat = 1 + Math.pow(Math.max(0, Math.sin(T * 5)), 8) * .08 * (1 - k);
-      ctx.save(); ctx.translate(540, 720); ctx.scale(lat, lat);
-      ctx.globalAlpha = 1 - k;
-      ctx.beginPath(); ctx.moveTo(0, 220); ctx.bezierCurveTo(-320, 20, -260, -260, 0, -120); ctx.bezierCurveTo(260, -260, 320, 20, 0, 220);
-      S30.relleno(ctx, '#8a2f2a', 10);
-      ctx.restore();
-      ctx.save(); ctx.globalAlpha = k; diamante(ctx, 540, 700, 230 * lerp(.6, 1, k), T, { oro: .25 }); ctx.restore();
-      if (k > .8) K.halo(ctx, 540, 700, 420, C.oro, .3 * (k - .8) * 5);
-      S30.pelicula(ctx, T);
-    },
-    // 15. Joyas prestadas a estrellas de cine.
+    // 8. Joyas prestadas a estrellas de cine.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       pasado(ctx, T, { x: 720, y: 760 });
@@ -294,7 +178,7 @@
       pastilla(ctx, 'HOLLYWOOD', 720, 340, prog(t, .1, .4), true);
       S30.pelicula(ctx, T);
     },
-    // 16. 1947: la máquina de escribir.
+    // 9. 1947: la máquina de escribir.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       pasado(ctx, T);
@@ -314,7 +198,7 @@
       ano(ctx, '1947', t, 300, 80);
       S30.pelicula(ctx, T);
     },
-    // 17. La frase.
+    // 10. La frase.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T, .5);
       ctx.fillStyle = C.tinta; ctx.fillRect(-20, -20, W + 40, H + 40);
@@ -327,7 +211,7 @@
       ctx.restore();
       S30.pelicula(ctx, T, { fuerza: .7 });
     },
-    // 18. Nunca lo vendas: el cajón con candado.
+    // 11. Nunca lo vendas: el cajón con candado.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       pasado(ctx, T);
@@ -351,7 +235,7 @@
       pastilla(ctx, 'NUNCA LO VENDAS', 540, 420, prog(t, d * .3, d * .3 + .3), true);
       S30.pelicula(ctx, T);
     },
-    // 19. Si todos revendieran, el precio se derrumbaría.
+    // 12. Si todos revendieran, el precio se derrumbaría.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       pasado(ctx, T, { y: 600 });
@@ -366,39 +250,7 @@
       K.trazo(ctx, pts.slice(0, Math.max(2, Math.round(caida * 30))), '#C2503A', 12);
       S30.pelicula(ctx, T);
     },
-    // 20. Al revender te ofrecen mucho menos.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      const parte = sale(prog(t, d * .35, d * .7));
-      const etiqueta = (dx, rot, txt, sub) => {
-        ctx.save(); ctx.translate(540 + dx, 740); ctx.rotate(rot);
-        ctx.beginPath(); ctx.moveTo(-200, -120); ctx.lineTo(160, -120); ctx.lineTo(240, 0); ctx.lineTo(160, 120); ctx.lineTo(-200, 120); ctx.closePath();
-        S30.relleno(ctx, C.papel, 8);
-        ctx.beginPath(); ctx.arc(150, 0, 18, 0, TAU); ctx.fillStyle = C.tinta; ctx.fill();
-        ctx.font = '700 64px "Cormorant Garamond", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.tinta; ctx.fillText(txt, -30, -16);
-        ctx.font = '700 30px Cinzel, serif'; ctx.fillStyle = '#5a1f1a'; ctx.fillText(sub, -30, 54);
-        ctx.restore();
-      };
-      if (parte < .05) etiqueta(0, 0, '$$$$', 'PAGASTE');
-      else {
-        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, 540, H); ctx.clip(); etiqueta(-parte * 60, -parte * .15, '$$$$', 'PAGASTE'); ctx.restore();
-        ctx.save(); ctx.beginPath(); ctx.rect(540, 0, 540, H); ctx.clip(); ctx.translate(parte * 80, parte * 260); etiqueta(0, parte * .5, '$$$$', 'PAGASTE'); ctx.restore();
-      }
-      pastilla(ctx, 'TE OFRECEN MUCHO MENOS', 540, 1080, prog(t, d * .6, d * .6 + .3), true);
-      S30.pelicula(ctx, T);
-    },
-    // 21. Tito pregunta por los dos sueldos.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      oficinaCon(ctx, T, () => {
-        S30.detective(ctx, 290, 1180, 1.02, { T, mira: .7 });
-        S30.escritorio(ctx, T, { y: 960 });
-        S30.tito(ctx, 790, 1240, 1.0, { T, dir: -1, caja: 1, boca: 'habla', mira: -.7 });
-      });
-      S30.pelicula(ctx, T);
-    },
-    // 22. El anuncio de periódico de los años ochenta.
+    // 13. Los dos sueldos: el anuncio de periódico de los años ochenta.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       pasado(ctx, T);
@@ -416,24 +268,7 @@
       ano(ctx, 'AÑOS 80', t, 300, 60);
       S30.pelicula(ctx, T);
     },
-    // 23. Japón 1967: casi ninguna.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      grilla(ctx, 20, 1, t, T, { cols: 5, x0: 200, y0: 560, paso: 170, r: 46, aro: true, ritmo: .05 });
-      ano(ctx, 'JAPÓN · 1967', t, 400, 64);
-      S30.pelicula(ctx, T);
-    },
-    // 24. 1981: seis de cada diez.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      grilla(ctx, 20, 1 + Math.round(11 * prog(t, .2, d * .8)), t, T, { cols: 5, x0: 200, y0: 560, paso: 170, r: 46, aro: true, ritmo: 0 });
-      ano(ctx, 'JAPÓN · 1981', t, 400, 64);
-      pastilla(ctx, '6 DE CADA 10', 540, 1170, prog(t, d * .7, d * .7 + .3), true);
-      S30.pelicula(ctx, T);
-    },
-    // 25. La lección de Sombra.
+    // 14. La lección de Sombra.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       zoom(ctx, t, d, 520, 860, 1.15, 1.35, () => oficinaCon(ctx, T, () => {
@@ -443,15 +278,7 @@
       }));
       S30.pelicula(ctx, T);
     },
-    // 26. Tito cierra la cajita; iris.
-    (ctx, t, d, K, T) => {
-      S30.vaiven(ctx, T);
-      zoom(ctx, t, d, 560, 900, 1.3, 1.5, () => oficinaCon(ctx, T, () =>
-        S30.tito(ctx, 560, 1240, 1.15, { T, caja: 1 - prog(t, d * .1, d * .5), boca: 'triste', orejas: 1, mira: .3 })));
-      S30.pelicula(ctx, T);
-      S30.iris(ctx, prog(t, d * .55, d), 560, 820);
-    },
-    // 27. Cierre: negro con halo; el logo lo pone la marca.
+    // 15. Cierre: negro con halo; el logo y la pregunta los pone la marca.
     (ctx, t, d, K, T) => {
       ctx.fillStyle = C.tinta; ctx.fillRect(0, 0, W, H);
       K.halo(ctx, 540, 660, 620, C.oro, .16);

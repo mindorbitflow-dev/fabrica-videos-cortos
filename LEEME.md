@@ -16,7 +16,8 @@ python run.py --check                            # diagnóstico: ffmpeg, Chromiu
 ## Sombra de Evidencia (lo que fabrica el automático)
 Desde 2026-11-10 el automático solo fabrica el nicho `evidencia`: el cerdito Tito llega a la oficina del detective Sombra con
 algo cotidiano y Sombra le revela su origen oculto (historias reales y documentadas de negocios, publicidad, dinero y psicología,
-contadas como una conspiración), en caricatura blanco y negro de los años 30 con ambiente noir. 22-32 escenas rápidas, 70-100 s.
+contadas como una conspiración), en caricatura blanco y negro de los años 30 con ambiente noir. 14-18 escenas rápidas, 50-65 s
+(Meta empuja los Reels de 35-70 s) y final con una pregunta para comentar (`final: pregunta`), no "síguenos".
 - `plantilla/sombra.js`: personajes fijos (detective Sombra, cerdito Tito, gente de época), oficina noir, luna, olas, niebla,
   película vieja e iris.
 - Marca (`marca: sombra` en el nicho): portada serif y cierre con el logo (`assets/marca/sombra.jpg`).

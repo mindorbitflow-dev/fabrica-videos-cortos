@@ -112,7 +112,7 @@ Tema: {tema}
 
 {reglas}
 
-La última escena debe decir exactamente: "{cierre}"
+{final}
 Ejemplo del formato y del nivel esperado (otro tema):
 {ejemplo}
 
@@ -175,7 +175,9 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
         kit += "\n" + (RAIZ / "plantilla" / "sombra.js").read_text(encoding="utf-8")
     avisar(f"El dibujante (Gemini) escribe el guion: {tema}")
     guion = leer_json(_gemini(router, [PROMPT_GUION.format(
-        nombre=conf["nombre"], descripcion=conf["descripcion"], tono=conf["tono"], tema=tema, cierre=conf.get("cierre", ""),
+        nombre=conf["nombre"], descripcion=conf["descripcion"], tono=conf["tono"], tema=tema,
+        final=("La última escena es la pregunta para comentar descrita en las reglas (nunca \"síguenos\")." if conf.get("final") == "pregunta"
+               else f'La última escena debe decir exactamente: "{conf.get("cierre", "")}"'),
         reglas=_seccion(md, "## 1.", "## 2."), ejemplo=(ejemplo / "guion.json").read_text(encoding="utf-8"))], json_mode=True))
     guion["tema"] = tema
     p = fabrica.nuevo_de_autor(nicho, guion)

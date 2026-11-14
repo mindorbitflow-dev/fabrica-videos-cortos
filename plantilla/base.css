@@ -111,4 +111,8 @@ svg * { transform-box: fill-box; transform-origin: center; }
 .marca-cierre { position: absolute; left: 70px; width: 870px; top: 380px; z-index: 6; display: flex; flex-direction: column;
   align-items: center; gap: 34px; text-align: center; }
 .marca-cierre img { width: 520px; height: 520px; border-radius: 50%; box-shadow: 0 0 120px rgba(212,180,122,.25); }
+.marca-cierre.con-pregunta { top: 330px; gap: 44px; }
+.marca-cierre.con-pregunta img { width: 300px; height: 300px; }
+.marca-cierre .pregunta-final { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 92px; line-height: 1.02;
+  color: #D4B47A; text-shadow: 0 4px 18px #000; }
 .marca-cierre .lema { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 76px; line-height: 1; color: #efe7d6; }
