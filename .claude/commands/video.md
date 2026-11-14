@@ -130,8 +130,11 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (léelo entero antes de dibu
 - Personajes fijos, nunca los redibujes: `S30.detective(...)` (Sombra) y `S30.tito(...)` (el cerdito: `boca`, `orejas`, `objeto`
   para lo que trae en las manos). Para la gente del flashback (empresarios, obreros, público) usa `S30.hombre(...)` con distintas
   `semilla`. Las escenas de oficina usan `S30.oficina(ctx, T)` y `S30.escritorio(ctx, T)` (encima del que está sentado detrás).
-- **Escena 1: Tito grande y con emoción** (asustado con `susto`, indignado o con la boca en 'o'), arriba de la portada, desde el
-  primer cuadro. Ningún rótulo informativo ("CASO REAL", años) en la escena 1: la portada ya dice la acusación.
+- **Escena 1: Tito grande y con una emoción EXAGERADA que cambia según el tema**, arriba de la portada, desde el primer cuadro.
+  No repitas siempre la misma: elige la que pide la historia (indignado porque le cobraron de más, horrorizado al ver la
+  etiqueta, orgulloso y feliz justo antes de enterarse, desesperado con el teléfono lento, confundido, furioso, muerto de
+  vergüenza). Exagérala como caricatura de los 30: salto con `susto`, brazos arriba, boca en 'o', orejas caídas, temblor,
+  el objeto apretado o a punto de caerse. Asustado es solo una opción más. Ningún rótulo informativo ("CASO REAL", años) en la escena 1: la portada ya dice la acusación.
 - El flashback es donde está la riqueza visual: edificios, fábricas, salas de juntas, anuncios de época, máquinas, contadores,
   gráficas, mapas. Cada escena con fondo completo (nada de fondos vacíos), un elemento principal grande y movimiento.
 - Ritmo rápido: cada escena dura 2-4 s; que algo pase desde el primer cuadro (zoom de cámara con `K.camara`, objeto que entra,
