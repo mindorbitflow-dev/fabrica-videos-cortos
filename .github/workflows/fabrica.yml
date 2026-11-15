@@ -1,19 +1,27 @@
-# Crea 2 videos (y sus posts) por ejecución, en 3 horarios al día (9:17, 14:17 y 19:17 hora de Colombia): unos 4-6 al día, porque
-# GitHub se salta o retrasa parte de las ejecuciones programadas. Los envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
+# Dos tandas al día, una para publicar en la mañana y otra en la noche: en cada tanda, un video (y su post) por cada página
+# activa. Cada tanda tiene una ejecución de respaldo 1,5 h después que solo hace las páginas que faltan (GitHub se salta o
+# retrasa ejecuciones). Los envía por correo. También se lanza a mano: Actions → Fábrica de videos → Run workflow.
 name: Fábrica de videos
 
 on:
   schedule:
-    # 2 videos por ejecución (decisión del usuario, 2026-11-13): cada uno gasta parte del límite de uso del plan de Claude.
-    # Hora UTC: 14, 19 y 0 = 9:17, 14:17 y 19:17 en Colombia (UTC-5). GitHub puede retrasarlas unos minutos o saltarse alguna.
-    - cron: "17 0,14,19 * * *"
+    # 2 videos al día por página (decisión del usuario, 2026-11-15): uno para la mañana y otro para la noche.
+    # Hora UTC → Colombia (UTC-5): 9:17 → 4:17 (mañana) y 20:17 → 15:17 (noche); los de :47 son los respaldos.
+    - cron: "17 9 * * *"
+    - cron: "47 10 * * *"
+    - cron: "17 20 * * *"
+    - cron: "47 21 * * *"
   workflow_dispatch:
     inputs:
       nicho:
         description: Nicho (rotar = el que lleva más tiempo sin video)
         type: choice
-        options: [rotar, evidencia, taller, sobrevive, biologia, cotidiano, ciencia, cuerpo, tecnologia, dinero, mente]
+        options: [todos, rotar, evidencia, taller, sobrevive, biologia, cotidiano, ciencia, cuerpo, tecnologia, dinero, mente]
         default: rotar
+      ejemplo:
+        description: Renderizar un ejemplo (ejemplos/NOMBRE) en vez de fabricar, p. ej. sobrevive
+        type: string
+        default: ""
       cantidad:
         description: Videos en esta ejecución (cada uno por correo)
         type: choice
@@ -72,7 +80,12 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
 
       - name: Fabricar y enviar por correo
-        run: python run.py --auto --cantidad "${{ inputs.cantidad || 2 }}" --nicho "${{ inputs.nicho || 'rotar' }}"
+        run: |
+          if [ -n "${{ inputs.ejemplo }}" ]; then
+            python run.py --ejemplo "${{ inputs.ejemplo }}" --correo
+          else
+            python run.py --auto --cantidad "${{ inputs.cantidad || 2 }}" --nicho "${{ inputs.nicho || 'todos' }}"
+          fi
 
       - name: Guardar el video en Actions (respaldo, 7 días)
         if: always()

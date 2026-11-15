@@ -85,12 +85,8 @@ def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
             f"{x.get('tokens_entrada', 0) + x.get('tokens_cache', 0):,} leídos ({x.get('tokens_cache', 0):,} de caché) · {x.get('minutos')} min"]
           if (x := p.get("consumo")) else []),
         *[f"⚠️ {a}" for a in avisos], "",
-        "La imagen adjunta es la portada: úsala como miniatura del reel.",
         "Antes de publicar, revisa que los datos del video sean correctos.",
     ])
-    portada = fabrica.portada_jpg(p)
-    if portada.exists():
-        adjuntos.append((portada.read_bytes(), f"portada_{p['id']}.jpg"))
     _enviar(f"🎬 {p['titulo']}", cuerpo, adjuntos)
 
 

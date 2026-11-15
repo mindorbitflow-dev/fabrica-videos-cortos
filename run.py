@@ -77,6 +77,12 @@ def auto(nicho: str | None, musica: str, cantidad: int = 1) -> None:
         signal.signal(signal.SIGALRM, limite)
     fallidos = 0
     router = LLMRouter()
+    permitidos = [x.strip() for x in os.getenv("NICHOS_AUTO", "").split(",") if x.strip()] or None
+    cola: list = [None] * cantidad
+    if nicho == "todos":   # un video por cada página activa (mañana y noche); el respaldo salta las que ya salieron
+        cola = fabrica.nichos_pendientes(permitidos, horas=6)
+        print(f"Páginas en esta tanda: {', '.join(cola) or 'ninguna (ya salieron todas)'}")
+        cantidad = len(cola)
     for n in range(cantidad):
         if cantidad > 1:
             print(f"\n=== Video {n + 1}/{cantidad} ===")
@@ -85,8 +91,7 @@ def auto(nicho: str | None, musica: str, cantidad: int = 1) -> None:
         try:
             if not correo.configurado():
                 raise RuntimeError("Faltan GMAIL_USUARIO y GMAIL_CLAVE_APP: no tendría a dónde enviar el video.")
-            permitidos = [x.strip() for x in os.getenv("NICHOS_AUTO", "").split(",") if x.strip()] or None
-            elegido = nicho if nicho and nicho != "rotar" else fabrica.elegir_nicho(permitidos)  # el historial ya cuenta el video anterior
+            elegido = cola[n] or (nicho if nicho and nicho not in ("rotar", "todos") else fabrica.elegir_nicho(permitidos))
             print(f"Nicho: {elegido}")
             p = fabrica.fabricar(elegido, "aleatorio", router, musica=musica)
             print(f"Listo: {fabrica.mp4(p)} ({p['duracion']} s, voz {p['voz_usada']})")
@@ -119,7 +124,14 @@ def autor(args) -> None:
     from src import correo, fabrica
     from src.env import load_env
     load_env()
-    if args.guion:
+    if args.ejemplo:   # renderiza un ejemplo (ejemplos/<nombre>: guion.json + escenas.js) como video de su nicho
+        import shutil
+        carpeta = os.path.join("ejemplos", args.ejemplo)
+        with open(os.path.join(carpeta, "guion.json"), encoding="utf-8") as f:
+            p = fabrica.nuevo_de_autor(args.ejemplo, json.load(f))
+        shutil.copy(os.path.join(carpeta, "escenas.js"), fabrica.escenas_js(p))
+        args.render = p["id"]
+    elif args.guion:
         if args.nicho not in fabrica.cargar_nichos():
             sys.exit(f"--guion necesita --nicho. Disponibles: {', '.join(fabrica.cargar_nichos())}")
         with open(args.guion, encoding="utf-8") as f:
@@ -162,6 +174,7 @@ def main() -> None:
     ap.add_argument("--guion", help="Archivo JSON con un guion ya escrito: crea un proyecto de autor (requiere --nicho)")
     ap.add_argument("--hoja", metavar="ID", help="Hojas de contacto de un proyecto")
     ap.add_argument("--render", metavar="ID", help="Renderiza un proyecto ya dibujado")
+    ap.add_argument("--ejemplo", metavar="NOMBRE", help="Renderiza ejemplos/NOMBRE como video de ese nicho (con --correo lo envía)")
     ap.add_argument("--correo", action="store_true", help="Con --render o --personajes: lo envía por correo")
     ap.add_argument("--personajes", action="store_true", help="Imágenes de los personajes (posts y recortes) en salida/personajes")
     args = ap.parse_args()
@@ -182,7 +195,7 @@ def main() -> None:
             correo.enviar_personajes(rutas)
             print("Correo enviado.")
         return
-    if args.hoja or args.render or args.guion:
+    if args.hoja or args.render or args.guion or args.ejemplo:
         return autor(args)
     if not args.nicho:
         subprocess.run([sys.executable, "-m", "streamlit", "run", os.path.join("src", "ui.py"),

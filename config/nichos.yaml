@@ -122,7 +122,7 @@ sobrevive:
   subtitulos: arriba      # subtítulos arriba, planos, sin borde ni relieve (letras blancas: escenas más oscuras)
   portada_en_video: false # arranca directo en el gancho
   voz: "gemini:Charon"
-  auto: false             # se activa cuando apruebes el primer video
+  auto: true              # activo desde 2026-11-15
   estilo: ilustracion
   cierre: "¿Tú qué habrías hecho? Escríbelo en los comentarios."
   lema: "¿Sobrevivirías?"
