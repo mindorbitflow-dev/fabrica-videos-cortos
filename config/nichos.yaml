@@ -16,6 +16,8 @@ evidencia:
   voz: "gemini:Charon"
   estilo: ilustracion
   cierre: "Síguenos: cada sombra tiene su evidencia."   # no se usa en el video: el final es la pregunta (final: pregunta)
+  temas: libre        # Claude elige cada tema (cotidiano o del momento) pensando en viralidad; la lista es solo de ejemplo
+  herramientas: "WebSearch,WebFetch"   # para confirmar temas del momento
   final: pregunta     # la última escena es una pregunta para comentar; la marca la pone en grande con el logo
   portada_en_video: false   # sin título al empezar: el video arranca directo en el gancho
   lema: "Cada sombra tiene su evidencia"

@@ -72,7 +72,8 @@ def _con_claude(nicho: str, tema: str, avisar) -> str:
                 f"puedes inspirarte en estos ejemplos o inventar uno mejor: {ejemplos}. Ya hechos, no los repitas: {hechos})")
     avisar(f"El dibujante (Claude Code{' · ' + modelo if modelo else ''}) trabaja en: {tema[:120]} (hasta {LIMITE_MIN} min)")
     try:
-        r = subprocess.run([shutil.which("claude"), "-p", f"/{comando} {nicho} {tema}", "--allowedTools", HERRAMIENTAS,
+        herramientas = HERRAMIENTAS + ("," + conf["herramientas"] if conf.get("herramientas") else "")
+        r = subprocess.run([shutil.which("claude"), "-p", f"/{comando} {nicho} {tema}", "--allowedTools", herramientas,
                             "--permission-mode", "acceptEdits", "--max-turns", str(MAX_PASOS), "--output-format", "json",
                             *(["--model", modelo] if modelo else [])],
                            cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=LIMITE_MIN * 60)
