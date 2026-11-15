@@ -483,7 +483,11 @@ def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "
         raise RuntimeError("La fabricación automática necesita una clave de IA (Ajustes en la barra lateral).")
     if not tema or tema.lower() == "aleatorio":
         avisar(0, "Eligiendo tema...")
-        tema = guionista.proponer_tema(router, cargar_nichos()[nicho], temas_usados(nicho), libre=autor.con_claude())
+        conf = cargar_nichos()[nicho]
+        if conf.get("temas") == "libre" and autor.con_claude():   # Claude elige siempre el tema; la lista solo sirve de ejemplo
+            tema = guionista.LIBRE
+        else:
+            tema = guionista.proponer_tema(router, conf, temas_usados(nicho), libre=autor.con_claude())
     if autor.disponible(router):  # camino de calidad: el dibujante escribe el guion y dibuja cada escena a medida
         p = cargar(autor.dibujar(nicho, tema, router, lambda m: avisar(0.05, m)))
         if tema != guionista.LIBRE:

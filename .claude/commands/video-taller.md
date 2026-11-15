@@ -13,8 +13,10 @@ Tono: casual y con humor, como un amigo que la arma contigo; frases cortas; fís
 (`P.piloto`, un patito de hule) aparece siempre: a bordo, usándolo o mirando asustado cuando algo falla.
 
 ## 1. Guion (`proyectos/guion_nuevo.json`)
-- **Si el tema dice LIBRE**, elígelo tú: un objeto, electrodoméstico o máquina que casi todos usan o ven a diario (o uno
-  espectacular), con fallas muy visuales y una pieza sorprendente, que no esté en la lista de ya hechos. Pon en `tema` su
+- **Si el tema dice LIBRE** (lo normal en esta página), elígelo tú pensando en viralidad: un objeto, electrodoméstico o
+  máquina que millones usan o ven a diario (o uno espectacular que todos quieren ver por dentro), con fallas muy visuales y una
+  pieza sorprendente que casi nadie conoce. Varía: no repitas el mismo tipo de objeto que en los últimos temas hechos, ni
+  ninguno de la lista de ya hechos. Pon en `tema` su
   nombre corto ("La plancha", "El tanque del inodoro"): queda en el historial para no repetirlo.
 - Formato: `{tema, titulo, portada: {texto, destacado, sub}, escenas: [{rol, voz, visual}], caption, hashtags}` como
   `ejemplos/taller/guion.json`. Español neutro. **18-24 escenas, 250-330 palabras (90-130 s)**, frases de 6-16 palabras.

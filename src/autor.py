@@ -59,8 +59,17 @@ def _con_claude(nicho: str, tema: str, avisar) -> str:
     modelo = str(conf.get("modelo", "")).strip()   # p. ej. sonnet: gasta menos del límite del plan que Opus
     comando = conf.get("comando", "video")
     if tema == "LIBRE":   # lista agotada: Claude elige; le pasamos lo ya hecho para que no repita
-        hechos = "; ".join(fabrica.temas_usados(nicho)[-120:]) or "ninguno"
-        tema = f"LIBRE (elige tú un tema nuevo y con mucho potencial viral; ya hechos, no los repitas: {hechos})"
+        usados = fabrica.temas_usados(nicho)
+        for g in (RAIZ / "ejemplos").glob("*/guion.json"):   # los temas de los ejemplos tampoco (ya se vieron como prueba)
+            try:
+                usados.append(json.loads(g.read_text(encoding="utf-8"))["tema"])
+            except (ValueError, KeyError):
+                pass
+        hechos = "; ".join(usados[-120:]) or "ninguno"
+        from src import guionista
+        ejemplos = "; ".join(str(i) for i in conf.get("ideas", []) if not guionista.ya_usado(str(i), usados))[:900] or "ninguno"
+        tema = (f"LIBRE (elige tú un tema nuevo con mucho potencial viral, de lo que hoy da miedo, curiosidad o conversación; "
+                f"puedes inspirarte en estos ejemplos o inventar uno mejor: {ejemplos}. Ya hechos, no los repitas: {hechos})")
     avisar(f"El dibujante (Claude Code{' · ' + modelo if modelo else ''}) trabaja en: {tema[:120]} (hasta {LIMITE_MIN} min)")
     try:
         r = subprocess.run([shutil.which("claude"), "-p", f"/{comando} {nicho} {tema}", "--allowedTools", HERRAMIENTAS,

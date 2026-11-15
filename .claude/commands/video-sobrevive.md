@@ -14,8 +14,9 @@ con tensión, en segunda persona ("tú"), frases cortas. La persona protagonista
 pantalón azul oscuro, siempre la misma.
 
 ## 1. Guion (`proyectos/guion_nuevo.json`)
-- **Si el tema dice LIBRE**, elígelo tú: una situación extrema real que la gente teme o ve en noticias, con un mito popular que
-  falla y una respuesta comprobada, que no esté en la lista de ya hechos. Pon en `tema` un nombre corto ("El rayo en campo
+- **Si el tema dice LIBRE** (lo normal en esta página), elígelo tú pensando en viralidad: una situación extrema real que la
+  gente teme, ha visto en noticias o en películas, con un mito popular que falla y una respuesta comprobada que sorprende.
+  Alterna tipos (máquinas, naturaleza, animales, agua, alturas, fuego) y no repitas ninguna de la lista de ya hechos. Pon en `tema` un nombre corto ("El rayo en campo
   abierto"): queda en el historial para no repetirlo.
 - Formato: `{tema, titulo, portada: {texto, destacado, sub}, escenas: [{rol, voz, visual}], caption, hashtags}` como
   `ejemplos/sobrevive/guion.json`. Español neutro. **15-20 escenas, 170-240 palabras (60-85 s)**, frases de 5-16 palabras.

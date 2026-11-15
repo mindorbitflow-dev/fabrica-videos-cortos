@@ -115,7 +115,7 @@ LIBRE = "LIBRE"   # "elige tú el tema": lo decide el dibujante (Claude Code) cu
 def proponer_tema(router: LLMRouter, nicho: dict, usados: list[str], libre: bool = False) -> str:
     """Tema nuevo para el nicho: primero una idea del banco del nicho (config/nichos.yaml) que no se haya usado, porque son temas reales,
     concretos y verificables, y en orden (el banco va de más a menos viral); la IA solo propone cuando el banco se acabó (sus temas libres salían abstractos o con premisas inventadas)."""
-    libres = [i for i in nicho.get("ideas", []) if not ya_usado(i, usados)]
+    libres = [str(i) for i in nicho.get("ideas", []) if not ya_usado(str(i), usados)]
     if libres:  # al azar entre las que faltan: la lista se usa como banco, no como fila
         return random.choice(libres)
     if libre:   # lista agotada y hay Claude Code: él elige un tema real y viral que no se haya hecho

@@ -70,6 +70,7 @@ taller:
   final: pregunta         # la última escena es una pregunta para comentar
   voz: "gemini:Puck"
   auto: true              # en la rotación automática, alternando con Evidencia (aprobado 2026-11-14)
+  temas: libre            # Claude elige cada tema pensando en viralidad; la lista de ideas es solo de ejemplo
   modelo: sonnet          # modelo de Claude Code para este nicho: gasta menos del límite del plan que Opus
   comando: video-taller   # reglas propias y cortas (.claude/commands/video-taller.md): menos tokens en cada paso
   texto: oscuro           # cielo y pasto claros: subtítulos, portada y pregunta final en letras oscuras
@@ -113,6 +114,7 @@ sobrevive:
   formato: supervivencia  # situación → dilema → el mito falla → lo que te salva → caso real → instrucción corta (reglas en .claude/commands/video-sobrevive.md)
   motor: 3d
   comando: video-sobrevive
+  temas: libre            # Claude elige cada tema pensando en viralidad; la lista de ideas es solo de ejemplo
   modelo: sonnet
   final: pregunta
   subtitulos: arriba      # subtítulos arriba, planos, sin borde ni relieve (letras blancas: escenas más oscuras)
@@ -141,7 +143,7 @@ sobrevive:
     - Caes al agua helada
     - Un tornado se acerca y estás en la calle
     - Te pierdes en el desierto sin agua
-    - Arenas movedizas: el mito y la verdad
+    - "Arenas movedizas: el mito y la verdad"
     - Te quedas encerrado en un carro bajo el sol
     - Te caes de un barco en alta mar
     - Un enjambre de abejas te persigue
