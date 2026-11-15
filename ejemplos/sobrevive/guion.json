@@ -1,0 +1,30 @@
+{
+  "tema": "El ascensor que se suelta",
+  "titulo": "Tu ascensor se suelta en el piso 30: ¿saltas o te acuestas?",
+  "portada": {
+    "texto": "TIENES 4 SEGUNDOS",
+    "destacado": "4 SEGUNDOS",
+    "sub": "¿saltas o te acuestas?"
+  },
+  "escenas": [
+    {"rol": "gancho", "voz": "Tu ascensor se suelta en el piso 30. Tienes cuatro segundos.", "visual": "dentro del ascensor: el cable se rompe con chispas y la cabina cae; la persona flota asustada"},
+    {"rol": "pregunta", "voz": "¿Saltas justo antes del golpe, o haces otra cosa?", "visual": "la cabina cae por el pozo; las puertas de los pisos pasan volando"},
+    {"rol": "mecanismo", "voz": "Casi todos dirían que saltar. Parece lógico: si estás en el aire, no te golpeas.", "visual": "la persona salta dentro de la cabina, en cámara lenta"},
+    {"rol": "mecanismo", "voz": "Pero vas cayendo a unos 150 kilómetros por hora.", "visual": "vista de corte: la cabina baja a toda velocidad con una flecha enorme hacia abajo"},
+    {"rol": "mecanismo", "voz": "Y tu mejor salto te frena apenas unos 10 kilómetros por hora.", "visual": "una flecha gigante hacia abajo y una diminuta hacia arriba"},
+    {"rol": "reenganche", "voz": "Además, tendrías que acertar el momento exacto, a oscuras, sin ver el suelo.", "visual": "la luz parpadea; la persona mira para todos lados"},
+    {"rol": "mecanismo", "voz": "Así que llegas casi igual de rápido.", "visual": "la cabina llega al fondo: nube de polvo y la cámara tiembla"},
+    {"rol": "mecanismo", "voz": "Quedarte de pie tampoco sirve: tus rodillas se llevan todo el golpe de una vez.", "visual": "la persona de pie; brillo rojo en las rodillas"},
+    {"rol": "revelacion", "voz": "Lo que recomiendan muchos físicos suena raro: acuéstate boca arriba en el piso.", "visual": "vista desde arriba: la persona se acuesta en el piso de la cabina"},
+    {"rol": "revelacion", "voz": "Así el golpe se reparte por todo tu cuerpo, y no solo en tus rodillas.", "visual": "muchas flechitas a lo largo del cuerpo acostado"},
+    {"rol": "reenganche", "voz": "Pero la buena noticia es que casi nunca lo vas a necesitar.", "visual": "la cabina se detiene suave; la persona respira"},
+    {"rol": "mecanismo", "voz": "Desde hace más de 150 años, los ascensores tienen frenos que muerden los rieles si bajan muy rápido.", "visual": "primer plano de los rieles: las mordazas se cierran con chispas y la cabina se frena"},
+    {"rol": "mecanismo", "voz": "Y abajo del todo hay amortiguadores gigantes, como resortes.", "visual": "el fondo del pozo: los amortiguadores se aplastan bajo la cabina"},
+    {"rol": "revelacion", "voz": "En 1945, Betty Lou Oliver cayó 75 pisos en un ascensor del Empire State… y sobrevivió.", "visual": "un rascacielos de noche en corte: la cabina cae por dentro"},
+    {"rol": "revelacion", "voz": "El cable amontonado en el fondo y el aire apretado del pozo frenaron la caída.", "visual": "el cable enrollado en el fondo y flechas de aire hacia arriba frenan la cabina"},
+    {"rol": "remate", "voz": "Así que si tu ascensor se suelta: al piso, boca arriba, y confía en los frenos.", "visual": "la persona acostada; la cabina se detiene, se abren las puertas y se levanta sonriendo"},
+    {"rol": "cierre", "voz": "¿Tú qué habrías hecho: saltar o acostarte? Escríbelo en los comentarios.", "visual": "la persona sale del ascensor; la pregunta en grande"}
+  ],
+  "caption": "Tu ascensor se suelta en el piso 30 y tienes 4 segundos. Saltar no sirve: esto es lo que recomiendan los físicos. ¿Tú qué habrías hecho: saltar o acostarte? Escríbelo en los comentarios.",
+  "hashtags": ["#supervivencia", "#fisica", "#ascensor", "#comosobrevivir"]
+}

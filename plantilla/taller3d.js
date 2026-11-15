@@ -232,7 +232,77 @@
           color: o.color || '#efe9dc', opacidad: .55 * (1 - k), baja: true, sombra: false });
       }
     },
-    // Piloto de la página: un patito de hule. Cámbialo por el personaje de la marca cuando exista.
+    // Persona low-poly (mide ~1,75 m con esc 1; mira hacia +Z; los pies quedan en y=0 salvo en 'salta', 'cae' y 'acostado').
+    //   pose: 'parado' | 'camina' | 'corre' | 'salta' | 'cae' | 'agachado' | 'protege' | 'sentado' | 'acostado'
+    //   T (tiempo, anima caminar/correr/agitar), susto 0-1 (ojos grandes, boca abierta), inclina (torso hacia delante, rad),
+    //   colores: { piel, camisa, pantalon, pelo, zapatos }. `art` sobrescribe ángulos: { piernaI, piernaD, rodillaI, rodillaD,
+    //   brazoI, brazoD (hacia delante), abreI, abreD (hacia afuera), codoI, codoD }.
+    persona: (o = {}) => {
+      const T = o.T || 0, pose = o.pose || 'parado', c = { piel: '#f1c7a3', camisa: '#f08c2e', pantalon: '#3d5a80', pelo: '#3b2a20', zapatos: '#2b2b2e', ...(o.colores || {}) };
+      const s = Math.sin, A = { piernaI: 0, piernaD: 0, rodillaI: 0, rodillaD: 0, brazoI: .05, brazoD: .05, abreI: .12, abreD: .12, codoI: .15, codoD: .15 };
+      let inclina = o.inclina || 0, apoyo = true;
+      if (pose === 'camina' || pose === 'corre') {
+        const k = pose === 'corre' ? 1 : .55, f = pose === 'corre' ? 11 : 6.5, ph = T * f;
+        A.piernaI = s(ph) * .7 * k; A.piernaD = -s(ph) * .7 * k;
+        A.rodillaI = Math.max(0, -s(ph + .9)) * 1.3 * k + .1; A.rodillaD = Math.max(0, s(ph + .9)) * 1.3 * k + .1;
+        A.brazoI = -s(ph) * .8 * k; A.brazoD = s(ph) * .8 * k; A.codoI = A.codoD = pose === 'corre' ? 1.5 : .35;
+        if (pose === 'corre') inclina += .22;
+      } else if (pose === 'salta') {
+        Object.assign(A, { piernaI: .5, piernaD: .4, rodillaI: 1.1, rodillaD: 1, brazoI: 2.7, brazoD: 2.7, abreI: .35, abreD: .35, codoI: .2, codoD: .2 }); apoyo = false;
+      } else if (pose === 'cae') {
+        const w = s(T * 13) * .45;
+        Object.assign(A, { piernaI: .35 + s(T * 9) * .3, piernaD: -.1 - s(T * 9) * .3, rodillaI: .6, rodillaD: .9, brazoI: 2.6 + w, brazoD: 2.6 - w, abreI: .6, abreD: .6, codoI: .4, codoD: .4 }); apoyo = false;
+      } else if (pose === 'agachado') {
+        Object.assign(A, { piernaI: 1.25, piernaD: 1.25, rodillaI: 2.3, rodillaD: 2.3, brazoI: .9, brazoD: .9, codoI: .9, codoD: .9 }); inclina += .35;
+      } else if (pose === 'protege') {
+        Object.assign(A, { piernaI: 1.15, piernaD: 1.15, rodillaI: 2.2, rodillaD: 2.2, brazoI: 2.5, brazoD: 2.5, abreI: .35, abreD: .35, codoI: 1.9, codoD: 1.9 }); inclina += .6;
+      } else if (pose === 'sentado') {
+        Object.assign(A, { piernaI: 1.5, piernaD: 1.5, rodillaI: 1.5, rodillaD: 1.5, brazoI: .5, brazoD: .5, codoI: .8, codoD: .8 });
+      } else if (pose === 'acostado') {
+        Object.assign(A, { abreI: .45, abreD: .45, brazoI: .1, brazoD: .1, codoI: .1, codoD: .1, piernaI: .05, piernaD: -.05 }); apoyo = false;
+      }
+      Object.assign(A, o.art || {});
+      // altura de la cadera para que el pie más bajo toque el suelo
+      const pie = (a, b) => .44 * Math.cos(a) + .44 * Math.cos(a - b) + .07;
+      const cadera = pose === 'sentado' ? .5 : apoyo ? Math.max(pie(A.piernaI, A.rodillaI), pie(A.piernaD, A.rodillaD)) : .95;
+      const acostado = pose === 'acostado';
+      P.grupo({ pos: o.pos, rot: o.rot, esc: o.esc ?? 1 }, () => P.grupo({ pos: acostado ? [0, .16, .95] : [0, 0, 0], rot: acostado ? [-Math.PI / 2, 0, 0] : [0, 0, 0] }, () => {
+        const yH = acostado ? .95 : cadera;
+        // piernas
+        for (const [lado, a, b] of [[-1, A.piernaI, A.rodillaI], [1, A.piernaD, A.rodillaD]]) {
+          const H = [lado * .1, yH, 0], K = [H[0], H[1] - .44 * Math.cos(a), .44 * Math.sin(a)], F = [H[0], K[1] - .44 * Math.cos(a - b), K[2] + .44 * Math.sin(a - b)];
+          P.tubo({ de: H, a: K, r: .075, color: c.pantalon }); P.esfera({ pos: K, r: .075, color: c.pantalon });
+          P.tubo({ de: K, a: F, r: .065, color: c.pantalon });
+          P.caja({ pos: [F[0], F[1] - .02, F[2] + .06], rot: [-(a - b) * .2, 0, 0], tam: [.12, .09, .26], color: c.zapatos });
+        }
+        P.esfera({ pos: [0, yH, 0], r: .17, esc: [1.05, .6, .8], color: c.pantalon });
+        // torso, cabeza y brazos (se inclinan juntos desde la cadera)
+        P.grupo({ pos: [0, yH, 0], rot: [inclina, 0, 0] }, () => {
+          P.cilindro({ pos: [0, .27, 0], r: .19, r2: .14, alto: .56, color: c.camisa });
+          P.esfera({ pos: [0, .55, 0], r: .19, esc: [1.15, .45, .8], color: c.camisa });
+          P.cilindro({ pos: [0, .64, 0], r: .055, alto: .12, color: c.piel });
+          const y0 = .8, ojo = .016 * (1 + (o.susto || 0) * .45);
+          P.esfera({ pos: [0, y0, 0], r: .135, esc: [1, 1.08, 1], color: c.piel });
+          P.esfera({ pos: [0, y0 + .045, -.02], r: .14, esc: [1.04, .8, 1.02], color: c.pelo });
+          for (const x of [-.048, .048]) {
+            P.esfera({ pos: [x, y0 + .015, .118], r: ojo * 1.7, color: '#ffffff', sombra: false });
+            P.esfera({ pos: [x + (o.mira || 0) * .01, y0 + .015, .132], r: ojo * .8, color: '#1b1b1b', sombra: false });
+          }
+          if ((o.susto || 0) > .3 || o.boca === 'o') P.esfera({ pos: [0, y0 - .06, .118], r: .022 + (o.susto || 0) * .012, esc: [1, 1.3, .5], color: '#5a2320', sombra: false });
+          else P.caja({ pos: [0, y0 - .058, .125], tam: [.05, .012, .01], color: '#5a2320', sombra: false });
+          for (const [lado, p, r, e] of [[-1, A.brazoI, A.abreI, A.codoI], [1, A.brazoD, A.abreD, A.codoD]]) {
+            const S = [lado * .22, .5, 0];
+            const d1 = [lado * Math.sin(r), -Math.cos(r) * Math.cos(p), Math.cos(r) * Math.sin(p)];
+            const d2 = [lado * Math.sin(r), -Math.cos(r) * Math.cos(p + e), Math.cos(r) * Math.sin(p + e)];
+            const E = S.map((v, i) => v + d1[i] * .29), M = E.map((v, i) => v + d2[i] * .27);
+            P.esfera({ pos: S, r: .07, color: c.camisa });
+            P.tubo({ de: S, a: E, r: .06, color: c.camisa }); P.esfera({ pos: E, r: .055, color: c.piel });
+            P.tubo({ de: E, a: M, r: .05, color: c.piel }); P.esfera({ pos: M, r: .06, color: c.piel });
+          }
+        });
+      }));
+    },
+    // Piloto de la página Así se fabrica: un patito de hule.
     piloto: (o = {}) => P.grupo({ pos: o.pos, rot: o.rot, esc: o.esc ?? 1 }, () => {
       const am = o.color || '#ffd23a', tiembla = o.susto ? Math.sin((o.T || 0) * 40) * .04 * o.susto : 0;
       P.esfera({ pos: [0, .28, 0], r: .3, esc: [1.15, .9, 1], color: am });
@@ -255,7 +325,7 @@
     const dentro = !!m.interior, cielo = m.cielo || (dentro ? '#e8edf1' : '#bfe2f2');
     escena.background = new THREE.Color(cielo);
     escena.fog = m.niebla === false ? null : new THREE.Fog(cielo, m.nieblaDesde ?? (dentro ? 20 : 30), m.nieblaHasta ?? 110);
-    hemi.groundColor.set(dentro ? '#b9b1a6' : '#8fae6a');
+    hemi.groundColor.set(dentro ? '#b9b1a6' : m.pasto === false ? '#8d939b' : '#8fae6a');
     mundo.pasto.visible = !dentro && m.pasto !== false; mundo.muro.visible = !dentro && !!m.muro;
     mundo.arboles.visible = !dentro && m.arboles !== false; mundo.pista.visible = !dentro && !!m.pista; mundo.interior.visible = dentro;
     if (m.pista) { mundo.pista.position.x = m.pistaX ?? 0; }

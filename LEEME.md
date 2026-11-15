@@ -44,6 +44,13 @@ porque sin ella algo falla a la vista (no se levanta, da una maroma, derrapa, ch
 - Ahorro del plan: `modelo: sonnet` en el nicho (Claude Code usa Sonnet en vez de Opus), hojas de 2 cuadros por escena y una
   sola revisión si no hay errores. `texto: oscuro` pone subtítulos, portada y pregunta final en letras oscuras.
 
+## ¿Sobrevivirías? (nicho `sobrevive`, en pruebas)
+Situaciones extremas en segunda persona, en 3D con personas: lo que casi todos harían falla y lo que de verdad te salva.
+- Personas: `P.persona({ pose, ... })` en `plantilla/taller3d.js` (parado, camina, corre, salta, cae, agachado, protege, sentado,
+  acostado; `susto` en la cara). Reglas en `.claude/commands/video-sobrevive.md`; ejemplo en `ejemplos/sobrevive/` (el ascensor).
+- Sin sangre ni heridas: el golpe se corta con polvo o temblor. Consejos según rescatistas y física.
+- `auto: false` hasta aprobar el primer video.
+
 ## Videos de autor (la calidad de referencia)
 Los videos que funcionan en redes (1Cell1Life y similares) son ilustración vectorial dibujada por código **a medida para cada tema**.
 Eso no lo logra una IA gratuita rellenando plantillas, así que el camino de calidad es otro: Claude Code escribe el guion y el

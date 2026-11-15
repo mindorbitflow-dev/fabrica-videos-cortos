@@ -106,6 +106,48 @@ taller:
     - El ascensor
     - El dron
 
+sobrevive:
+  nombre: 🆘 ¿Sobrevivirías?
+  descripcion: Situaciones extremas en segunda persona (un ascensor que cae, un rayo, hielo que se rompe, una corriente que te arrastra) en 3D con personas; lo que casi todos harían falla y lo que de verdad te salva, con física real.
+  tono: Directo y con tensión, en segunda persona ("tú"), frases cortas. Primero el miedo, luego el mito que falla y al final la respuesta que salva. Consejos correctos según rescatistas y física; nada de sangre ni heridas.
+  formato: supervivencia  # situación → dilema → el mito falla → lo que te salva → caso real → instrucción corta (reglas en .claude/commands/video-sobrevive.md)
+  motor: 3d
+  comando: video-sobrevive
+  modelo: sonnet
+  final: pregunta
+  subtitulos: arriba      # subtítulos arriba, planos, sin borde ni relieve (letras blancas: escenas más oscuras)
+  portada_en_video: false # arranca directo en el gancho
+  voz: "gemini:Charon"
+  auto: false             # se activa cuando apruebes el primer video
+  estilo: ilustracion
+  cierre: "¿Tú qué habrías hecho? Escríbelo en los comentarios."
+  lema: "¿Sobrevivirías?"
+  paleta: {fondo: ["#1d2229", "#2a3039", "#3a424d"], acento: "#F4C430", principal: "#F4C430", secundario: "#2F3E57", peligro: "#E5484D", ok: "#5FBF6A"}
+  ideas:
+    # situaciones extremas reales: la fábrica toma una al azar entre las que no se han hecho; al acabarse, Claude elige otras
+    - El ascensor que se suelta
+    - Te cae un rayo en campo abierto
+    - El hielo del lago se rompe bajo tus pies
+    - Una corriente de resaca te arrastra mar adentro
+    - Tu carro cae a un río
+    - Terremoto dentro de un edificio (el mito del triángulo de la vida)
+    - Incendio en tu edificio y el pasillo lleno de humo
+    - El avión pierde presión y caen las máscaras
+    - Los frenos de tu carro fallan en una bajada
+    - Una avalancha te alcanza esquiando
+    - El mar se retira de golpe en la playa (tsunami)
+    - Te atragantas comiendo y estás solo
+    - Te muerde una serpiente en el campo
+    - Caes al agua helada
+    - Un tornado se acerca y estás en la calle
+    - Te pierdes en el desierto sin agua
+    - Arenas movedizas: el mito y la verdad
+    - Te quedas encerrado en un carro bajo el sol
+    - Te caes de un barco en alta mar
+    - Un enjambre de abejas te persigue
+    - Te pierdes en el bosque de noche
+    - Te sorprende una tormenta eléctrica nadando
+
 biologia:
   nombre: 🧬 Biología que no te contaron
   descripcion: Datos reales del cuerpo y los animales que contradicen lo que la gente cree, con giro sorprendente.
