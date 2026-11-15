@@ -30,14 +30,14 @@ contadas como una conspiración), en caricatura blanco y negro de los años 30 c
 - Ejemplo completo: `ejemplos/evidencia/` ("Tu diamante es publicidad"); `ejemplos/misterio/` es un relato anterior con más piezas.
 - Música: pon pistas de suspenso sin derechos de autor en `assets/musica/` (hoy solo hay un ambiente).
 
-## Así se fabrica — Taller 3D (nicho `taller`, en pruebas)
+## Así se fabrica — Taller 3D (nicho `taller`)
 Cómo funciona una máquina armándola desde cero en un mundo 3D: empieza terminada, se reduce a lo mínimo y cada pieza aparece
 porque sin ella algo falla a la vista (no se levanta, da una maroma, derrapa, choca). 18-24 escenas, 90-130 s.
 - `plantilla/taller3d.js` (`T3`): three.js en modo inmediato (sin estado) sobre el mismo canvas de las escenas de autor. Mundo
   (pasto, muro, árboles, pista), cámara, piezas (caja, cilindro, tubo, hélice con disco borroso, rueda, flecha de fuerza, viento,
   polvo) y el piloto de la página (un patito de hule provisional). three.js va en `plantilla/vendor/` (licencia MIT).
 - Ejemplo completo: `ejemplos/taller/` ("Cómo vuela un avión"). Reglas del guion y del dibujo en `.claude/commands/video.md`.
-- `auto: false` hasta aprobar el primer video; para activarlo en GitHub, cambia a `auto: true` en `config/nichos.yaml`.
+- En la rotación automática (`auto: true`): alterna con Evidencia en los mismos horarios.
 - Render: el 3D se dibuja al 75 % y se escala (`T3_CALIDAD`); ~0,2 s por cuadro, unos 10-12 min para un video de 100 s.
 - Reglas propias y cortas: `.claude/commands/video-taller.md` (`comando: video-taller` en el nicho). Cualquier objeto,
   electrodoméstico o máquina; `mundo: { interior: true }` para objetos de casa. El correo trae el consumo de Claude de cada video.

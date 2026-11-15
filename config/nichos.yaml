@@ -68,7 +68,7 @@ taller:
   motor: 3d               # escenas en 3D con three.js (plantilla/taller3d.js)
   final: pregunta         # la última escena es una pregunta para comentar
   voz: "gemini:Puck"
-  auto: false             # se activa en la rotación cuando apruebes el primer video
+  auto: true              # en la rotación automática, alternando con Evidencia (aprobado 2026-11-14)
   modelo: sonnet          # modelo de Claude Code para este nicho: gasta menos del límite del plan que Opus
   comando: video-taller   # reglas propias y cortas (.claude/commands/video-taller.md): menos tokens en cada paso
   texto: oscuro           # cielo y pasto claros: subtítulos, portada y pregunta final en letras oscuras
