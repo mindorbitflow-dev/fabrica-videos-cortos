@@ -2,9 +2,9 @@
 // se corta con polvo. Ejes: la cámara suele mirar la cabina de frente desde +Z; y = altura (el fondo del pozo es y=0).
 (() => {
   const { lerp, prog, sale, clamp } = K;
-  const C = { muro: '#5d636b', metal: '#a3abb5', piso: '#3a3f46', puerta: '#2b3036', marco: '#c9ced6', luz: '#fff3c4',
+  const C = { muro: '#2b4c7e', metal: '#17b3a3', piso: '#1c2a44', puerta: '#ff6b3d', marco: '#ffd23f', luz: '#fff3c4',
               rojo: '#e5484d', verde: '#5fbf6a', ropa: { camisa: '#f4c430', pantalon: '#2f3e57' } };
-  const OSCURO = { pasto: false, arboles: false, cielo: '#1d2229', nieblaDesde: 18, nieblaHasta: 70 };
+  const OSCURO = { pasto: false, arboles: false, cielo: '#13203d', nieblaDesde: 18, nieblaHasta: 70 };
 
   // Pozo del ascensor alrededor de la altura y (solo el tramo visible, para no dibujar 90 m de paredes).
   function pozo(P, y, corte = false) {   // corte: sin la pared derecha, para ver los rieles y los frenos
@@ -23,7 +23,7 @@
   // Cabina: o = { y, cable: 'entero' | 'roto', luz 0-1, puertas 0-1 (abiertas), mordazas 0-1 }
   function cabina(P, o) {
     P.grupo({ pos: [0, o.y, 0] }, () => {
-      P.caja({ pos: [0, .06, 0], tam: [2.6, .12, 2.4], color: '#6f5a46' });
+      P.caja({ pos: [0, .06, 0], tam: [2.6, .12, 2.4], color: '#c0392b' });
       P.caja({ pos: [0, 1.36, -1.18], tam: [2.6, 2.6, .08], color: C.metal });
       for (const s of [-1, 1]) {
         P.caja({ pos: [s * 1.3, 1.36, 0], tam: [.08, 2.6, 2.4], color: C.metal });
@@ -102,7 +102,7 @@
     // 6. A oscuras: la luz parpadea y no se ve el suelo.
     (ctx, t, d, K, T) => {
       const y = 14 - 4 * t, luz = Math.sin(T * 23) > .2 ? 1 : .05;
-      T3.cuadro(ctx, T, { camara: { desde: [.6, y + 1.5, 4.4], hacia: [0, y + 1.2, 0], fov: 50 }, mundo: { ...OSCURO, cielo: luz > .5 ? '#1d2229' : '#0b0d10' } }, P => {
+      T3.cuadro(ctx, T, { camara: { desde: [.6, y + 1.5, 4.4], hacia: [0, y + 1.2, 0], fov: 50 }, mundo: { ...OSCURO, cielo: luz > .5 ? '#13203d' : '#070b14' } }, P => {
         pozo(P, y); cabina(P, { y, cable: 'roto', luz });
         persona(P, { pose: 'parado', pos: [0, y + .12, 0], rot: [0, Math.sin(T * 3) * .9, 0], T, susto: 1 });
       });
@@ -180,9 +180,9 @@
       T3.cuadro(ctx, T, { camara: { desde: [60, 120, 230], hacia: [0, 125, 0], fov: 44 }, mundo: { pasto: false, arboles: false, cielo: '#16213a', niebla: false } }, P => {
         P.caja({ pos: [0, -1, 0], tam: [400, 2, 400], color: '#2c323b' });
         for (const [w, y0, h] of [[60, 0, 120], [44, 120, 90], [28, 210, 50], [14, 260, 30]]) {
-          P.caja({ pos: [-w / 4 - 2, y0 + h / 2, 0], tam: [w / 2 - 4, h, w], color: '#4a5260' });
-          P.caja({ pos: [w / 4 + 2, y0 + h / 2, 0], tam: [w / 2 - 4, h, w], color: '#4a5260' });
-          P.caja({ pos: [0, y0 + h / 2, -w / 2 + 2], tam: [8, h, 4], color: '#4a5260' });
+          P.caja({ pos: [-w / 4 - 2, y0 + h / 2, 0], tam: [w / 2 - 4, h, w], color: '#3a4f7a' });
+          P.caja({ pos: [w / 4 + 2, y0 + h / 2, 0], tam: [w / 2 - 4, h, w], color: '#3a4f7a' });
+          P.caja({ pos: [0, y0 + h / 2, -w / 2 + 2], tam: [8, h, 4], color: '#3a4f7a' });
           for (let fy = y0 + 4; fy < y0 + h - 2; fy += 9) for (const s of [-1, 1]) for (let fx = 6; fx < w / 2 - 4; fx += 7)
             P.caja({ pos: [s * fx, fy, w / 2 + .1], tam: [3, 4, .2], color: '#ffd77a', brillo: (fx + fy) % 3 ? .8 : .1, sombra: false });
         }

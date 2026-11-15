@@ -62,6 +62,8 @@ Léelo una vez: `plantilla/taller3d.js` (API de `T3` y `P`) y `ejemplos/taller/e
 - **Sin rótulos ni textos flotantes** dentro de las escenas (nada de `K.pastilla`, letreros ni etiquetas): lo que pasa se
   entiende por la imagen y la voz. Usa solo las tres primeras funciones de `T3.cuadro`. La última escena tampoco lleva texto:
   la pregunta la pone el sistema; deja el objeto abajo o a un lado.
+- **Colores vivos que llamen la atención:** saturados y con contraste (rojos, naranjas, turquesas, amarillos, azules
+  intensos). Nada de crema, beige ni gris claro en lo importante; el fondo con color, no gris. El motor ya realza la saturación.
 - Escribe el archivo de una vez, reutilizando funciones; nada de comentarios largos.
 
 ## 4. Revisión

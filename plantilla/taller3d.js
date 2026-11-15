@@ -13,6 +13,8 @@
   const ANCHO = 1080, ALTO = 1920;
   // Calidad del 3D: se dibuja a menor resolución y se escala al lienzo (WebGL va por software en GitHub: es lo que más tarda).
   const Q = Object.assign({ escala: .75, sombra: 1024, suavizado: true }, window.T3_CALIDAD || {});
+  // Color: la luz ambiental fuerte lava los colores (salen "crema"); menos ambiente, más sol y un realce final de saturación.
+  const VIVO = Object.assign({ saturacion: 1.45, contraste: 1.1, brillo: 1.02 }, window.T3_COLOR || {});
   const AN3 = Math.round(ANCHO * Q.escala), AL3 = Math.round(ALTO * Q.escala);
   let R = null, escena, camara, sol, hemi, mundo = {}, listo = false;
   const geo = {}, mats = new Map(), pools = {}, usados = {};
@@ -26,8 +28,8 @@
     R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
     escena = new THREE.Scene();
     camara = new THREE.PerspectiveCamera(38, ANCHO / ALTO, 0.05, 600);
-    hemi = new THREE.HemisphereLight('#ffffff', '#8fae6a', 2.4); escena.add(hemi);
-    sol = new THREE.DirectionalLight('#fff6e8', 2.6); sol.position.set(14, 26, 10); sol.castShadow = true;
+    hemi = new THREE.HemisphereLight('#ffffff', '#8fae6a', 1.7); escena.add(hemi);
+    sol = new THREE.DirectionalLight('#fff4e0', 3.2); sol.position.set(14, 26, 10); sol.castShadow = true;
     sol.shadow.mapSize.set(Q.sombra, Q.sombra); sol.shadow.bias = -0.0004; sol.shadow.normalBias = 0.02;
     const s = sol.shadow.camera; s.left = -22; s.right = 22; s.top = 22; s.bottom = -22; s.near = 1; s.far = 80;
     escena.add(sol); escena.add(sol.target);
@@ -65,24 +67,24 @@
     const c = document.createElement('canvas'), g = c.getContext('2d');
     let rep = [1, 1];
     if (nombre === 'pasto') {
-      c.width = c.height = 512; g.fillStyle = '#86c95a'; g.fillRect(0, 0, 512, 512);
+      c.width = c.height = 512; g.fillStyle = '#5fb83a'; g.fillRect(0, 0, 512, 512);
       for (let i = 0; i < 2600; i++) {
         const x = hash(i) * 512, y = hash(i + 9e3) * 512, l = 4 + hash(i + 3e3) * 9;
-        g.strokeStyle = ['#6fb34a', '#9ad46a', '#79bd50', '#a7dc78'][i % 4]; g.lineWidth = 1.6;
+        g.strokeStyle = ['#4fae2c', '#8be05a', '#5fbd36', '#9ae86a'][i % 4]; g.lineWidth = 1.6;
         g.beginPath(); g.moveTo(x, y); g.lineTo(x + (hash(i + 7) - .5) * 4, y - l); g.stroke();
       }
       rep = [40, 40];
     } else if (nombre === 'ladrillo') {
-      c.width = 512; c.height = 256; g.fillStyle = '#d9cdb8'; g.fillRect(0, 0, 512, 256);
+      c.width = 512; c.height = 256; g.fillStyle = '#f1dcb5'; g.fillRect(0, 0, 512, 256);
       for (let f = 0; f < 8; f++) for (let k = -1; k < 9; k++) {
-        const x = k * 64 + (f % 2) * 32, y = f * 32, v = hash(f * 31 + k) * 18 - 9;
-        g.fillStyle = `rgb(${226 + v},${214 + v},${194 + v})`; g.fillRect(x + 2, y + 2, 60, 28);
+        const x = k * 64 + (f % 2) * 32, y = f * 32, v = hash(f * 31 + k) * 30 - 15;
+        g.fillStyle = `rgb(${206 + v},${88 + v * .6},${58 + v * .4})`; g.fillRect(x + 2, y + 2, 60, 28);
       }
       rep = [6, 1];
     } else if (nombre === 'baldosa') {
-      c.width = c.height = 256; g.fillStyle = '#b9ad9c'; g.fillRect(0, 0, 256, 256);
+      c.width = c.height = 256; g.fillStyle = '#1e8fa6'; g.fillRect(0, 0, 256, 256);
       for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
-        const v = hash(i * 7 + j) * 10 - 5; g.fillStyle = `rgb(${214 + v},${205 + v},${190 + v})`; g.fillRect(i * 64 + 2, j * 64 + 2, 60, 60);
+        g.fillStyle = (i + j) % 2 ? '#f7f3ea' : '#2fc4d6'; g.fillRect(i * 64 + 2, j * 64 + 2, 60, 60);
       }
       rep = [30, 30];
     } else if (nombre === 'pista') {
@@ -126,9 +128,9 @@
     const interior = new THREE.Group();
     const piso = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), material('#ffffff', { mapa: 'baldosa' }));
     piso.rotation.x = -Math.PI / 2; piso.receiveShadow = true; interior.add(piso);
-    const pared = new THREE.Mesh(new THREE.BoxGeometry(60, 14, .4), material('#dfe6ec'));
+    const pared = new THREE.Mesh(new THREE.BoxGeometry(60, 14, .4), material('#ffcf5a'));
     pared.position.set(0, 7, -7); pared.receiveShadow = true; interior.add(pared);
-    const zocalo = new THREE.Mesh(new THREE.BoxGeometry(60, .4, .5), material('#c9ced6'));
+    const zocalo = new THREE.Mesh(new THREE.BoxGeometry(60, .4, .5), material('#e2553f'));
     zocalo.position.set(0, .2, -6.9); interior.add(zocalo);
     escena.add(interior); mundo.interior = interior;
   }
@@ -302,6 +304,78 @@
         });
       }));
     },
+    // Animales low-poly (miran hacia +Z, patas en y=0). tipo: 'oso' | 'perro' | 'lobo' | 'tigre' | 'toro' | 'cocodrilo' |
+    //   'tiburon' | 'serpiente'. accion: 'quieto' | 'camina' | 'corre' | 'ataca' (embiste con la boca abierta) | 'erguido' (oso de
+    //   pie). boca 0-1 (abierta), T (anima). Caricatura: dientes blancos, nunca sangre.
+    animal: (o = {}) => {
+      const tipo = o.tipo || 'perro', T = o.T || 0, acc = o.accion || 'quieto';
+      if (tipo === 'tiburon') return tiburon(o);
+      if (tipo === 'serpiente') return serpiente(o);
+      const B = { // largo, alto de patas, radio del cuerpo, cabeza, hocico, colores
+        oso: { L: 1.9, h: .55, r: .55, c: .38, ho: .22, col: '#6b4226', vientre: '#8a5a36', nariz: '#1b1b1b', oreja: 'redonda', cola: .12 },
+        perro: { L: 1.1, h: .45, r: .26, c: .22, ho: .16, col: '#c8843a', vientre: '#f3d29b', nariz: '#1b1b1b', oreja: 'punta', cola: .45 },
+        lobo: { L: 1.3, h: .55, r: .28, c: .24, ho: .2, col: '#7d8590', vientre: '#d9dde2', nariz: '#1b1b1b', oreja: 'punta', cola: .6 },
+        tigre: { L: 1.9, h: .6, r: .36, c: .3, ho: .16, col: '#f28c1e', vientre: '#fff1d6', nariz: '#e07a8a', oreja: 'redonda', cola: 1, rayas: true },
+        toro: { L: 2.2, h: .7, r: .55, c: .36, ho: .2, col: '#3b2a24', vientre: '#5a4034', nariz: '#d99a8a', oreja: 'punta', cola: .7, cuernos: true },
+        cocodrilo: { L: 3.2, h: .22, r: .3, c: .26, ho: .75, col: '#4f8a3a', vientre: '#c9d97a', nariz: '#2c4a22', oreja: null, cola: 1.8, plano: true },
+      }[tipo];
+      if (o.ajuste) Object.assign(B, o.ajuste);   // p. ej. puma = tigre con { col: '#c8955a', vientre: '#f1dcb5', rayas: false }
+      const corre = acc === 'corre' || acc === 'ataca', f = acc === 'camina' ? 6 : corre ? 12 : 0, amp = acc === 'camina' ? .35 : corre ? .7 : 0;
+      const ataque = acc === 'ataca' ? Math.max(0, Math.sin(T * 6)) : 0, boca = Math.max(o.boca || 0, acc === 'ataca' ? .4 + .6 * ataque : 0);
+      const erguido = acc === 'erguido';
+      P.grupo({ pos: o.pos, rot: o.rot, esc: o.esc ?? 1 }, () => P.grupo({ pos: [0, erguido ? B.L * .2 : 0, ataque * .4], rot: [erguido ? -1.2 : -ataque * .15, 0, 0] }, () => {
+        const y = B.h + B.r * (B.plano ? .5 : .9), ancho = B.plano ? 1.1 : .85;
+        P.esfera({ pos: [0, y, 0], r: 1, esc: [B.r * ancho, B.r * (B.plano ? .55 : 1), B.L / 2], color: B.col });
+        P.esfera({ pos: [0, y - B.r * .3, .05], r: 1, esc: [B.r * ancho * .8, B.r * .7, B.L / 2 * .8], color: B.vientre });
+        if (B.rayas) for (let i = -2; i <= 2; i++) P.toro({ pos: [0, y, i * B.L * .16], r: B.r * .97, grosor: .05, color: '#1b1b1b' });
+        // patas (pares diagonales)
+        for (const [x, z, fase] of [[-1, 1, 0], [1, 1, Math.PI], [-1, -1, Math.PI], [1, -1, 0]]) {
+          const a = Math.sin(T * f + fase) * amp, top = [x * B.r * .55, y - B.r * .4, z * B.L * .32];
+          const pie = [top[0], erguido && z < 0 ? .02 : .06, top[2] + Math.sin(a) * B.h];
+          P.tubo({ de: top, a: pie, r: B.r * (B.plano ? .2 : .26), color: B.col });
+          P.esfera({ pos: pie, r: B.r * (B.plano ? .22 : .28), esc: [1, .6, 1.2], color: B.col });
+        }
+        // cola
+        const cy = Math.sin(T * 4) * .3;
+        P.tubo({ de: [0, y, -B.L / 2 * .9], a: [Math.sin(cy) * B.cola * .5, y + (B.plano ? -.05 : B.cola * .35), -B.L / 2 - B.cola], r: B.plano ? .16 : .05, color: B.col });
+        // cabeza
+        const hz = B.L / 2 + B.c * .5, hy = y + (B.plano ? 0 : B.r * .45);
+        P.grupo({ pos: [0, hy, hz], rot: [-(o.mira || 0) * .3 + (erguido ? 1.2 : 0), 0, 0] }, () => {
+          P.esfera({ r: B.c, esc: [1, B.plano ? .6 : 1, 1], color: B.col });
+          // hocico: mandíbula de arriba fija y la de abajo se abre
+          const hl = B.ho + B.c * .6;
+          P.caja({ pos: [0, B.plano ? 0 : -B.c * .15, B.c * .55 + hl / 2 - B.c * .3], tam: [B.c * (B.plano ? 1.2 : .9), B.c * .45, hl], color: B.vientre });
+          P.grupo({ pos: [0, -B.c * .38, B.c * .25], rot: [boca * .7, 0, 0] }, () => {
+            P.caja({ pos: [0, 0, hl / 2], tam: [B.c * (B.plano ? 1.15 : .8), B.c * .22, hl], color: B.vientre });
+            if (boca > .15) for (let i = 0; i < 4; i++) for (const sx of [-1, 1])
+              P.cono({ pos: [sx * B.c * .3, B.c * .16, hl * (.25 + i * .22)], r: .025 * B.c * 4, alto: .07 * B.c * 4, color: '#ffffff', sombra: false });
+          });
+          if (boca > .15) for (let i = 0; i < 4; i++) for (const sx of [-1, 1])
+            P.cono({ pos: [sx * B.c * .3, -B.c * .38, B.c * .25 + hl * (.25 + i * .22)], rot: [Math.PI, 0, 0], r: .025 * B.c * 4, alto: .07 * B.c * 4, color: '#ffffff', sombra: false });
+          P.esfera({ pos: [0, B.plano ? B.c * .12 : -B.c * .02, B.c * .55 + hl - B.c * .3], r: B.c * .17, color: B.nariz });
+          for (const sx of [-1, 1]) {
+            P.esfera({ pos: [sx * B.c * .42, B.c * .32, B.c * .62], r: B.c * .17, color: '#ffffff', sombra: false });
+            P.esfera({ pos: [sx * B.c * .42, B.c * .32, B.c * .76], r: B.c * .09, color: '#1b1b1b', sombra: false });
+            if (acc === 'ataca' || o.enojado) P.caja({ pos: [sx * B.c * .4, B.c * .52, B.c * .6], rot: [0, 0, sx * .45], tam: [B.c * .4, B.c * .07, B.c * .1], color: '#1b1b1b', sombra: false });
+            if (B.oreja === 'punta') P.cono({ pos: [sx * B.c * .55, B.c * .85, -B.c * .1], rot: [0, 0, -sx * .3], r: B.c * .25, alto: B.c * .55, color: B.col });
+            if (B.oreja === 'redonda') P.esfera({ pos: [sx * B.c * .62, B.c * .72, -B.c * .1], r: B.c * .26, esc: [1, 1, .5], color: B.col });
+            if (B.cuernos) P.tubo({ de: [sx * B.c * .5, B.c * .6, 0], a: [sx * B.c * 1.4, B.c * 1.2, B.c * .3], r: B.c * .1, color: '#f3ead2' });
+          }
+        });
+      }));
+    },
+    // Enjambre de abejas alrededor de un punto (persigue si mueves `pos`).
+    enjambre: (o) => {
+      const n = o.n ?? 25, R0 = o.r ?? 1.2, T = o.T || 0;
+      for (let i = 0; i < n; i++) {
+        const a = T * (3 + hash(i) * 3) + i * 2.4, b = T * (2 + hash(i + 5) * 2) + i;
+        const p = [o.pos[0] + Math.cos(a) * R0 * (.3 + hash(i + 1) * .7), o.pos[1] + Math.sin(b) * R0 * .5, o.pos[2] + Math.sin(a) * R0 * (.3 + hash(i + 2) * .7)];
+        P.esfera({ pos: p, r: .06, esc: [1, .9, 1.4], color: '#ffc61a', sombra: false });
+        P.esfera({ pos: [p[0], p[1], p[2] - .03], r: .045, esc: [1.1, 1, .4], color: '#1b1b1b', sombra: false });
+        const w = Math.sin(T * 60 + i) * .5;
+        for (const s of [-1, 1]) P.disco({ pos: [p[0] + s * .06, p[1] + .05, p[2]], rot: [-Math.PI / 2 + w * s, 0, 0], r: .05, color: '#ffffff', opacidad: .6, sombra: false });
+      }
+    },
     // Piloto de la página Así se fabrica: un patito de hule.
     piloto: (o = {}) => P.grupo({ pos: o.pos, rot: o.rot, esc: o.esc ?? 1 }, () => {
       const am = o.color || '#ffd23a', tiembla = o.susto ? Math.sin((o.T || 0) * 40) * .04 * o.susto : 0;
@@ -314,6 +388,47 @@
     }),
   };
 
+  // Tiburón (nada hacia +Z; boca 0-1) y serpiente (cuerpo ondulado; 'ataca' levanta la cabeza).
+  function tiburon(o) {
+    const T = o.T || 0, ataque = o.accion === 'ataca' ? Math.max(0, Math.sin(T * 5)) : 0, boca = Math.max(o.boca || 0, ataque), ond = Math.sin(T * 5) * .25;
+    P.grupo({ pos: o.pos, rot: o.rot, esc: o.esc ?? 1 }, () => {
+      P.esfera({ pos: [0, 0, 0], r: 1, esc: [.55, .6, 2], color: '#6f8fa8' });
+      P.esfera({ pos: [0, -.18, .2], r: 1, esc: [.45, .4, 1.7], color: '#eef3f6' });
+      P.caja({ pos: [0, .75, -.1], rot: [-.5, 0, 0], tam: [.08, .8, .6], color: '#6f8fa8' });
+      for (const s of [-1, 1]) P.caja({ pos: [s * .6, -.25, .5], rot: [.3, 0, s * .5], tam: [.7, .06, .4], color: '#6f8fa8' });
+      P.grupo({ pos: [0, 0, -1.9], rot: [0, ond, 0] }, () => {
+        P.caja({ pos: [0, .35, -.35], rot: [.7, 0, 0], tam: [.08, .9, .3], color: '#6f8fa8' });
+        P.caja({ pos: [0, -.25, -.25], rot: [-.7, 0, 0], tam: [.08, .6, .25], color: '#6f8fa8' });
+      });
+      P.grupo({ pos: [0, -.2, 1.6], rot: [boca * .6, 0, 0] }, () => {
+        P.caja({ pos: [0, 0, .2], tam: [.6, .1, .5], color: '#eef3f6' });
+        if (boca > .15) for (let i = 0; i < 5; i++) P.cono({ pos: [(i - 2) * .11, .08, .4], r: .035, alto: .1, color: '#ffffff', sombra: false });
+      });
+      if (boca > .15) for (let i = 0; i < 5; i++) P.cono({ pos: [(i - 2) * .11, -.12, 1.85], rot: [Math.PI, 0, 0], r: .035, alto: .1, color: '#ffffff', sombra: false });
+      for (const s of [-1, 1]) { P.esfera({ pos: [s * .32, .12, 1.45], r: .07, color: '#ffffff', sombra: false }); P.esfera({ pos: [s * .35, .12, 1.5], r: .045, color: '#1b1b1b', sombra: false }); }
+    });
+  }
+  function serpiente(o) {
+    const T = o.T || 0, n = 22, L = o.largo ?? 2.4, ataca = o.accion === 'ataca', alza = ataca ? .6 : 0;
+    P.grupo({ pos: o.pos, rot: o.rot, esc: o.esc ?? 1 }, () => {
+      let prev = null;
+      for (let i = 0; i < n; i++) {
+        const u = i / (n - 1), z = (u - .5) * L, x = Math.sin(u * 9 - T * 4) * .25 * (1 - u * .3);
+        const y = .1 + (u > .75 ? Math.pow((u - .75) / .25, 2) * alza : 0), r = .09 * (1 - Math.abs(u - .6) * .7);
+        const p = [x, y, z];
+        P.esfera({ pos: p, r, color: i % 3 === 0 ? '#e0b030' : '#3f7a2c' });
+        if (prev) P.tubo({ de: prev, a: p, r: r * .95, color: '#3f7a2c' });
+        prev = p;
+      }
+      const [hx, hy, hz] = prev, boca = ataca ? .5 + .5 * Math.sin(T * 8) : 0;
+      P.esfera({ pos: [hx, hy + .02, hz + .1], r: .13, esc: [1, .65, 1.4], color: '#3f7a2c' });
+      for (const s of [-1, 1]) { P.esfera({ pos: [hx + s * .08, hy + .08, hz + .18], r: .035, color: '#ffe14d', sombra: false }); P.esfera({ pos: [hx + s * .09, hy + .09, hz + .2], r: .018, color: '#1b1b1b', sombra: false }); }
+      const len = .12 + .12 * Math.max(0, Math.sin(T * 14));
+      P.tubo({ de: [hx, hy, hz + .26], a: [hx, hy - .02, hz + .26 + len], r: .012, color: '#e5484d' });
+      if (boca > .2) for (const s of [-1, 1]) P.cono({ pos: [hx + s * .04, hy - .05, hz + .22], rot: [Math.PI, 0, 0], r: .015, alto: .07, color: '#ffffff', sombra: false });
+    });
+  }
+
   // Posición en pantalla (px del lienzo 1080x1920) de un punto 3D, para poner rótulos 2D encima.
   P.pantalla = (p) => { const v = new THREE.Vector3(...p).project(camara); return [(v.x + 1) / 2 * ANCHO, (1 - v.y) / 2 * ALTO]; };
 
@@ -322,10 +437,10 @@
     if (!window.THREE) throw new Error('falta three.js (el nicho debe tener motor: 3d)');
     iniciar();
     const m = conf.mundo || {};
-    const dentro = !!m.interior, cielo = m.cielo || (dentro ? '#e8edf1' : '#bfe2f2');
+    const dentro = !!m.interior, cielo = m.cielo || (dentro ? '#ffe9b3' : '#8fd3f5');
     escena.background = new THREE.Color(cielo);
     escena.fog = m.niebla === false ? null : new THREE.Fog(cielo, m.nieblaDesde ?? (dentro ? 20 : 30), m.nieblaHasta ?? 110);
-    hemi.groundColor.set(dentro ? '#b9b1a6' : m.pasto === false ? '#8d939b' : '#8fae6a');
+    hemi.groundColor.set(dentro ? '#c9a77a' : m.pasto === false ? '#6c7a8f' : '#7fb34f');
     mundo.pasto.visible = !dentro && m.pasto !== false; mundo.muro.visible = !dentro && !!m.muro;
     mundo.arboles.visible = !dentro && m.arboles !== false; mundo.pista.visible = !dentro && !!m.pista; mundo.interior.visible = dentro;
     if (m.pista) { mundo.pista.position.x = m.pistaX ?? 0; }
@@ -343,7 +458,9 @@
     for (const k in pools) for (let i = usados[k] || 0; i < pools[k].length; i++) pools[k][i].visible = false;
     for (let i = gruposUsados; i < gruposPool.length; i++) gruposPool[i].visible = false;
     R.render(escena, camara);
-    ctx.imageSmoothingQuality = 'high'; ctx.drawImage(R.domElement, 0, 0, ANCHO, ALTO);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.save(); ctx.filter = `saturate(${VIVO.saturacion}) contrast(${VIVO.contraste}) brightness(${VIVO.brillo})`;
+    ctx.drawImage(R.domElement, 0, 0, ANCHO, ALTO); ctx.restore();
     if (encima) { ctx.save(); try { encima(ctx, P); } finally { ctx.restore(); } }
   }
   let raizG = null;

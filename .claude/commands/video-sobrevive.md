@@ -9,7 +9,7 @@ Deja escrito, dibujado y revisado UN video de la página **¿Sobrevivirías?**, 
 archivos.
 
 **La página:** te pone en una situación extrema real (un ascensor que cae, un rayo, hielo que se rompe, una corriente que te
-arrastra) y te muestra en 3D, con una persona, por qué lo que casi todos harían falla y qué te salva de verdad. Tono directo y
+arrastra, el ataque de un animal) y te muestra en 3D, con una persona, por qué lo que casi todos harían falla y qué te salva de verdad. Tono directo y
 con tensión, en segunda persona ("tú"), frases cortas. La persona protagonista es "tú": camiseta amarilla (`#f4c430`) y
 pantalón azul oscuro, siempre la misma.
 
@@ -49,6 +49,11 @@ Léelo una vez: `plantilla/taller3d.js` (API de `T3` y `P`, incluida `P.persona`
 - **La persona:** `P.persona({ pose, pos, rot, T, susto, inclina, art, colores })` con poses `parado`, `camina`, `corre`,
   `salta`, `cae`, `agachado`, `protege`, `sentado`, `acostado` (boca arriba). Usa siempre los mismos colores (función
   `persona()` del ejemplo). `susto` 0-1 en el peligro; `art` para ajustar brazos y piernas a mano.
+- **Animales:** `P.animal({ tipo, accion, pos, rot, T, boca })` con `tipo` `oso`, `perro`, `lobo`, `tigre`, `toro`,
+  `cocodrilo`, `tiburon`, `serpiente` y `accion` `quieto`, `camina`, `corre`, `ataca` (embiste con la boca abierta) o
+  `erguido` (oso de pie); `ajuste` cambia colores y forma (puma = `tigre` con `{ col: '#c8955a', vientre: '#f1dcb5',
+  rayas: false }`); `P.enjambre({ pos, T })` para abejas. En un ataque, corta antes del contacto (polvo, temblor o cambio
+  de plano): nunca mordidas ni heridas.
 - Define primero el escenario como funciones reutilizables (como `pozo()` y `cabina()` del ejemplo) y úsalas en todas las
   escenas. Formas con `caja`, `cilindro`, `cono`, `esfera`, `toro`, `disco`, `tubo`, `grupo`; agua, hielo, humo o vidrio con
   `opacidad`; fuego, rayos, chispas y luces con `brillo`.
@@ -62,6 +67,8 @@ Léelo una vez: `plantilla/taller3d.js` (API de `T3` y `P`, incluida `P.persona`
   la situación se ve desde el primer cuadro.
 - **Sin rótulos ni textos flotantes** dentro de las escenas: se entiende por la imagen y la voz. La última escena sin texto: la
   pregunta la pone el sistema arriba; deja a la persona abajo.
+- **Colores vivos que llamen la atención:** saturados y con contraste (rojos, naranjas, turquesas, amarillos, azules
+  intensos). Nada de crema, beige ni gris claro en lo importante; el fondo con color, no gris. El motor ya realza la saturación.
 - Escribe el archivo de una vez, reutilizando funciones; nada de comentarios largos.
 
 ## 4. Revisión
