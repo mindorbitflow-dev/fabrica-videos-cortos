@@ -401,7 +401,8 @@ def componer_html(p: dict) -> str:
     pal = conf["paleta"]
     estilo = estilo_de(p)
     marca = conf.get("marca") if p.get("autor") else None
-    portada = html_portada(p.get("portada"))
+    # `portada_en_video: false`: sin título encima al empezar; el video arranca directo en el gancho
+    portada = html_portada(p.get("portada")) if conf.get("portada_en_video", True) else ""
     fa, fb, fc = pal["fondo"]
     r, g, b = (int(pal["principal"][i:i + 2], 16) for i in (1, 3, 5))
     css = (PLANTILLA / "base.css").read_text(encoding="utf-8")

@@ -28,9 +28,9 @@ Tono: casual y con humor, como un amigo que la arma contigo; frases cortas; fís
   humor: exageradas, físicas y claras. Nombres técnicos solo cuando la pieza aparece, explicados con lo que hace.
 - Hechos ciertos: si dudas de un dato o una cifra, quítalo. Años y cifras con dígitos. Sin "sabías que", "increíble",
   "secreto", "descubre".
-- Portada: 3-5 palabras con la consecuencia o la apuesta, nunca el tema ("SIN ESTA PIEZA SE ESTRELLA", "TU LICUADORA
-  EXPLOTARÍA"); `destacado` = la consecuencia (trozo literal de `texto`); `sub` provoca ("y no es la que crees").
-  `titulo`: máx. 60 caracteres con la consecuencia ("Le quité una pieza a este avión y se estrelló").
+- El video NO lleva título encima al empezar: arranca directo en el gancho, con la voz y la imagen. Aun así llena `portada`
+  (la usan el correo y el post): 3-5 palabras con la consecuencia ("SIN ESTA PIEZA SE ESTRELLA"), `destacado` = trozo
+  literal de `texto`, `sub` corto. `titulo`: máx. 60 caracteres con la consecuencia ("Le quité una pieza a este avión y se estrelló").
 - `cierre` (última escena): "¿Qué [objeto/máquina] desarmamos después? Escríbela en los comentarios." (o una pregunta concreta
   del tema). `caption`: primera línea = gancho; termina con la misma pregunta. `hashtags`: 3-5 del tema.
 
@@ -54,7 +54,7 @@ Léelo una vez: `plantilla/taller3d.js` (API de `T3` y `P`) y `ejemplos/taller/e
   física se ve mejor grande.
 - **Cámara**: el cuadro es vertical (poco ancho). Para ver entero un objeto de ~8 m, cámara a 13-18 m con `fov` 40-50;
   objeto de ~1,5 m, a 3-5 m. Los subtítulos van ARRIBA (y=170-400): deja esa franja libre (cielo o pared) y pon la acción
-  entre y=450 y y=1600. En la escena 1 la portada ocupa y=860-1240: ahí el objeto va arriba de ella (y=450-850) o debajo. Varía el plano en cada escena (de lado, desde arriba,
+  entre y=450 y y=1600. La escena 1 no lleva título encima: el objeto y la falla del gancho se ven desde el primer cuadro. Varía el plano en cada escena (de lado, desde arriba,
   persecución, primer plano de la pieza nueva) y en cada falla cambia algo grande.
 - **Sin rótulos ni textos flotantes** dentro de las escenas (nada de `K.pastilla`, letreros ni etiquetas): lo que pasa se
   entiende por la imagen y la voz. Usa solo las tres primeras funciones de `T3.cuadro`. La última escena tampoco lleva texto:
