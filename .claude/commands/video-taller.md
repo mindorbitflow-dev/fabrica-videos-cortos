@@ -40,7 +40,7 @@ Tono: casual y con humor, como un amigo que la arma contigo; frases cortas; fís
 ## 3. Dibujo 3D (`proyectos/<id>/escenas.js`)
 Léelo una vez: `plantilla/taller3d.js` (API de `T3` y `P`) y `ejemplos/taller/escenas.js` (cómo se arma un video completo).
 - `window.ESCENAS = [...]`: UNA función por escena, en orden: `(ctx, t, d, K, T) => T3.cuadro(ctx, T, { camara, mundo },
-  P => {...}, (c, P) => {...})`. `t` = segundos de la escena, `d` = su duración (anima con fracciones de `d`), `T` = segundos
+  P => {...})`. `t` = segundos de la escena, `d` = su duración (anima con fracciones de `d`), `T` = segundos
   del video (movimiento ambiental). Solo funciones del tiempo: prohibido `Math.random()`, `Date` y estado entre cuadros.
 - Define primero el objeto como UNA función con un factor de aparición 0-1 por pieza (como `avion()` del ejemplo, con
   `parte()` y `ap()`) y úsala en todas las escenas: así se arma y se desarma siempre igual. Formas reconocibles con pocas
@@ -53,18 +53,18 @@ Léelo una vez: `plantilla/taller3d.js` (API de `T3` y `P`) y `ejemplos/taller/e
   pasto ni árboles) sobre una mesa que armas con `caja`. Objetos pequeños: escala el objeto a 1-2 m o acerca la cámara; la
   física se ve mejor grande.
 - **Cámara**: el cuadro es vertical (poco ancho). Para ver entero un objeto de ~8 m, cámara a 13-18 m con `fov` 40-50;
-  objeto de ~1,5 m, a 3-5 m. Mira un poco por debajo del objeto (`hacia` con y menor) para que quede en la mitad de arriba:
-  subtítulos en y=1260-1440, portada en y=860-1240 durante la escena 1. Varía el plano en cada escena (de lado, desde arriba,
+  objeto de ~1,5 m, a 3-5 m. Los subtítulos van ARRIBA (y=170-400): deja esa franja libre (cielo o pared) y pon la acción
+  entre y=450 y y=1600. En la escena 1 la portada ocupa y=860-1240: ahí el objeto va arriba de ella (y=450-850) o debajo. Varía el plano en cada escena (de lado, desde arriba,
   persecución, primer plano de la pieza nueva) y en cada falla cambia algo grande.
-- Rótulos (4.ª función, `rot()` del ejemplo con `K.pastilla` en `P.pantalla([x, y, z])`): pocos, en mayúsculas; rojo
-  `#e5484d` para lo que falla ("¡SALPICA!"), verde para lo que funciona, blanco para nombrar piezas. La última escena sin
-  texto: la pregunta la pone el sistema arriba; deja el objeto abajo o a un lado.
+- **Sin rótulos ni textos flotantes** dentro de las escenas (nada de `K.pastilla`, letreros ni etiquetas): lo que pasa se
+  entiende por la imagen y la voz. Usa solo las tres primeras funciones de `T3.cuadro`. La última escena tampoco lleva texto:
+  la pregunta la pone el sistema; deja el objeto abajo o a un lado.
 - Escribe el archivo de una vez, reutilizando funciones; nada de comentarios largos.
 
 ## 4. Revisión
 `python run.py --hoja <id>` genera `proyectos/<id>/hojas/hoja_*.jpg` (inicio y final de cada escena) y lista los errores de
 JavaScript. Ábrelas con Read y corrige lo que no cumpla: se reconoce lo que dice la voz; el objeto se ve igual en todas las
-escenas y ocupa buena parte del cuadro; nada cortado ni bajo los subtítulos; algo cambia entre el inicio y el final. **Si no
+escenas y ocupa buena parte del cuadro; nada cortado ni tapado por los subtítulos de arriba; ningún texto dentro de las escenas; algo cambia entre el inicio y el final. **Si no
 hay errores y todo se ve, una sola revisión basta.**
 
 ## 5. Entrega

@@ -419,8 +419,10 @@ def componer_html(p: dict) -> str:
         for i, e in enumerate(p["escenas"]))
     if marca:
         estilo += f" marca-{marca}"
-    if conf.get("texto") == "oscuro":   # fondos claros (cielo, pasto): letras oscuras con borde blanco
+    if conf.get("texto") == "oscuro":   # fondos claros (cielo, pasto): letras oscuras
         estilo += " texto-oscuro"
+    if conf.get("subtitulos") == "arriba":   # subtítulos en la parte de arriba del video, sin borde ni relieve
+        estilo += " subs-arriba"
     return f"""<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><title>{htmlmod.escape(p['titulo'])}</title>
 <style>{css}

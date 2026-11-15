@@ -72,6 +72,7 @@ taller:
   modelo: sonnet          # modelo de Claude Code para este nicho: gasta menos del límite del plan que Opus
   comando: video-taller   # reglas propias y cortas (.claude/commands/video-taller.md): menos tokens en cada paso
   texto: oscuro           # cielo y pasto claros: subtítulos, portada y pregunta final en letras oscuras
+  subtitulos: arriba      # subtítulos arriba (y=170-400), planos, sin borde ni relieve
   estilo: ilustracion
   cierre: "Síguenos para armar la próxima máquina."
   lema: "Así se fabrica"

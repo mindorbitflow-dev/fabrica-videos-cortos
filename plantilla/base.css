@@ -124,6 +124,8 @@ svg * { transform-box: fill-box; transform-origin: center; }
 .texto-oscuro #subtitulo { color: #151515;
   text-shadow: 0 0 6px #fff, 0 5px 0 #fff, 0 -3px 0 #fff, 4px 0 0 #fff, -4px 0 0 #fff, 3px 3px 0 #fff, -3px -3px 0 #fff; }
 .texto-oscuro #subtitulo .actual { color: #d6333a; }
+/* Subtítulos arriba (nicho con `subtitulos: arriba`): texto plano, sin borde ni relieve */
+.subs-arriba #subtitulo { top: 170px; text-shadow: none; }
 .texto-oscuro .portada .linea { color: #151515; text-shadow: 0 0 8px #fff, 0 6px 0 #fff, 0 -4px 0 #fff, 5px 0 0 #fff, -5px 0 0 #fff; }
 .texto-oscuro .portada .destacado { color: #d6333a; }
 .texto-oscuro .portada .sub { color: #151515; font-weight: 700; text-shadow: 0 0 6px #fff, 0 0 12px #fff; }

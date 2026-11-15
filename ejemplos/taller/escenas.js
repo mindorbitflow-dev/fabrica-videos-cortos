@@ -61,12 +61,6 @@
     [[0, 3.8, 0, 1.7], [-1, 3.2, .4, 1.25], [1, 3.3, -.3, 1.3], [.1, 4.8, .1, 1.2]].forEach(([dx, dy, dz, r], i) =>
       P.esfera({ pos: [x + dx * s, dy * s, z + dz * s], r: r * s, color: ['#5fa64a', '#6cb553', '#559c42'][i % 3], baja: true }));
   }
-  // Rótulo 2D sobre un punto 3D. tipo: 'falla' (rojo), 'bien' (verde) o normal.
-  function rot(c, P, texto, p3, k, tipo, dy = -110) {
-    if (k <= 0) return;
-    const [x, y] = P.pantalla(p3), f = { falla: C.rojo, bien: C.verde }[tipo] || '#ffffff';
-    K.pastilla(c, texto, clamp(x, 300, 780), clamp(y + dy, 300, 1180), { fondo: f, color: tipo ? '#ffffff' : '#1b1b1b', tam: 46, escala: sale(k) });
-  }
   // Chorros de aire a lo largo del ala vista de lado: rectos antes del ala y doblados hacia abajo detrás (desvío = 0-1).
   function chorros(P, T, cx, cy, desvio, n = 7) {
     for (let i = 0; i < n; i++) {
@@ -93,7 +87,7 @@
           P.caja({ pos: [0, .62, 0], tam: [1.0, 1.25, .07], color: C.ala }); P.caja({ pos: [0, 1.2, 0], tam: [1.02, .14, .09], color: C.rojo });
         });
         P.polvo({ pos: [x, 0, 0], k: suelo > 0 ? Math.min(.99, (u - Math.sqrt((6.2 - PANZA - .3) / 2.2)) / 1.2 + .05) : 0, r: 3, n: 12 });
-      }, (c, P) => rot(c, P, '¡SE SOLTÓ!', [x - 3.4 - u * 2, 8.4 + u, 0], prog(t, suelta + .1, suelta + .4), 'falla', 0));
+      });
     },
     // 2. Se desarma: las piezas saltan una a una hasta que queda el tubo.
     (ctx, t, d, K, T) => {
@@ -109,7 +103,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [5, 3.4, 14], hacia: [.2, .3, 0], fov: 45 }, mundo }, P => {
         avion(P, { pos: [0, PANZA + T3.caida(t, 2.2), 0], motor: prog(t, d * .45, d * .7), helice: t * 2, T });
         P.polvo({ pos: [0, 0, 0], k: prog(t, .5, 1.3), r: 2 });
-      }, (c, P) => { rot(c, P, 'TUBO', [-1, 1, 0], prog(t, d * .2, d * .35)); rot(c, P, 'MOTOR', [2.6, 1, 0], prog(t, d * .6, d * .75)); });
+      });
     },
     // 4. La hélice empuja el aire hacia atrás y el tubo arranca.
     (ctx, t, d, K, T) => {
@@ -118,7 +112,7 @@
         avion(P, { pos: [x, PANZA, 0], motor: 1, helice: giro, rapida: prog(t, d * .1, d * .4), T });
         P.viento({ pos: [x + 1.2, .5, 0], dir: [-1, 0, 0], T, largo: 5, ancho: 1.4, alto: 1.2, vel: 10, n: 12 });
         P.flecha({ de: [x + 3, .5, 0], dir: [1, 0, 0], largo: lerp(.3, 2.2, prog(t, d * .25, d * .55)), color: '#8e6cf0' });
-      }, (c, P) => rot(c, P, 'EMPUJE', [x + 4.2, .5, 0], prog(t, d * .3, d * .45)));
+      });
     },
     // 5. Corre rapidísimo y no se levanta.
     (ctx, t, d, K, T) => {
@@ -126,7 +120,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [x - 9, 2.4, 11], hacia: [x + 1, .5, 0], fov: 50 }, mundo: { pista: true } }, P => {
         avion(P, { pos: [x, PANZA + Math.sin(T * 50) * .015, 0], motor: 1, helice: T * 70, rapida: 1, T });
         P.viento({ pos: [x, .6, 0], dir: [-1, 0, 0], T, largo: 9, ancho: 4, alto: 2, vel: 30, n: 16 });
-      }, (c, P) => rot(c, P, 'NO SE LEVANTA', [x, 1, 0], prog(t, d * .5, d * .6), 'falla'));
+      });
     },
     // 6. Le falta empujar aire hacia abajo: peso hacia abajo y una pregunta.
     (ctx, t, d, K, T) => {
@@ -134,14 +128,14 @@
         avion(P, { pos: [0, PANZA, 0], motor: 1, helice: T * 3, T });
         const L = lerp(.4, 2.2, prog(t, d * .1, d * .4));
         P.flecha({ de: [-.6, 1.3 + L, 0], dir: [0, -1, 0], largo: L, color: C.rojo, r: .09 });
-      }, (c, P) => { rot(c, P, 'PESO', [-.6, 3.6, 0], prog(t, d * .2, d * .35), null, 0); rot(c, P, '¿Y HACIA ARRIBA?', [0, 5, 0], prog(t, d * .55, d * .7), null, 0); });
+      });
     },
     // 7. Alas planas: el viento pasa derecho, casi nada.
     (ctx, t, d, K, T) => {
       T3.cuadro(ctx, T, { camara: { desde: [7, 5, 15], hacia: [.3, .7, 0], fov: 45 }, mundo }, P => {
         avion(P, { pos: [0, PANZA, 0], motor: 1, alas: prog(t, 0, d * .35), helice: T * 30, rapida: .7, T });
         if (t > d * .4) P.viento({ pos: [.5, .95, 0], dir: [-1, 0, 0], T, largo: 6, ancho: 6, alto: .6, vel: 8, n: 14 });
-      }, (c, P) => { rot(c, P, 'ALAS PLANAS', [.5, 1.3, -3], prog(t, d * .2, d * .35)); rot(c, P, 'CASI NADA', [.5, 2.2, 0], prog(t, d * .7, d * .8)); });
+      });
     },
     // 8. Alas inclinadas: vista de lado, el aire sale doblado hacia abajo.
     (ctx, t, d, K, T) => {
@@ -149,7 +143,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [.3, 1.5, 13], hacia: [.3, 1.1, 3.8], fov: 26 }, mundo: { pista: true, muro: true } }, P => {
         avion(P, { pos: [0, PANZA, 0], motor: 1, alas: 1, inclina: ang, helice: T * 30, rapida: .7, T });
         chorros(P, T, .5, .95, prog(t, d * .3, d * .65));
-      }, (c, P) => rot(c, P, 'AIRE HACIA ABAJO', [-3.5, -.2, 0], prog(t, d * .65, d * .8), null, 60));
+      });
     },
     // 9. El aire empuja el ala hacia arriba: sustentación.
     (ctx, t, d, K, T) => {
@@ -159,14 +153,13 @@
         chorros(P, T, .5, .95 + sube, 1);
         for (const x of [-1.6, -2.4]) P.flecha({ de: [x, .8 + sube, 4.2], dir: [0, -1, 0], largo: 1, color: '#ffffff' });
         P.flecha({ de: [.5, 1.1 + sube, 0], dir: [0, 1, 0], largo: lerp(.3, 2.2, prog(t, d * .35, d * .7)), color: '#8e6cf0', r: .1 });
-      }, (c, P) => rot(c, P, 'SUSTENTACIÓN', [.5, 3.6 + sube, 0], prog(t, d * .55, d * .7), 'bien', 0));
+      });
     },
     // 10. ¡Despegamos! (sin cola).
     (ctx, t, d, K, T) => {
       const x = t * 14, y = PANZA + Math.max(0, t - .3) ** 1.4 * 1.6, cab = .1 + t / d * .12;
       T3.cuadro(ctx, T, { camara: { desde: [x - 10, y + 2.2, 14], hacia: [x, y - .4, 0], fov: 48 }, mundo }, P =>
-        avion(P, { pos: [x, y, 0], rot: [0, 0, cab], motor: 1, alas: 1, inclina: .06, helice: T * 70, rapida: 1, T }),
-      (c, P) => rot(c, P, '¡VUELA!', [x, y + 1.6, 0], prog(t, d * .3, d * .45), 'bien'));
+        avion(P, { pos: [x, y, 0], rot: [0, 0, cab], motor: 1, alas: 1, inclina: .06, helice: T * 70, rapida: 1, T }));
     },
     // 11. La nariz sube sin control: maroma y caída.
     (ctx, t, d, K, T) => {
@@ -176,7 +169,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [38, 4.5, 30], hacia: [39, 5.5, 0], fov: 50 }, mundo }, P => {
         avion(P, { pos: [x, y, 0], rot: [0, 0, choque > 0 ? 3.1 : cab], motor: 1, alas: 1, inclina: .06, helice: T * 60, rapida: 1 - choque, susto: prog(t, d * .3, d * .5), T });
         P.polvo({ pos: [x, 0, 0], k: choque, r: 3, n: 12 });
-      }, (c, P) => rot(c, P, '¡MAROMA!', [x, y + 2, 0], prog(t, d * .4, d * .55), 'falla'));
+      });
     },
     // 12. El estabilizador: la nariz oscila y vuelve a quedar derecha.
     (ctx, t, d, K, T) => {
@@ -185,7 +178,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [x - 1, 7.2, 17], hacia: [x - .6, 5.6, 0], fov: 45 }, mundo }, P => {
         avion(P, { pos: [x, 6, 0], rot: [0, 0, t < d * .35 ? .35 : cab], motor: 1, alas: 1, inclina: .06, colaH: k, helice: T * 60, rapida: 1, T });
         if (t > d * .35) P.flecha({ de: [x - 3.5, 6.6, 0], dir: [0, cab > 0 ? 1 : -1, 0], largo: .7 + Math.abs(cab) * 6, color: '#8e6cf0', r: .09 });
-      }, (c, P) => rot(c, P, 'ESTABILIZADOR', [x - 3.5, 6.6, 0], prog(t, d * .15, d * .3)));
+      });
     },
     // 13. Ráfaga de lado: derrapa.
     (ctx, t, d, K, T) => {
@@ -193,7 +186,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [x - 16, 11, 7], hacia: [x, 5.4, z], fov: 45 }, mundo }, P => {
         avion(P, { pos: [x, 6, z], rot: [rumbo * .3, rumbo, 0], motor: 1, alas: 1, inclina: .06, colaH: 1, helice: T * 60, rapida: 1, susto: u, T });
         if (u > 0) P.viento({ pos: [x, 6, z + 3], dir: [0, 0, -1], T, largo: 7, ancho: 8, alto: 3, vel: 14, n: 16 });
-      }, (c, P) => rot(c, P, 'DERRAPA', [x, 7.2, z], prog(t, d * .55, d * .65), 'falla'));
+      });
     },
     // 14. La deriva lo endereza como las plumas de una flecha.
     (ctx, t, d, K, T) => {
@@ -201,7 +194,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [x - 15, 11, 9], hacia: [x, 5.4, 0], fov: 45 }, mundo }, P => {
         avion(P, { pos: [x, 6, 0], rot: [rumbo * .25, rumbo, 0], motor: 1, alas: 1, inclina: .06, colaH: 1, colaV: prog(t, 0, d * .3), helice: T * 60, rapida: 1, T });
         P.viento({ pos: [x, 6, 0], dir: [-1, 0, 0], T, largo: 8, ancho: 6, alto: 3, vel: 16, n: 12 });
-      }, (c, P) => rot(c, P, 'DERIVA', [x - 3.3, 7.6, 0], prog(t, d * .15, d * .3)));
+      });
     },
     // 15. No puede girar y viene un árbol.
     (ctx, t, d, K, T) => {
@@ -209,14 +202,13 @@
       T3.cuadro(ctx, T, { camara: { desde: [x - 14, 8.5, 4.5], hacia: [x + 5, 5, 0], fov: 50 }, mundo: { muro: false, pista: true } }, P => {
         avion(P, { ...COMPLETO, alerones: null, elevador: null, timon: null, flaps: null, pos: [x, 5.5, 0], helice: T * 60, rapida: 1, susto: prog(t, d * .4, d * .8), T });
         arbolGrande(P, arbol, 0, 3);
-      }, (c, P) => rot(c, P, 'NO PUEDE GIRAR', [x, 7, 0], prog(t, d * .25, d * .4), 'falla'));
+      });
     },
     // 16. Alerones: uno sube, el otro baja, y se ladea. Vista desde atrás.
     (ctx, t, d, K, T) => {
       const a = prog(t, d * .25, d * .55), alabeo = a * .7, x = -20 + t * 2;
       T3.cuadro(ctx, T, { camara: { desde: [x - 26, 6.2, 0], hacia: [x + 1, 5.4, 0], fov: 24 }, mundo: { pista: true } }, P =>
-        avion(P, { ...COMPLETO, elevador: null, timon: null, flaps: null, alerones: a, pos: [x, 5.5, 0], rot: [alabeo, 0, 0], helice: T * 60, rapida: 1, T }),
-      (c, P) => { rot(c, P, 'SUBE', [x + .5, 6.4, 3], prog(t, d * .3, d * .45), null, -40); rot(c, P, 'BAJA', [x + .5, 4.8, -3], prog(t, d * .35, d * .5), null, 60); });
+        avion(P, { ...COMPLETO, elevador: null, timon: null, flaps: null, alerones: a, pos: [x, 5.5, 0], rot: [alabeo, 0, 0], helice: T * 60, rapida: 1, T }));
     },
     // 17. Timón y elevador: la cola se mueve y esquiva el árbol.
     (ctx, t, d, K, T) => {
@@ -225,7 +217,7 @@
         avion(P, { ...COMPLETO, flaps: null, alerones: giro * .5, timon: Math.sin(T * 3) * .6 * (1 - giro) + giro * .8, elevador: Math.sin(T * 2.4 + 1) * .6 * (1 - giro),
           pos: [x, 5.5, z], rot: [giro * .5, rumbo, 0], helice: T * 60, rapida: 1, T });
         arbolGrande(P, 0, 0, 3);
-      }, (c, P) => { rot(c, P, 'TIMÓN', [x - 3.6, 7.2, z], prog(t, d * .1, d * .25)); rot(c, P, 'ELEVADOR', [x - 3.6, 5.3, z + 1.4], prog(t, d * .2, d * .35), null, 120); });
+      });
     },
     // 18. Aterrizaje sin flaps ni ruedas: llega como un misil y rebota de panza.
     (ctx, t, d, K, T) => {
@@ -233,7 +225,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [x - 7, 2.4, 15], hacia: [x + 2, Math.max(1.2, y - 1.5), 0], fov: 50 }, mundo }, P => {
         avion(P, { ...COMPLETO, tren: 0, flaps: null, pos: [x, y, 0], rot: [u > toca ? Math.sin(T * 9) * .12 : 0, 0, u < toca ? -.2 : .05], helice: T * 60, rapida: 1, susto: u > .3 ? 1 : 0, T });
         P.polvo({ pos: [lerp(-28, 22, toca + .02), 0, 0], k: prog(t, d * toca, d * (toca + .3)), r: 3, n: 12 });
-      }, (c, P) => rot(c, P, 'DEMASIADO RÁPIDO', [x, y + 2, 0], prog(t, d * .25, d * .4), 'falla'));
+      });
     },
     // 19. Flaps: primer plano del ala; bajan y la flecha hacia arriba crece.
     (ctx, t, d, K, T) => {
@@ -241,7 +233,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [-6, 9.5, 9], hacia: [0, 5.4, 1.4], fov: 42 }, mundo: { pista: true } }, P => {
         avion(P, { ...COMPLETO, tren: 0, flaps: f, pos: [0, 5.5, 0], rot: [0, 0, .08], helice: T * 50, rapida: 1, T });
         P.flecha({ de: [.5, 6.1, 2.2], dir: [0, 1, 0], largo: lerp(.8, 1.8, f), color: '#8e6cf0', r: .08 });
-      }, (c, P) => rot(c, P, 'FLAPS', [-.3, 5.6, 2.2], prog(t, d * .35, d * .5), null, 90));
+      });
     },
     // 20. Tren de aterrizaje: sale, toca la pista suave y rueda.
     (ctx, t, d, K, T) => {
@@ -250,7 +242,7 @@
       T3.cuadro(ctx, T, { camara: { desde: [x - 4, 1.4, 13], hacia: [x + 1, 1.6, 0], fov: 45 }, mundo }, P => {
         avion(P, { ...COMPLETO, tren, flaps: 1, pos: [x, y, 0], rot: [0, 0, u < toca ? .1 : .02], ruedas: u > toca ? (u - toca) * d * 25 : 0, helice: T * 30, rapida: .6, T });
         P.polvo({ pos: [x + .3, 0, 0], k: prog(t, d * toca, d * (toca + .25)), r: 1.4, n: 6 });
-      }, (c, P) => rot(c, P, 'RUEDAS', [x + .5, .2, 1], prog(t, d * .2, d * .35), 'bien', 80));
+      });
     },
     // 21. Completa: despega y pasa sobre la cámara, como en la escena 1.
     (ctx, t, d, K, T) => {
