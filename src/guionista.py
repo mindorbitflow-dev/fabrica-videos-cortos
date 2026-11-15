@@ -91,11 +91,28 @@ def _normalizar(t: str) -> str:
     return re.sub(r"[^a-z0-9ñ ]", "", t.lower()).strip()
 
 
+VACIAS = {"como", "funciona", "una", "uno", "unos", "unas", "los", "las", "del", "que", "por", "para", "con", "sin", "sus", "este",
+          "esta", "caso", "porque", "pero", "mas", "muy", "hace", "the"}
+
+
+def _claves(t: str) -> set[str]:
+    """Palabras que identifican un tema (sin tildes, artículos ni "cómo funciona")."""
+    return {w for w in re.findall(r"[a-z0-9]+", _norm(t)) if len(w) > 2 and w not in VACIAS}
+
+
+def ya_usado(idea: str, usados: list[str]) -> bool:
+    """¿La idea ya se hizo, aunque con otras palabras? ("El inodoro" ≈ "Cómo funciona un inodoro";
+    "Amazon Prime y el laberinto para cancelarlo - la FTC" ≈ "...- la demanda del gobierno"): 60 % de sus palabras clave."""
+    c = _claves(idea)
+    if not c:
+        return _normalizar(idea) in {_normalizar(u) for u in usados}
+    return any(len(c & _claves(u)) / len(c) >= .6 for u in usados)
+
+
 def proponer_tema(router: LLMRouter, nicho: dict, usados: list[str]) -> str:
     """Tema nuevo para el nicho: primero una idea del banco del nicho (config/nichos.yaml) que no se haya usado, porque son temas reales,
     concretos y verificables, y en orden (el banco va de más a menos viral); la IA solo propone cuando el banco se acabó (sus temas libres salían abstractos o con premisas inventadas)."""
-    vistos = {_normalizar(u) for u in usados}
-    libres = [i for i in nicho.get("ideas", []) if _normalizar(i) not in vistos]
+    libres = [i for i in nicho.get("ideas", []) if not ya_usado(i, usados)]
     if libres:  # en orden: el banco va de más a menos viral
         return libres[0]
     if router.has_any:
@@ -106,7 +123,7 @@ def proponer_tema(router: LLMRouter, nicho: dict, usados: list[str]) -> str:
                 ejemplos="; ".join(nicho.get("ideas", [])[:4]),
                 usados="; ".join(usados[-60:]) or "ninguno"), max_tokens=300, temperature=0.95)
             tema = str(leer_json(texto).get("tema", "")).strip()
-            if tema and _normalizar(tema) not in vistos:
+            if tema and not ya_usado(tema, usados):
                 return tema
         except Exception as error:
             print(f"[Guionista] IA no propuso tema: {error}")

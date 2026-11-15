@@ -97,15 +97,16 @@ def leer_historial() -> list[dict]:
 def registrar_historial(p: dict) -> None:
     historial = [h for h in leer_historial() if h.get("id") != p["id"]]
     historial.append({"id": p["id"], "fecha": p.get("actualizado", p["creado"]), "nicho": p["nicho"],
-                      "tema": p["tema"], "titulo": p["titulo"]})
+                      "tema": p["tema"], "titulo": p["titulo"], **({"idea": p["idea"]} if p.get("idea") else {})})
     HISTORIAL.parent.mkdir(parents=True, exist_ok=True)
     HISTORIAL.write_text(json.dumps(historial, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def temas_usados(nicho: Optional[str] = None) -> list[str]:
     """Temas del historial (también los fabricados en GitHub) y de los proyectos locales, del más viejo al más nuevo."""
-    entradas = [(h["fecha"], h["tema"], h["nicho"]) for h in leer_historial()]
-    entradas += [(p.get("creado", ""), p["tema"], p.get("nicho")) for p in listar()]
+    # El dibujante reescribe el tema ("El inodoro" → "Cómo funciona un inodoro"): se guarda también la idea pedida.
+    entradas = [(h["fecha"], t, h["nicho"]) for h in leer_historial() for t in (h.get("idea"), h["tema"]) if t]
+    entradas += [(p.get("creado", ""), t, p.get("nicho")) for p in listar() for t in (p.get("idea"), p["tema"]) if t]
     temas = [t for _, t, n in sorted(entradas) if nicho is None or n == nicho]
     return list(dict.fromkeys(temas))
 
@@ -485,6 +486,7 @@ def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "
         tema = guionista.proponer_tema(router, cargar_nichos()[nicho], temas_usados(nicho))
     if autor.disponible(router):  # camino de calidad: el dibujante escribe el guion y dibuja cada escena a medida
         p = cargar(autor.dibujar(nicho, tema, router, lambda m: avisar(0.05, m)))
+        p["idea"] = tema; guardar(p)   # la idea pedida queda en el historial aunque el guion cambie el tema
         _, errores = hoja(p, por_escena=2)
         if errores:  # una escena con error saldría en negro
             raise RuntimeError("el dibujo tiene errores: " + "; ".join(errores)[:400])
