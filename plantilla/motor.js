@@ -83,10 +83,11 @@
     let html = '';
     if (idx >= 0) {
       const g = p.grupos.find(g => g.includes(idx));
+      // Sin rayas de diálogo ni guiones sueltos en pantalla ("—Esa regla…" → "Esa regla…").
       html = g.map(i => {
-        const w = p.palabras[i].w.replace(/[<>&]/g, '');
-        return i === idx ? `<span class="actual">${w}</span>` : w;
-      }).join(' ');
+        const w = p.palabras[i].w.replace(/[<>&]/g, '').replace(/[—–]/g, '').replace(/^-+|-+$/g, '');
+        return !w ? '' : i === idx ? `<span class="actual">${w}</span>` : w;
+      }).filter(Boolean).join(' ');
     }
     if (html !== ultimoSub) { sub.innerHTML = html; ultimoSub = html; }
   }

@@ -119,7 +119,7 @@ y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evi
   comparación lado a lado y dato visual (barras, contador, línea de tiempo). Cada 3-4 escenas cambia algo grande (escenario,
   escala o color). En `reenganche` y `revelacion` el visual debe ser el más llamativo del video (zoom fuerte, cambio de color,
   algo que aparece o se detiene).
-- Composición: lo importante entre y=300 y y=1200 y entre x=80 y x=940. La portada tapa y=860-1240 durante la escena 1 (pon al
+- Composición: lo importante entre y=300 y y=1200 y entre x=80 y x=940. En Sombra de Evidencia la escena 1 NO lleva título encima (arranca directo en el gancho); en los demás nichos la portada tapa y=860-1240 durante la escena 1 (pon al
   protagonista arriba) y los subtítulos ocupan y=1260-1440 en las demás. Debajo de y=1440 solo fondo.
 - Rótulos: pocos, cortos, en mayúsculas, de 32 px o más (`K.rotulo`, `K.pastilla`). Nombran lo que se ve; no repiten la voz.
 - Termina cada escena con `K.acabado(ctx, T)` (grano y viñeta).
@@ -132,11 +132,11 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (léelo entero antes de dibu
 - Personajes fijos, nunca los redibujes: `S30.detective(...)` (Sombra) y `S30.tito(...)` (el cerdito: `boca`, `orejas`, `objeto`
   para lo que trae en las manos). Para la gente del flashback (empresarios, obreros, público) usa `S30.hombre(...)` con distintas
   `semilla`. Las escenas de oficina usan `S30.oficina(ctx, T)` y `S30.escritorio(ctx, T)` (encima del que está sentado detrás).
-- **Escena 1: Tito grande y con una emoción EXAGERADA que cambia según el tema**, arriba de la portada, desde el primer cuadro.
+- **Escena 1: Tito grande y con una emoción EXAGERADA que cambia según el tema**, desde el primer cuadro (el video no lleva título encima: arranca directo en el gancho).
   No repitas siempre la misma: elige la que pide la historia (indignado porque le cobraron de más, horrorizado al ver la
   etiqueta, orgulloso y feliz justo antes de enterarse, desesperado con el teléfono lento, confundido, furioso, muerto de
   vergüenza). Exagérala como caricatura de los 30: salto con `susto`, brazos arriba, boca en 'o', orejas caídas, temblor,
-  el objeto apretado o a punto de caerse. Asustado es solo una opción más. Ningún rótulo informativo ("CASO REAL", años) en la escena 1: la portada ya dice la acusación.
+  el objeto apretado o a punto de caerse. Asustado es solo una opción más. Ningún rótulo informativo ("CASO REAL", años) en la escena 1: el gancho es la imagen y la voz.
 - El flashback es donde está la riqueza visual: edificios, fábricas, salas de juntas, anuncios de época, máquinas, contadores,
   gráficas, mapas. Cada escena con fondo completo (nada de fondos vacíos), un elemento principal grande y movimiento.
 - Ritmo rápido: cada escena dura 2-4 s; que algo pase desde el primer cuadro (zoom de cámara con `K.camara`, objeto que entra,

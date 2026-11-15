@@ -17,6 +17,7 @@ evidencia:
   estilo: ilustracion
   cierre: "Síguenos: cada sombra tiene su evidencia."   # no se usa en el video: el final es la pregunta (final: pregunta)
   final: pregunta     # la última escena es una pregunta para comentar; la marca la pone en grande con el logo
+  portada_en_video: false   # sin título al empezar: el video arranca directo en el gancho
   lema: "Cada sombra tiene su evidencia"
   paleta: {fondo: ["#1b1916", "#0f0e0c", "#050505"], acento: "#D4B47A", principal: "#efe7d6", secundario: "#8a8278", peligro: "#C2503A", ok: "#D4B47A"}
   ideas:
