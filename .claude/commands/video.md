@@ -14,6 +14,9 @@ tema, con un personaje u objeto reconocible que se mantiene igual en todo el vid
 rótulos pequeños. Nunca emojis, íconos genéricos ni tarjetas de solo texto. Ejemplo completo para imitar: `ejemplos/pulpo/`.
 
 ## 1. Guion (`proyectos/guion_nuevo.json`)
+- **Si el tema dice LIBRE**, elígelo tú: un tema real, verificable y con mucho potencial viral para el nicho (para Evidencia,
+  una marca o un objeto cotidiano que todos conocen, con una trampa comprobada), que no esté en la lista de ya hechos. Pon en
+  `tema` un nombre corto y concreto: queda en el historial para no repetirlo.
 - Formato: `{tema, titulo, portada: {texto, destacado, sub}, escenas: [{rol, voz, visual}], caption, hashtags}` (ver
   `ejemplos/pulpo/guion.json`; ese ejemplo es más corto que lo que se pide aquí).
 - **Duración: 90-150 s = 16-24 escenas y 260-380 palabras.** Frases de 6-14 palabras, una idea por escena, en segunda persona

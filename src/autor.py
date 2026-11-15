@@ -37,10 +37,17 @@ def _reglas(nicho: str) -> Path:
     return RAIZ / ".claude" / "commands" / f"{fabrica.cargar_nichos().get(nicho, {}).get('comando', 'video')}.md"
 
 
+def con_claude() -> bool:
+    return bool(shutil.which("claude"))
+
+
 def dibujar(nicho: str, tema: str, router: LLMRouter, avisar=print) -> str:
-    """Devuelve el id del proyecto dibujado y revisado."""
-    if shutil.which("claude"):
+    """Devuelve el id del proyecto dibujado y revisado. Con tema LIBRE, Claude elige uno nuevo y viral."""
+    if con_claude():
         return _con_claude(nicho, tema, avisar)
+    if tema == "LIBRE":
+        from src import fabrica, guionista
+        tema = guionista.proponer_tema(router, {**fabrica.cargar_nichos()[nicho], "ideas": []}, fabrica.temas_usados(nicho))
     return _con_gemini(nicho, tema, router, avisar)
 
 
@@ -51,7 +58,10 @@ def _con_claude(nicho: str, tema: str, avisar) -> str:
     conf = fabrica.cargar_nichos().get(nicho, {})
     modelo = str(conf.get("modelo", "")).strip()   # p. ej. sonnet: gasta menos del límite del plan que Opus
     comando = conf.get("comando", "video")
-    avisar(f"El dibujante (Claude Code{' · ' + modelo if modelo else ''}) trabaja en: {tema} (hasta {LIMITE_MIN} min)")
+    if tema == "LIBRE":   # lista agotada: Claude elige; le pasamos lo ya hecho para que no repita
+        hechos = "; ".join(fabrica.temas_usados(nicho)[-120:]) or "ninguno"
+        tema = f"LIBRE (elige tú un tema nuevo y con mucho potencial viral; ya hechos, no los repitas: {hechos})"
+    avisar(f"El dibujante (Claude Code{' · ' + modelo if modelo else ''}) trabaja en: {tema[:120]} (hasta {LIMITE_MIN} min)")
     try:
         r = subprocess.run([shutil.which("claude"), "-p", f"/{comando} {nicho} {tema}", "--allowedTools", HERRAMIENTAS,
                             "--permission-mode", "acceptEdits", "--max-turns", str(MAX_PASOS), "--output-format", "json",

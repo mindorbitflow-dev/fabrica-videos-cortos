@@ -80,7 +80,7 @@ taller:
   lema: "Así se fabrica"
   paleta: {fondo: ["#bfe2f2", "#9fd0e6", "#6fb0cf"], acento: "#FFD23A", principal: "#F5A623", secundario: "#5B5F66", peligro: "#E5484D", ok: "#5FA64A"}
   ideas:
-    # objetos, electrodomésticos y máquinas (de más a menos viral): la fábrica toma la primera que no se haya usado
+    # objetos, electrodomésticos y máquinas: la fábrica toma una al azar entre las que no se han hecho; al acabarse, Claude elige temas nuevos
     - La licuadora
     - El inodoro
     - La nevera
