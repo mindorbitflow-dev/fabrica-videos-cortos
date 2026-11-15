@@ -6,6 +6,7 @@
 //     P.helice({ pos: [0, 2, 0], giro: T * 30 });
 //   }, (c, P) => K.pastilla(c, 'MOTOR', ...P.pantalla([0, 2, 0]), 1, true));   // 2D encima (opcional)
 //
+// mundo: afuera { muro, pista, arboles, pasto, cielo } o, para objetos de casa, { interior: true } (piso y pared de cocina).
 // Unidades: 1 = 1 metro aprox. Y hacia arriba; el suelo es y=0. Ángulos en radianes. Colores CSS.
 // pos/rot/esc son [x, y, z]. Todo lo que se dibuja dentro de P.grupo({pos, rot, esc}, () => ...) se mueve con el grupo.
 (() => {
@@ -78,6 +79,12 @@
         g.fillStyle = `rgb(${226 + v},${214 + v},${194 + v})`; g.fillRect(x + 2, y + 2, 60, 28);
       }
       rep = [6, 1];
+    } else if (nombre === 'baldosa') {
+      c.width = c.height = 256; g.fillStyle = '#b9ad9c'; g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+        const v = hash(i * 7 + j) * 10 - 5; g.fillStyle = `rgb(${214 + v},${205 + v},${190 + v})`; g.fillRect(i * 64 + 2, j * 64 + 2, 60, 60);
+      }
+      rep = [30, 30];
     } else if (nombre === 'pista') {
       c.width = 256; c.height = 1024; g.fillStyle = '#5b5e63'; g.fillRect(0, 0, 256, 1024);
       g.fillStyle = '#f4f1e8'; for (let y = 0; y < 1024; y += 128) g.fillRect(118, y + 20, 20, 70);
@@ -115,6 +122,15 @@
     const pista = new THREE.Mesh(new THREE.PlaneGeometry(8, 160), material('#ffffff', { mapa: 'pista' }));
     pista.rotation.x = -Math.PI / 2; pista.rotation.z = Math.PI / 2; pista.position.set(0, 0.01, 0); pista.receiveShadow = true;
     escena.add(pista); mundo.pista = pista;
+    // Interior (objetos de casa): piso de baldosas y pared de cocina.
+    const interior = new THREE.Group();
+    const piso = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), material('#ffffff', { mapa: 'baldosa' }));
+    piso.rotation.x = -Math.PI / 2; piso.receiveShadow = true; interior.add(piso);
+    const pared = new THREE.Mesh(new THREE.BoxGeometry(60, 14, .4), material('#dfe6ec'));
+    pared.position.set(0, 7, -7); pared.receiveShadow = true; interior.add(pared);
+    const zocalo = new THREE.Mesh(new THREE.BoxGeometry(60, .4, .5), material('#c9ced6'));
+    zocalo.position.set(0, .2, -6.9); interior.add(zocalo);
+    escena.add(interior); mundo.interior = interior;
   }
 
   // ---------- pools: modo inmediato sin crear objetos en cada cuadro ----------
@@ -236,9 +252,12 @@
     if (!window.THREE) throw new Error('falta three.js (el nicho debe tener motor: 3d)');
     iniciar();
     const m = conf.mundo || {};
-    escena.background = new THREE.Color(m.cielo || '#bfe2f2');
-    escena.fog = m.niebla === false ? null : new THREE.Fog(m.cielo || '#bfe2f2', m.nieblaDesde ?? 30, m.nieblaHasta ?? 110);
-    mundo.pasto.visible = m.pasto !== false; mundo.muro.visible = !!m.muro; mundo.arboles.visible = m.arboles !== false; mundo.pista.visible = !!m.pista;
+    const dentro = !!m.interior, cielo = m.cielo || (dentro ? '#e8edf1' : '#bfe2f2');
+    escena.background = new THREE.Color(cielo);
+    escena.fog = m.niebla === false ? null : new THREE.Fog(cielo, m.nieblaDesde ?? (dentro ? 20 : 30), m.nieblaHasta ?? 110);
+    hemi.groundColor.set(dentro ? '#b9b1a6' : '#8fae6a');
+    mundo.pasto.visible = !dentro && m.pasto !== false; mundo.muro.visible = !dentro && !!m.muro;
+    mundo.arboles.visible = !dentro && m.arboles !== false; mundo.pista.visible = !dentro && !!m.pista; mundo.interior.visible = dentro;
     if (m.pista) { mundo.pista.position.x = m.pistaX ?? 0; }
     const c = window.__camaraDebug || conf.camara || {};
     camara.fov = c.fov ?? 38; camara.updateProjectionMatrix();

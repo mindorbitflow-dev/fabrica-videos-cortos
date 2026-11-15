@@ -39,6 +39,8 @@ porque sin ella algo falla a la vista (no se levanta, da una maroma, derrapa, ch
 - Ejemplo completo: `ejemplos/taller/` ("Cómo vuela un avión"). Reglas del guion y del dibujo en `.claude/commands/video.md`.
 - `auto: false` hasta aprobar el primer video; para activarlo en GitHub, cambia a `auto: true` en `config/nichos.yaml`.
 - Render: el 3D se dibuja al 75 % y se escala (`T3_CALIDAD`); ~0,2 s por cuadro, unos 10-12 min para un video de 100 s.
+- Reglas propias y cortas: `.claude/commands/video-taller.md` (`comando: video-taller` en el nicho). Cualquier objeto,
+  electrodoméstico o máquina; `mundo: { interior: true }` para objetos de casa. El correo trae el consumo de Claude de cada video.
 - Ahorro del plan: `modelo: sonnet` en el nicho (Claude Code usa Sonnet en vez de Opus), hojas de 2 cuadros por escena y una
   sola revisión si no hay errores. `texto: oscuro` pone subtítulos, portada y pregunta final en letras oscuras.
 

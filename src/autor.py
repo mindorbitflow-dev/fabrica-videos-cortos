@@ -19,6 +19,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 REGLAS = RAIZ / ".claude" / "commands" / "video.md"
 KIT = RAIZ / "plantilla" / "kit.js"
 LIMITE_MIN = 50  # guiones de 16-24 escenas: escribir, mirar las hojas y corregir
+MAX_PASOS = 60   # tope de pasos del agente: evita que se quede dando vueltas (y gastando) si algo no le sale
 # Claude Code: solo lo que el procedimiento necesita (leer el kit y el ejemplo, escribir el guion y las escenas, pasos de run.py).
 HERRAMIENTAS = "Read,Write,Edit,Glob,Grep,Bash(python run.py:*)"
 RONDAS_GEMINI = 3          # revisiones con las hojas de contacto
@@ -28,6 +29,12 @@ GEMINI_ESPERAS = (0, 30, 90)  # rondas sobre todos los modelos si están saturad
 
 def disponible(router: LLMRouter) -> bool:
     return shutil.which("claude") is not None or bool(router.keys.get("gemini"))
+
+
+def _reglas(nicho: str) -> Path:
+    """Archivo de reglas del nicho: cada página puede tener su comando (más corto = menos tokens por paso)."""
+    from src import fabrica
+    return RAIZ / ".claude" / "commands" / f"{fabrica.cargar_nichos().get(nicho, {}).get('comando', 'video')}.md"
 
 
 def dibujar(nicho: str, tema: str, router: LLMRouter, avisar=print) -> str:
@@ -41,20 +48,41 @@ def dibujar(nicho: str, tema: str, router: LLMRouter, avisar=print) -> str:
 def _con_claude(nicho: str, tema: str, avisar) -> str:
     from src import fabrica
     antes = {p["id"] for p in fabrica.listar()}
-    modelo = str(fabrica.cargar_nichos().get(nicho, {}).get("modelo", "")).strip()   # p. ej. sonnet: gasta menos del plan
+    conf = fabrica.cargar_nichos().get(nicho, {})
+    modelo = str(conf.get("modelo", "")).strip()   # p. ej. sonnet: gasta menos del límite del plan que Opus
+    comando = conf.get("comando", "video")
     avisar(f"El dibujante (Claude Code{' · ' + modelo if modelo else ''}) trabaja en: {tema} (hasta {LIMITE_MIN} min)")
     try:
-        r = subprocess.run([shutil.which("claude"), "-p", f"/video {nicho} {tema}", "--allowedTools", HERRAMIENTAS,
-                            "--permission-mode", "acceptEdits", *(["--model", modelo] if modelo else [])],
+        r = subprocess.run([shutil.which("claude"), "-p", f"/{comando} {nicho} {tema}", "--allowedTools", HERRAMIENTAS,
+                            "--permission-mode", "acceptEdits", "--max-turns", str(MAX_PASOS), "--output-format", "json",
+                            *(["--model", modelo] if modelo else [])],
                            cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=LIMITE_MIN * 60)
     except subprocess.TimeoutExpired:
         raise RuntimeError(f"el dibujante tardó más de {LIMITE_MIN} minutos")
     salida = (r.stdout or "").strip()
-    print(salida[-1500:])
+    consumo = _consumo(salida)
+    print((consumo.pop("texto", "") or salida)[-1500:])
+    if consumo:
+        print("[Dibujante] consumo:", json.dumps(consumo, ensure_ascii=False))
     nuevos = [p for p in fabrica.listar() if p["id"] not in antes and p.get("autor") and fabrica.escenas_js(p).exists()]
     if r.returncode != 0 or not nuevos:
         raise RuntimeError(f"el dibujante no entregó un proyecto (código {r.returncode}): {(r.stderr or salida)[-400:]}")
+    if consumo:   # queda en proyecto.json y en el correo: así se mide qué ahorra cada cambio
+        p = nuevos[0]; p["consumo"] = consumo; fabrica.guardar(p)
     return nuevos[0]["id"]  # listar() ordena del más nuevo al más viejo
+
+
+def _consumo(salida: str) -> dict:
+    """Resumen de `claude -p --output-format json`: pasos, tokens y costo equivalente en API (no es un cobro: va del plan)."""
+    try:
+        d = json.loads(salida[salida.index("{"):])
+    except ValueError:
+        return {}
+    u = d.get("usage") or {}
+    return {"texto": str(d.get("result", "")), "pasos": d.get("num_turns"), "modelo": ",".join((d.get("modelUsage") or {}).keys()) or None,
+            "tokens_entrada": u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0),
+            "tokens_cache": u.get("cache_read_input_tokens", 0), "tokens_salida": u.get("output_tokens", 0),
+            "usd_equivalente": round(d.get("total_cost_usd") or 0, 3), "minutos": round((d.get("duration_ms") or 0) / 60000, 1)}
 
 
 # ---------- Gemini ----------
@@ -168,7 +196,7 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
     from src import fabrica
     from src.guionista import leer_json
     conf = fabrica.cargar_nichos()[nicho]
-    md = REGLAS.read_text(encoding="utf-8")
+    md = _reglas(nicho).read_text(encoding="utf-8")
     relato = conf.get("formato") == "historia"
     tres_d = conf.get("motor") == "3d"
     ejemplo = RAIZ / "ejemplos" / ("taller" if tres_d else "evidencia" if relato else "pulpo")

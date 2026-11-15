@@ -81,6 +81,9 @@ def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
         "──── DETALLES ────",
         f"Nicho: {nicho}",
         f"Duración: {p.get('duracion', '?')} s · Voz: {voces.nombre_voz(p.get('voz_usada') or p.get('voz', ''))}",
+        *([f"Claude: {x.get('pasos')} pasos · {x.get('tokens_salida', 0):,} tokens escritos · "
+            f"{x.get('tokens_entrada', 0) + x.get('tokens_cache', 0):,} leídos ({x.get('tokens_cache', 0):,} de caché) · {x.get('minutos')} min"]
+          if (x := p.get("consumo")) else []),
         *[f"⚠️ {a}" for a in avisos], "",
         "La imagen adjunta es la portada: úsala como miniatura del reel.",
         "Antes de publicar, revisa que los datos del video sean correctos.",

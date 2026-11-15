@@ -62,7 +62,7 @@ evidencia:
 
 taller:
   nombre: 🔧 Así se fabrica
-  descripcion: Cómo funciona una máquina, armándola desde cero en un mundo 3D con física. Empieza con la máquina terminada, la reduce a lo mínimo y cada pieza aparece porque sin ella algo falla a la vista.
+  descripcion: Cualquier objeto, electrodoméstico o máquina se desarma y se vuelve a armar en un mundo 3D con física; cada pieza aparece porque sin ella algo falla a la vista.
   tono: Casual y con humor, como un amigo que arma la máquina contigo. Frases cortas; cada falla es un chiste visual y cada pieza la arregla. Física real, sin mitos.
   formato: construccion   # empieza terminado → lo mínimo → falla → pieza que lo arregla → terminado (reglas en .claude/commands/video.md)
   motor: 3d               # escenas en 3D con three.js (plantilla/taller3d.js)
@@ -70,24 +70,38 @@ taller:
   voz: "gemini:Puck"
   auto: false             # se activa en la rotación cuando apruebes el primer video
   modelo: sonnet          # modelo de Claude Code para este nicho: gasta menos del límite del plan que Opus
+  comando: video-taller   # reglas propias y cortas (.claude/commands/video-taller.md): menos tokens en cada paso
   texto: oscuro           # cielo y pasto claros: subtítulos, portada y pregunta final en letras oscuras
   estilo: ilustracion
   cierre: "Síguenos para armar la próxima máquina."
   lema: "Así se fabrica"
   paleta: {fondo: ["#bfe2f2", "#9fd0e6", "#6fb0cf"], acento: "#FFD23A", principal: "#F5A623", secundario: "#5B5F66", peligro: "#E5484D", ok: "#5FA64A"}
   ideas:
-    - Cómo vuela un avión
-    - Cómo vuela un helicóptero
-    - Por qué una bicicleta no se cae
-    - Cómo sube un cohete al espacio
-    - Cómo se sumerge un submarino
-    - Cómo vuela un dron
-    - Cómo frena un carro
-    - Cómo levanta peso una grúa
-    - Cómo un paracaídas te salva
-    - Cómo flota un barco de acero
-    - Cómo sostiene un puente colgante
-    - Cómo funciona una motosierra
+    # objetos, electrodomésticos y máquinas (de más a menos viral): la fábrica toma la primera que no se haya usado
+    - La licuadora
+    - El inodoro
+    - La nevera
+    - El microondas
+    - El bombillo
+    - La olla a presión
+    - El candado
+    - La cremallera
+    - La bicicleta
+    - El helicóptero
+    - La lavadora
+    - El paraguas
+    - El secador de pelo
+    - La tostadora
+    - El ventilador
+    - El cohete
+    - El paracaídas
+    - La cafetera
+    - El extintor
+    - La motosierra
+    - El submarino
+    - La grúa
+    - El ascensor
+    - El dron
 
 biologia:
   nombre: 🧬 Biología que no te contaron

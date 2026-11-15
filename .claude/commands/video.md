@@ -3,6 +3,8 @@ description: Escribe el guion y dibuja a medida las escenas de un video corto ex
 argument-hint: "<nicho> <tema>"
 ---
 
+Para el nicho `taller` (Así se fabrica) usa `/video-taller`: estas reglas son para los demás nichos.
+
 Deja dibujado y revisado UN video de autor, sin pedir confirmaciones ni hacer preguntas (nadie está mirando: lo lanza la fábrica,
 `src/autor.py`, que después lo renderiza y lo envía por correo). Argumentos: `$ARGUMENTS` = la primera palabra es el nicho
 (clave de `config/nichos.yaml`; lee ahí su tono y su frase de cierre) y el resto es el tema.
@@ -100,31 +102,6 @@ y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evi
   En `pregunta` y `respuesta` marca entre *asteriscos* las 2-4 palabras clave (salen en dorado). La respuesta debe entenderse sola,
   sin haber visto el video, y dejar ganas de verlo.
 
-### Si el nicho tiene `formato: construccion` (Taller 3D)
-Cómo funciona una máquina, armándola desde cero en un mundo 3D. Ejemplo completo: `ejemplos/taller/` (léelo entero).
-- **El gancho es una consecuencia, no un tema.** En los primeros 2 segundos se VE algo salir mal y la voz pone en juego algo:
-  "Si le quitas una sola pieza a este avión, se estrella." (y en pantalla se le cae una pieza y se va en picada). Prohibido
-  abrir con el tema o el plan: nada de "cómo funciona...", "un avión desde cero", "vamos a armar/desarmar", "hoy veremos".
-  Otras fórmulas que sirven: "Esta pieza de 10 centímetros es lo único que evita que la bici te tire.", "Sin este tubito, el
-  helicóptero gira como trompo.", "Le quitamos las ruedas a un carro a 100 km/h. Mira." La escena 2 sube la apuesta y abre el
-  bucle sin explicar ("Así que se las quitamos todas, a ver cuál hace qué."). La revelación de la pieza del gancho se guarda.
-- Portada: 3-5 palabras con la consecuencia o la apuesta, nunca el tema ("SIN ESTA PIEZA SE ESTRELLA", "LA BICI TE TIRARÍA",
-  "GIRA COMO TROMPO"), con el `destacado` en la consecuencia y `sub` que provoca ("y no es la que crees").
-- **La estructura es la de "construir desde la falla"**: `gancho` (la consecuencia, arriba) → `pregunta` (sube la apuesta) →
-  ciclos de `mecanismo` y `reenganche`: **lo mínimo** (la versión más simple que podría funcionar) → **falla a la
-  vista** (no se levanta, gira sin control, se voltea, choca) → **la pieza que lo arregla, y por qué** (una idea física, en
-  palabras de todos los días) → la siguiente falla… → `revelacion` en la pieza más sorprendente → `remate` (la máquina completa
-  otra vez, igual que en la escena 1, para que el video quede en bucle: "Ya tienes un avión.") → `cierre`.
-- **Cada pieza existe porque sin ella algo sale mal.** Si no puedes mostrar qué falla sin esa pieza, no la incluyas. Las fallas
-  son el humor del video: exageradas, físicas y claras (maromas, choques, giros locos, rebotes de panza).
-- **Duración: 90-130 s = 18-24 escenas y 250-330 palabras.** Este formato aguanta más que los demás porque cada pieza es una
-  mini-historia; aun así, frases de 6-16 palabras y nada de relleno entre fallas.
-- Tono casual, como un amigo que arma la máquina contigo, en segunda persona o "nosotros". Física real: nada de mitos (el ala
-  no funciona "porque el aire de arriba llega al mismo tiempo"; empuja aire hacia abajo). Nombres técnicos solo cuando la pieza
-  aparece, y explicados con lo que hace ("los alerones: uno sube, el otro baja, y el avión se inclina").
-- `cierre`: la pregunta para comentar del nicho (`final: pregunta`): "¿Qué máquina armamos después? Escríbela en los comentarios.".
-- `caption`: primera línea = gancho; termina con la misma pregunta del cierre.
-
 ## 2. Proyecto
 `python run.py --nicho <nicho> --guion proyectos/guion_nuevo.json` imprime el id y la ruta de `proyectos/<id>/escenas.js`, que debes escribir.
 
@@ -168,31 +145,6 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (léelo entero antes de dibu
 - La marca solo pone el logo y la pregunta final en la última escena: esa escena lleva solo fondo negro con un halo dorado (como
   los ejemplos); no escribas texto en ella.
 - Rótulos con `K.pastilla` (fondo papel o dorado) y títulos o años con `S30.titulo` (Cinzel dorada).
-
-### Si el nicho tiene `motor: 3d` (Taller 3D)
-Las escenas se dibujan en 3D con `T3` (`plantilla/taller3d.js`, léelo antes de dibujar) sobre three.js. Ejemplo completo para
-imitar: `ejemplos/taller/escenas.js`.
-- Cada escena es `(ctx, t, d, K, T) => T3.cuadro(ctx, T, { camara, mundo }, P => {...}, (c, P) => {...})`: la tercera función
-  dibuja las piezas 3D con `P` y la cuarta (opcional) pone rótulos 2D encima con `K.pastilla` en `P.pantalla([x, y, z])`.
-- Piezas de `P`: `caja`, `cilindro`, `cono`, `esfera`, `toro`, `disco`, `tubo` (de un punto a otro), `grupo` (todo lo de adentro
-  se mueve junto), `helice` (con `giro` y `rapida` para el disco borroso), `rueda`, `flecha` (fuerzas), `viento` (líneas de
-  aire), `polvo` (choques) y `piloto` (el personaje de la página: siempre a bordo de la máquina, con `susto` en las fallas).
-- Define primero la máquina como UNA función con un factor de aparición 0-1 por pieza (como `avion()` del ejemplo) y úsala en
-  todas las escenas: así se arma y se desarma igual siempre.
-- Física "actuada": las posiciones salen de fórmulas del tiempo (`t`, `T`), nunca de una simulación con estado. Usa
-  `T3.caida(t, altura)` para caídas con rebote, `T3.tiembla` para motores forzados y `T3.orbita` para cámaras que giran.
-- **Cámara**: el lienzo es vertical, así que el ancho visible es poco. Para ver una máquina de ~8 m entera la cámara va a
-  13-18 m con `fov` 40-50; acércate solo para un detalle. Mira un poco por debajo de la máquina (`hacia` con y menor) para que
-  quede en la mitad de arriba del cuadro: los subtítulos ocupan y=1260-1440 y la portada y=860-1240 en la escena 1.
-- `mundo`: `{ muro, pista, arboles, pasto, cielo }`. Varía el plano cada escena (de lado, desde atrás, persecución, primer
-  plano de la pieza nueva) y en cada falla cambia algo grande (velocidad, choque, polvo, rótulo rojo).
-- Rótulos: pocos, en mayúsculas, sobre la pieza nueva o la falla: rojo (`#e5484d`) para lo que falla ("NO SE LEVANTA"),
-  verde para lo que funciona ("¡VUELA!"), blanco para nombrar piezas. La última escena no lleva texto: la pregunta la pone el
-  sistema arriba; deja la máquina abajo o a un lado.
-- No uses `S30.vaiven`, `S30.pelicula` ni `K.acabado` en este formato.
-- **Ahorro (la página saca varios videos al día):** escribe `escenas.js` de una vez, reutilizando la función de la máquina y
-  los planos del ejemplo; no leas otros archivos que el kit, el ejemplo y tu proyecto. La hoja trae 2 cuadros por escena: si no
-  hay errores de JavaScript y todo se ve, UNA revisión basta (esto reemplaza el "repite al menos una vez" del paso 4).
 
 ## 4. Revisión con tus propios ojos (obligatoria)
 `python run.py --hoja <id>` genera `proyectos/<id>/hojas/hoja_*.jpg` (3 cuadros por escena) y lista los errores de JavaScript.
