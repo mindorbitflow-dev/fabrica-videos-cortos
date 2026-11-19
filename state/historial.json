@@ -355,5 +355,138 @@
   "nicho": "taller",
   "tema": "El inodoro",
   "titulo": "Le quité una pieza al inodoro y el baño apesta"
+ },
+ {
+  "id": "20261115_215449_el-ascensor-que-se-suelta",
+  "fecha": "2026-11-15T22:09:33",
+  "nicho": "sobrevive",
+  "tema": "El ascensor que se suelta",
+  "titulo": "Tu ascensor se suelta en el piso 30: ¿saltas o te acuestas?"
+ },
+ {
+  "id": "20261116_165300_por-que-los-focos-se-funden-el-cartel-ph",
+  "fecha": "2026-11-16T17:01:04",
+  "nicho": "evidencia",
+  "tema": "Por qué los focos se funden - el cártel Phoebus y las 1000 horas",
+  "titulo": "Tu foco se quema porque un cártel lo decidió en 1924"
+ },
+ {
+  "id": "20261116_170552_la-olla-a-presion",
+  "fecha": "2026-11-16T17:23:41",
+  "nicho": "taller",
+  "tema": "La olla a presión",
+  "titulo": "Le quité una pieza a esta olla y la tapa salió volando"
+ },
+ {
+  "id": "20261116_172603_la-corriente-de-resaca-en-la-playa",
+  "fecha": "2026-11-16T17:38:03",
+  "nicho": "sobrevive",
+  "tema": "La corriente de resaca en la playa",
+  "titulo": "Una corriente te arrastra mar adentro: ¿nadas de frente o de lado?"
+ },
+ {
+  "id": "20261117_041312_black-friday-muchas-ofertas-cuestan-lo-m",
+  "fecha": "2026-11-17T04:18:04",
+  "nicho": "evidencia",
+  "tema": "Black Friday - muchas ofertas cuestan lo mismo o menos otros días del año",
+  "titulo": "El Black Friday casi nunca es el día más barato"
+ },
+ {
+  "id": "20261117_042253_el-extintor",
+  "fecha": "2026-11-17T04:38:19",
+  "nicho": "taller",
+  "tema": "El extintor",
+  "titulo": "Le quité una pieza a este extintor y ganó el fuego"
+ },
+ {
+  "id": "20261117_044007_arenas-movedizas-el-mito-y-la-verdad",
+  "fecha": "2026-11-17T04:51:44",
+  "nicho": "sobrevive",
+  "tema": "Arenas movedizas: el mito y la verdad",
+  "titulo": "Caes en arenas movedizas: ¿pataleas o te quedas quieto?"
+ },
+ {
+  "id": "20261117_183926_la-creadora-del-dia-de-la-madre-paso-su-",
+  "fecha": "2026-11-17T18:46:34",
+  "nicho": "evidencia",
+  "tema": "La creadora del Día de la Madre pasó su vida intentando eliminarlo - Anna Jarvis",
+  "titulo": "La creadora del Día de la Madre lo odiaba"
+ },
+ {
+  "id": "20261117_184839_el-paracaidas",
+  "fecha": "2026-11-17T19:01:22",
+  "nicho": "taller",
+  "tema": "El paracaídas",
+  "titulo": "Le quité una pieza al paracaídas y el patito cayó"
+ },
+ {
+  "id": "20261117_190531_el-hielo-del-lago-se-rompe",
+  "fecha": "2026-11-17T19:18:54",
+  "nicho": "sobrevive",
+  "tema": "El hielo del lago se rompe",
+  "titulo": "El hielo se rompe a 20 m de la orilla: ¿trepas o pataleas?"
+ },
+ {
+  "id": "20261118_024222_hp-y-la-tinta-de-impresora-la-actualizac",
+  "fecha": "2026-11-18T02:47:06",
+  "nicho": "evidencia",
+  "tema": "HP y la tinta de impresora - la actualización que bloqueó cartuchos baratos (2016)",
+  "titulo": "HP bloqueó tu tinta barata con una actualización"
+ },
+ {
+  "id": "20261118_025322_la-tostadora",
+  "fecha": "2026-11-18T03:12:12",
+  "nicho": "taller",
+  "tema": "La tostadora",
+  "titulo": "Le quité una pieza a esta tostadora y se incendió"
+ },
+ {
+  "id": "20261118_031408_el-mar-se-retira-de-golpe-tsunami",
+  "fecha": "2026-11-18T03:23:42",
+  "nicho": "sobrevive",
+  "tema": "El mar se retira de golpe (tsunami)",
+  "titulo": "El mar se retira de golpe: ¿miras o corres?"
+ },
+ {
+  "id": "20261118_180902_monopoly-nacio-como-una-critica-a-los-mo",
+  "fecha": "2026-11-18T18:15:26",
+  "nicho": "evidencia",
+  "tema": "Monopoly nació como una crítica a los monopolios - Lizzie Magie",
+  "titulo": "Monopoly se inventó para criticar a los monopolios"
+ },
+ {
+  "id": "20261118_181630_el-microondas",
+  "fecha": "2026-11-18T18:48:18",
+  "nicho": "taller",
+  "tema": "El microondas",
+  "titulo": "Le quité una pieza al microondas y todo salió mal"
+ },
+ {
+  "id": "20261118_185100_el-oso-pardo-te-ve-en-el-bosque",
+  "fecha": "2026-11-18T19:06:00",
+  "nicho": "sobrevive",
+  "tema": "El oso pardo te ve en el bosque",
+  "titulo": "Un oso pardo te ve: ¿corres o te quedas quieto?"
+ },
+ {
+  "id": "20261119_015639_el-inventor-del-scroll-infinito-se-arrep",
+  "fecha": "2026-11-19T02:02:34",
+  "nicho": "evidencia",
+  "tema": "El inventor del scroll infinito se arrepintió de crearlo",
+  "titulo": "El inventor del scroll infinito se arrepiente de crearlo"
+ },
+ {
+  "id": "20261119_020616_el-bombillo",
+  "fecha": "2026-11-19T02:16:46",
+  "nicho": "taller",
+  "tema": "El bombillo",
+  "titulo": "Le quité una pieza al bombillo y se apagó en un segundo"
+ },
+ {
+  "id": "20261119_021928_tu-carro-cae-a-un-rio",
+  "fecha": "2026-11-19T02:29:51",
+  "nicho": "sobrevive",
+  "tema": "Tu carro cae a un río",
+  "titulo": "Tu carro cae a un río: ¿esperas o sales ya?"
  }
 ]
