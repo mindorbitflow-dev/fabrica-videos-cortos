@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Ilustra F2 — Calle lluviosa con Personaje2</title>
+<style>html,body{margin:0;background:#111;overflow:hidden}canvas{display:block;width:1080px;height:1920px}</style>
+</head><body><canvas id="lienzo" width="1080" height="1920"></canvas>
+<script src="../src/nucleo.js"></script>
+<script src="../src/geom3.js"></script>
+<script src="../src/pincel.js"></script>
+<script src="../src/pintura.js"></script>
+<script src="../src/luz.js"></script>
+<script src="../src/atmosfera.js"></script>
+<script src="../src/camara.js"></script>
+<script src="../src/esqueleto.js"></script>
+<script src="../src/rig25.js"></script>
+<script src="../src/dinamica.js"></script>
+<script src="../src/personaje.js"></script>
+<script src="../src/mano.js"></script>
+<script src="../src/cuerpo.js"></script>
+<script src="../src/ropa.js"></script>
+<script src="../src/cabeza25.js"></script>
+<script src="../src/pelo.js"></script>
+<script src="../src/personaje2.js"></script>
+<script src="../src/props.js"></script>
+<script src="../src/escenarios.js"></script>
+<script src="../src/elipsis.js"></script>
+<script src="../src/escena.js"></script>
+<script>
+// WP7: misma escena y mismo guion que calle_lluvia.html, pero Lía es un Personaje2 (?modo=vector para ver solo el personaje nuevo sin pintura).
+// Escena de 10 s: Lía camina bajo la lluvia, se detiene ante el escaparate de la panadería y sonríe.
+const I = Ilustra, qm = new URLSearchParams(location.search);
+I.MODO = qm.get('modo') || 'pintado';
+const esc = I.escenarios.calleLluviosa({ hora: 'atardecer', escaparateX: 330 });
+const H = 540, SUELO = esc.suelo;
+const lia = new I.Personaje2({
+  nombre: 'Lía', altura: H, semilla: 11, piel: '#eab48c', pelo: '#3b2924', peinado: 'melena', ojos: { estilo: 'puntos', color: '#3a2a20' },
+  abrigo: { color: '#a8844f', largo: 0.66, cuello: true }, bufanda: { color: '#3d6b6e' },
+  pantalon: '#363a48', zapatos: { modelo: 'botin', color: '#2b2422' }, proporciones: 'adulto', complexion: 'media'
+});
+
+// recorrido: velocidad constante hasta 5 s, frena con suavidad hasta 6.4 s (termina en doble apoyo)
+const S2 = 2 * 0.26 * H, D_FIN = S2 * 4.05, V0 = D_FIN / 5.7, X_FIN = 420, X0 = X_FIN + D_FIN;
+function distancia(t) {
+  if (t < 5) return V0 * t;
+  const k = Math.min(1, (t - 5) / 1.4);
+  return V0 * 5 + V0 * 1.4 * (k - (k * k * k - k * k * k * k / 2));
+}
+const brazoParaguas = { brazoD: 0.5, antebrazoD: 1.85, manoD: -0.5 };
+function estado(t) {
+  const d = distancia(t), x = X0 - d, dir = -1;
+  const andar = I.ciclos.poseCaminar(x, SUELO, d, H, dir, brazoParaguas, ['brazoD', 'antebrazoD'], { zancada: 0.26, brazos: 0.3 });
+  // transición a estar de pie: se conservan los pies plantados (sin deslizamiento)
+  const kParar = I.suave(I.clamp((t - 5.9) / 0.7, 0, 1));
+  let pose = andar;
+  if (kParar > 0) {
+    const quieto = I.ciclos.poseParado(x, SUELO, H, dir, Object.assign({}, I.POSES.dePie, brazoParaguas, { cabeza: -0.12, cuello: -0.04 }),
+      [andar.objetivoPieD[0], andar.objetivoPieI[0]]);
+    pose = I.mezclarPoses(andar, quieto, kParar);
+    // paso final: el pie retrasado se junta con el delantero (arco), sin deslizar el de apoyo
+    const k2 = I.suave(I.clamp((t - 6.55) / 0.55, 0, 1));
+    if (k2 > 0) {
+      const xD = andar.objetivoPieD[0], xI = andar.objetivoPieI[0];
+      const atrasD = (xD - x) * dir < (xI - x) * dir;              // ¿el pie D es el retrasado?
+      const delante = atrasD ? xI : xD, atras = atrasD ? xD : xI;
+      const destino = delante - dir * 0.075 * H;
+      const nx = I.lerp(atras, destino, k2), ny = SUELO - 0.02 * H - 0.035 * H * Math.sin(Math.PI * k2);
+      if (atrasD) { pose.objetivoPieD = [nx, ny]; pose.pieD = 0.25 * Math.sin(Math.PI * k2); }
+      else { pose.objetivoPieI = [nx, ny]; pose.pieI = 0.25 * Math.sin(Math.PI * k2); }
+      pose.raizY = (pose.raizY || 0) - 0.006 * Math.sin(Math.PI * k2);
+    }
+  }
+  // expresión: neutra al caminar, ternura al mirar el escaparate, sonrisa al final
+  const expresion = t < 6.2 ? 'neutra' : I.mezclarExpresiones(I.mezclarExpresiones('neutra', 'ternura', I.suave(I.clamp((t - 6.2) / 0.8, 0, 1))), 'alegre', I.suave(I.clamp((t - 8.2) / 0.8, 0, 1)));
+  const mirada = [I.lerp(0.2, 0.7, kParar), I.lerp(0.1, -0.35, kParar)];
+  // luz: borde frío-cálido de la farola; al llegar al escaparate gana luz cálida lateral
+  const kVent = I.suave(I.clamp((t - 4.5) / 2, 0, 1));
+  const luz = esc.luz.con({ dir: [I.lerp(0.4, -0.9, kVent), I.lerp(-0.9, -0.35, kVent)], dirBorde: [I.lerp(0.9, -0.95, kVent), -0.3], borde: kVent > 0.5 ? '#ffc070' : '#ffd29a', fuerzaBorde: 1 + 0.4 * kVent });
+  return { x, y: SUELO, dir, pose, expresion, mirada, viento: 0.45 + 0.25 * I.ruido1(t * 0.4, 3), luz, paraguas: { color: '#2e3b48', inclinacion: -0.1 }, _estadoEn: estado };
+}
+const cam = new I.Camara({ temblor: 0.8, claves: {
+  x: [[0, X0 - 80], [5, X0 - V0 * 5 - 70], [6.6, X_FIN - 20], [10, X_FIN - 30]],
+  y: [[0, 960], [6, 960], [10, 935]],
+  zoom: [[0, 1], [6.2, 1], [10, 1.13]] } });
+// la cámara sigue con suavidad: se usa interpolación lineal en el tramo de marcha
+cam.en = (function (orig) { return function (t) { const r = orig.call(this, t); if (t < 5) r.x = X0 - V0 * t - 70 + I.ruido1(t * 0.7, 3) * 1.2; return r; }; })(cam.en);
+
+const escena = new I.Escena({
+  escenario: esc, camara: cam, duracion: 10, fps: 30,
+  actores: [{ personaje: lia, estado }],
+  post: { lluvia: { densidad: 230, alfa: 0.3, semilla: 9 }, grano: 0.055, vineta: 0.5, gradacion: { fuerza: 0.1 } }
+});
+const dibujar = escena.draw; escena.draw = function (ctx, t) { I.dinamica.vaciarCache(); return dibujar.call(this, ctx, t); };   // cabo 3: lo hará Escena.draw (WP8)
+I.montar(escena);
+</script></body></html>

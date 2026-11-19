@@ -47,7 +47,7 @@ DIBUJOS = {
 PAGINA = r"""<!DOCTYPE html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Cormorant+Garamond:wght@700&family=Montserrat:wght@800&family=Space+Mono&display=block" rel="stylesheet">
 <style>body{{margin:0;background:transparent}}</style></head><body><canvas id="c" width="1080" height="1920"></canvas>
-<script>{kit}</script><script>{sombra}</script><script>
+<script>{kit}</script><script>{sombra}</script><script>{ilustra}</script><script>
 // Globo de diálogo con el texto ajustado: reduce la letra hasta que quepa. (cx, cy) = punta de la cola.
 function globo(ctx, x, y, w, h, cx, cy, texto, {{tam = 52, min = 30, fondo = '#efe7d6', color = '#0d0c0b', resalta = '#7a5a1f'}} = {{}}) {{
   ctx.save();
@@ -106,11 +106,22 @@ ctx.fillText('SOMBRA DE EVIDENCIA', 935, 1374);
 """
 
 
+def _ilustra() -> str:
+    """Kit de ilustración + adaptador (S30.detective/S30.tito con el estilo nuevo), si el nicho evidencia lo pide."""
+    import yaml
+    nichos = yaml.safe_load((PLANTILLA.parent / "config" / "nichos.yaml").read_text(encoding="utf-8")) or {}
+    if nichos.get("evidencia", {}).get("personajes") != "ilustra":
+        return ""
+    return "</script><script>".join((PLANTILLA / f).read_text(encoding="utf-8").replace("</script", "<\\/script")
+                                    for f in ("ilustra.js", "sombra_ilustra.js"))
+
+
 async def _dibujar(destino: Path, dibujos: dict, datos: dict | None = None) -> list[Path]:
     destino.mkdir(parents=True, exist_ok=True)
     pagina = destino / "personajes.html"
     pagina.write_text(PAGINA.format(kit=(PLANTILLA / "kit.js").read_text(encoding="utf-8"),
-                                     sombra=(PLANTILLA / "sombra.js").read_text(encoding="utf-8")), encoding="utf-8")
+                                     sombra=(PLANTILLA / "sombra.js").read_text(encoding="utf-8"),
+                                     ilustra=_ilustra()), encoding="utf-8")
     logo = "data:image/jpeg;base64," + base64.b64encode(LOGO.read_bytes()).decode()
     rutas = []
     async with async_playwright() as pw:

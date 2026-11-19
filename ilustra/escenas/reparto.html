@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Ilustra — Reparto de la fábrica de videos</title>
+<style>html,body{margin:0;background:#111;overflow:hidden}canvas{display:block;width:1080px;height:1920px}</style>
+</head><body><canvas id="lienzo" width="1080" height="1920"></canvas>
+<script src="../src/nucleo.js"></script>
+<script src="../src/pincel.js"></script>
+<script src="../src/luz.js"></script>
+<script src="../src/atmosfera.js"></script>
+<script src="../src/camara.js"></script>
+<script src="../src/esqueleto.js"></script>
+<script src="../src/personaje.js"></script>
+<script src="../src/props.js"></script>
+<script src="../src/escenarios.js"></script>
+<script src="../src/elipsis.js"></script>
+<script src="../src/escena.js"></script>
+<script src="../src/reparto.js"></script>
+<script src="../src/reparto_gente.js"></script>
+<script src="../src/reparto_fauna.js"></script>
+<script>
+// Hoja del reparto. Vistas (parámetro ?vista= o window.REPARTO_VISTA): 'hoja' (todos), fichas de 2 poses ('sombra', 'tito', 'hombre', 'mujer',
+// 'anciano', 'nino', 'patito', 'persona', 'tiburon', 'serpiente') y catálogos de poses completos ('poses_sombra', 'poses_tito', 'poses_persona').
+// Contrato del render: window.ESCENA.draw(ctx, t) dibuja la vista actual; herramientas/ficha.py cambia de vista y renderiza.
+const I = Ilustra, R = I.REPARTO;
+const luz = new I.Luz({ dir: [-0.6, -0.8], dirBorde: [0.9, -0.35], clave: '#ffd9a0', ambiente: '#6a5248', borde: '#ffc078', niebla: '#7a6458' });
+
+// ---- fábrica de figuras (se cachea por clave)
+const cache = {};
+function fig(tipo, altura, extra) {
+  const k = tipo + '|' + altura + '|' + (extra ? JSON.stringify(extra) : '');
+  if (cache[k]) return cache[k];
+  let p;
+  if (tipo === 'sombra') p = R.sombra({ altura });
+  else if (tipo === 'tito') p = R.tito({ altura });
+  else if (tipo === 'patito') p = R.patito(Object.assign({ altura }, extra));
+  else if (tipo === 'persona') p = R.persona(Object.assign({ altura }, extra));
+  else if (tipo === 'tiburon') p = R.tiburon(Object.assign({ largo: altura }, extra));
+  else if (tipo === 'serpiente') p = R.serpiente(Object.assign({ largo: altura }, extra));
+  else p = R.gente(tipo, Object.assign({ altura }, extra));
+  return cache[k] = p;
+}
+const ALT = { sombra: 0.92, tito: 0.74, hombre: 0.92, mujer: 0.88, anciano: 0.85, nino: 0.7, patito: 0.62, persona: 0.85 };
+
+// ---- descripciones de las figuras: [tipo, estado, extra, etiqueta]
+const S = (pose, expresion, e) => ['sombra', Object.assign({ pose, expresion }, e), null, 'Sombra · ' + pose];
+const T = (pose, expresion, e) => ['tito', Object.assign({ pose, expresion }, e), null, 'Tito · ' + pose];
+const G = (v, pose, expresion, e) => [v, Object.assign({ pose, expresion }, e), null, v];
+const PA = (pose, extra, e) => ['patito', Object.assign({ pose }, e), extra, 'patito · ' + pose];
+const PE = (pose, expresion, e, extra) => ['persona', Object.assign({ pose, expresion }, e), extra, 'persona · ' + pose];
+const FIG = {
+  sombraDePie: S('dePie', 'neutra'), sombraSenalar: S('senalar', 'alegre'), sombraLupa: S('lupa', 'concentrado'), sombraPens: S('pensativo', 'pensativa'),
+  sombraSorp: S('sorprendido', 'asombro'), sombraCamina: S('camina', 'neutra', { dist: 220 }),
+  titoDePie: T('dePie', 'alegre'), titoObjeto: T('traeObjeto', 'alegre', { objeto: 'carpeta' }), titoTriste: T('triste', 'triste'), titoAsombro: T('asombrado', 'asombro'),
+  titoCamina: T('camina', 'alegre', { dist: 160 }), titoSaluda: T('saluda', 'risa'),
+  hombre: G('hombre', 'dePie', 'neutra'), mujer: G('mujer', 'dePie', 'alegre'), anciano: G('anciano', 'dePie', 'pensativa'), nino: G('nino', 'dePie', 'grito'),
+  hombreCamina: G('hombre', 'camina', 'neutra', { dist: 260 }), mujerCamina: G('mujer', 'camina', 'alegre', { dist: 260 }), ancianoCamina: G('anciano', 'camina', 'neutra', { dist: 90 }), ninoCamina: G('nino', 'camina', 'alegre', { dist: 200 }),
+  patitoFlotar: PA('flotar'), patitoSusto: PA('susto'), patitoCelebrar: PA('celebrar'), patitoRedondo: PA('inclinarse', { casco: 'redondo' }), patitoSinCasco: PA('flotar', { casco: false }),
+  perDePie: PE('dePie', 'neutra'), perCamina: PE('camina', 'neutra', { dist: 300 }), perCorre: PE('corre', 'susto', { dist: 700 }), perSalta: PE('saltar', 'sorpresa', { k: 0.5 }),
+  perCae: PE('caer', 'susto', { k: 1 }), perAgacha: PE('agacharse', 'concentrado'), perProtege: PE('protegerse', 'susto'), perSienta: PE('sentarse', 'triste'),
+  perTendido: PE('tendido', 'neutra'), perSusto: PE('susto', 'susto'), perCaeAtras: PE('caerAtras', 'susto', { k: 1 }),
+  tiburon: ['tiburon', { pose: 'nada' }, null, 'tiburón · nada'], tiburonAtaca: ['tiburon', { pose: 'ataca' }, null, 'tiburón · ataca'], tiburonAleta: ['tiburon', { pose: 'acecha', agua: true }, null, 'tiburón · acecha'],
+  serpiente: ['serpiente', { pose: 'repta' }, null, 'serpiente · repta'], serpienteAtaca: ['serpiente', { pose: 'ataca' }, null, 'serpiente · ataca'], serpienteAlerta: ['serpiente', { pose: 'alerta' }, null, 'serpiente · alerta']
+};
+
+function dibujaFig(ctx, t, f, x, y, altura, dir, sinAlt) {
+  const [tipo, est, extra] = f, a = sinAlt ? altura : altura * (ALT[tipo] || 1);
+  const p = fig(tipo, tipo === 'tiburon' || tipo === 'serpiente' || sinAlt ? altura : a, extra);
+  p.dibujar(ctx, t, Object.assign({ x, y, dir: dir || 1 }, est));
+}
+function etiqueta(ctx, texto, x, y, tam, alfa) {
+  ctx.save(); ctx.font = tam + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(240,222,196,' + (alfa || 0.75) + ')'; ctx.fillText(texto, x, y); ctx.restore();
+}
+function fondo(ctx, suelo) {
+  const g = ctx.createLinearGradient(0, 0, 0, 1920); g.addColorStop(0, '#76604f'); g.addColorStop(0.55, '#5a463a'); g.addColorStop(1, '#2f2320');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 1080, 1920);
+  if (suelo) { // zócalo y suelo de madera a lo largo de toda la hoja
+    ctx.fillStyle = 'rgba(40,26,20,0.35)'; ctx.fillRect(0, suelo - 6, 1080, 1920 - suelo + 6);
+  }
+}
+
+// ---- vistas
+const VISTAS = {
+  hoja(ctx, t) {
+    fondo(ctx);
+    // [clave, altura final en px]; y = suelo de la fila
+    const filas = [
+      { y: 332, it: [['sombraDePie', 222], ['sombraSenalar', 222], ['sombraLupa', 222], ['sombraSorp', 222]] },
+      { y: 618, it: [['titoDePie', 180], ['titoObjeto', 180], ['titoTriste', 180], ['titoAsombro', 180]] },
+      { y: 910, it: [['hombre', 222], ['mujer', 214], ['anciano', 205], ['nino', 150]] },
+      { y: 1112, it: [['patitoFlotar', 140], ['patitoSusto', 140], ['patitoCelebrar', 140], ['patitoRedondo', 140]] },
+      { y: 1445, it: [['perCorre', 222], ['perSalta', 222], ['perCae', 222], ['perAgacha', 222]] },
+      { y: 1705, it: [['perProtege', 222], ['perSienta', 222], ['perTendido', 222], ['perSusto', 222]] }
+    ];
+    const cw = 270;
+    filas.forEach(fila => {
+      ctx.fillStyle = 'rgba(30,20,16,0.28)'; ctx.fillRect(14, fila.y + 6, 1052, 3);
+      fila.it.forEach(([k, alt], c) => {
+        const cx = 14 + c * cw + cw / 2, f = FIG[k];
+        const sinWater = f[0] === 'patito';
+        dibujaFig(ctx, t, f, cx, fila.y, alt, 1, true);
+        etiqueta(ctx, f[3], cx, fila.y + (sinWater ? 44 : 26), 15, 0.6);
+      });
+    });
+    const base = 1880;
+    ctx.fillStyle = 'rgba(30,20,16,0.28)'; ctx.fillRect(14, base + 6, 1052, 3);
+    dibujaFig(ctx, t, FIG.tiburon, 300, base - 60, 330, 1, true); etiqueta(ctx, 'tiburón', 300, base + 26, 15, 0.6);
+    dibujaFig(ctx, t, FIG.serpienteAtaca, 800, base - 4, 270, 1, true); etiqueta(ctx, 'serpiente', 800, base + 26, 15, 0.6);
+  }
+};
+function ficha(a, b, suelo, h, titulo) {
+  return (ctx, t) => {
+    fondo(ctx); const y = 1180;
+    ctx.fillStyle = 'rgba(30,20,16,0.28)'; ctx.fillRect(0, y + 6, 1080, 6);
+    dibujaFig(ctx, t, FIG[a], 250, y, h, 1); dibujaFig(ctx, t, FIG[b], 700, y, h, 1);
+    etiqueta(ctx, FIG[a][3], 250, y + 70, 26, 0.7); etiqueta(ctx, FIG[b][3], 700, y + 70, 26, 0.7);
+  };
+}
+VISTAS.tallas = (ctx, t) => {
+  fondo(ctx); const y = 1180, H = 560;
+  ctx.fillStyle = 'rgba(30,20,16,0.28)'; ctx.fillRect(0, y + 6, 1080, 6);
+  [['sombraDePie', 110, H], ['hombre', 300, H], ['mujer', 480, H * 0.95], ['perDePie', 660, H * 0.95], ['titoDePie', 880, H * 0.8]].forEach(([k, x, h]) => { if (FIG[k]) { dibujaFig(ctx, t, FIG[k], x, y, h, 1, true); etiqueta(ctx, FIG[k][3], x, y + 50, 20, 0.7); } });
+};
+VISTAS.sombra = ficha('sombraLupa', 'sombraSenalar', 0, 700);
+VISTAS.tito = ficha('titoObjeto', 'titoTriste', 0, 700);
+VISTAS.hombre = ficha('hombre', 'hombreCamina', 0, 680);
+VISTAS.mujer = ficha('mujer', 'mujerCamina', 0, 680);
+VISTAS.anciano = ficha('anciano', 'ancianoCamina', 0, 680);
+VISTAS.nino = ficha('nino', 'ninoCamina', 0, 880);
+VISTAS.patito = (ctx, t) => { fondo(ctx); const y = 1100; dibujaFig(ctx, t, FIG.patitoFlotar, 290, y, 640); dibujaFig(ctx, t, FIG.patitoSusto, 790, y, 640); etiqueta(ctx, 'flotar', 290, y + 90, 26); etiqueta(ctx, 'susto', 790, y + 90, 26); };
+VISTAS.persona = ficha('perCorre', 'perCae', 0, 680);
+VISTAS.tiburon = (ctx, t) => { fondo(ctx); dibujaFig(ctx, t, FIG.tiburon, 540, 700, 700); dibujaFig(ctx, t, FIG.tiburonAtaca, 540, 1150, 700); etiqueta(ctx, 'nada', 540, 830, 26); etiqueta(ctx, 'ataca', 540, 1280, 26); };
+VISTAS.serpiente = (ctx, t) => { fondo(ctx); dibujaFig(ctx, t, FIG.serpiente, 540, 800, 640); dibujaFig(ctx, t, FIG.serpienteAtaca, 540, 1330, 640); etiqueta(ctx, 'repta', 540, 860, 26); etiqueta(ctx, 'ataca', 540, 1390, 26); };
+function catalogo(claves, h, cols, rowH) {
+  return (ctx, t) => {
+    fondo(ctx);
+    const cw = 1080 / cols;
+    claves.forEach((k, i) => {
+      const r = Math.floor(i / cols), c = i % cols, base = 150 + rowH * (r + 1) - 70, cx = cw * c + cw / 2;
+      ctx.fillStyle = 'rgba(30,20,16,0.25)'; if (c === 0) ctx.fillRect(14, base + 6, 1052, 3);
+      dibujaFig(ctx, t, FIG[k], cx, base, h); etiqueta(ctx, FIG[k][3], cx, base + 30, 20, 0.7);
+    });
+  };
+}
+VISTAS.poses_sombra = catalogo(['sombraDePie', 'sombraCamina', 'sombraSenalar', 'sombraLupa', 'sombraPens', 'sombraSorp'], 470, 3, 640);
+VISTAS.poses_tito = catalogo(['titoDePie', 'titoCamina', 'titoObjeto', 'titoTriste', 'titoAsombro', 'titoSaluda'], 400, 3, 640);
+VISTAS.poses_persona = catalogo(['perDePie', 'perCamina', 'perCorre', 'perSalta', 'perCae', 'perCaeAtras', 'perAgacha', 'perProtege', 'perSienta', 'perTendido', 'perSusto', 'perDePie'], 300, 4, 420);
+VISTAS.poses_animales = (ctx, t) => { fondo(ctx);
+  const f = (k, x, y, h) => dibujaFig(ctx, t, FIG[k], x, y, h);
+  f('patitoFlotar', 270, 400, 300); f('patitoSusto', 810, 400, 300); f('patitoCelebrar', 270, 760, 300); f('patitoRedondo', 810, 760, 300);
+  f('tiburon', 300, 1060, 460); f('tiburonAtaca', 790, 1060, 460); f('tiburonAleta', 300, 1280, 460); f('serpiente', 270, 1540, 420); f('serpienteAtaca', 790, 1640, 420); };
+
+
+// ---- expresiones: cabezas ampliadas de Sombra, Tito y la persona con las mismas expresiones
+VISTAS.expresiones = (ctx, t) => {
+  fondo(ctx);
+  const nombres = ['neutra', 'alegre', 'triste', 'asombro', 'enfado', 'pensativa', 'susto', 'risa', 'duda', 'concentrado', 'grito', 'ternura'];
+  const filas = [['sombra', 'Sombra'], ['tito', 'Tito'], ['persona', 'persona']];
+  const cols = 3, cw = 360, ch = 330, x0 = 0, y0 = 150;
+  filas.forEach(([tipo, rot], r) => {
+    nombres.forEach((n, i) => {
+      const c = i % cols, rr = Math.floor(i / cols);
+      // 4 filas de expresiones por personaje: se reparten en 3 columnas -> usamos 3 bloques verticales
+    });
+  });
+  // disposición: 12 expresiones x 3 personajes = 36 cabezas; 6 columnas x 6 filas de 180x300
+  const W = 180, Hh = 300;
+  filas.forEach(([tipo], r) => {
+    nombres.forEach((n, i) => {
+      const col = i % 6, fila = r * 2 + Math.floor(i / 6);
+      const cx = col * W + W / 2, cy = 160 + fila * Hh + Hh / 2 - 20;
+      const p = fig(tipo, tipo === 'persona' ? 520 : 600, null);
+      const est = { x: 0, y: 0, dir: 1, pose: 'dePie', expresion: n, sombraSuelo: false };
+      const a = I.capaAux('repartoExpr', 1080, 1920); a.ctx.setTransform(1, 0, 0, 1, 0, 0); a.ctx.clearRect(0, 0, 1080, 1920); a.ctx.translate(300, 1500);
+      p.dibujar(a.ctx, t, Object.assign({}, est, { x: 0, y: 0 }));
+      const J = (p.ultimas || p.pj.ultimas), hc = J.cabeza;
+      ctx.save(); ctx.beginPath(); ctx.rect(cx - W / 2 + 4, cy - Hh / 2 + 4, W - 8, Hh - 8); ctx.clip();
+      const k = tipo === 'persona' ? 2.1 : tipo === 'tito' ? 0.74 : 0.6;
+      ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-hc.x - (tipo === 'sombra' ? 30 : tipo === 'tito' ? 14 : 8), -hc.y + (tipo === 'sombra' ? -45 : tipo === 'tito' ? -10 : 0));
+      p.dibujar(ctx, t, Object.assign({}, est, { x: 0, y: 0 }));
+      ctx.restore();
+      etiqueta(ctx, n, cx, cy + Hh / 2 - 12, 15, 0.7);
+    });
+  });
+};
+
+const vista = new URLSearchParams(location.search).get('vista') || window.REPARTO_VISTA || 'hoja';
+const escena = {
+  duracion: 4, fps: 30, vistas: Object.keys(VISTAS),
+  draw(ctx, t) {
+    const v = window.REPARTO_VISTA || new URLSearchParams(location.search).get('vista') || 'hoja';
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    I.luzActual = luz;
+    (VISTAS[v] || VISTAS.hoja)(ctx, t);
+    I.grano(ctx, t, { intensidad: 0.035 }); I.vineta(ctx, { fuerza: 0.3 });
+  }
+};
+I.montar(escena);
+</script></body></html>

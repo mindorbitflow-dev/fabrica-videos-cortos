@@ -92,6 +92,8 @@ def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
 
 def enviar_post(p: dict) -> bool:
     """Correo aparte con el post del mismo tema (imagen 1080x1350 + texto). Devuelve False si el video no trae post."""
+    if not fabrica.cargar_nichos().get(p.get("nicho"), {}).get("post", True):
+        return False   # `post: false` en el nicho: sin post aparte
     imagen, post = fabrica.post_jpg(p), p.get("post") or {}
     if not imagen.exists():
         return False

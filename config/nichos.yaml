@@ -15,6 +15,8 @@ evidencia:
   marca: sombra       # portada serif y cierre con el logo (assets/marca/sombra.jpg)
   voz: "gemini:Charon"
   estilo: ilustracion
+  post: false         # sin el post de dos cuadros (viñeta Tito/Sombra) ni su correo aparte; quita la línea para reactivarlo
+  personajes: ilustra   # Sombra y Tito con el kit de ilustración (plantilla/ilustra.js); quita esta línea para volver a la caricatura
   cierre: "Síguenos: cada sombra tiene su evidencia."   # no se usa en el video: el final es la pregunta (final: pregunta)
   temas: libre        # Claude elige cada tema (cotidiano o del momento) pensando en viralidad; la lista es solo de ejemplo
   herramientas: "WebSearch,WebFetch"   # para confirmar temas del momento

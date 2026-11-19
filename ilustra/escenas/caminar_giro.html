@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Ilustra F2 — Personaje2 camina y gira</title>
+<style>html,body{margin:0;background:#111;overflow:hidden}canvas{display:block;width:1080px;height:1920px}</style>
+</head><body><canvas id="lienzo" width="1080" height="1920"></canvas>
+<script src="../src/nucleo.js"></script>
+<script src="../src/geom3.js"></script>
+<script src="../src/pincel.js"></script>
+<script src="../src/pintura.js"></script>
+<script src="../src/luz.js"></script>
+<script src="../src/atmosfera.js"></script>
+<script src="../src/camara.js"></script>
+<script src="../src/esqueleto.js"></script>
+<script src="../src/rig25.js"></script>
+<script src="../src/dinamica.js"></script>
+<script src="../src/personaje.js"></script>
+<script src="../src/mano.js"></script>
+<script src="../src/cuerpo.js"></script>
+<script src="../src/ropa.js"></script>
+<script src="../src/cabeza25.js"></script>
+<script src="../src/pelo.js"></script>
+<script src="../src/personaje2.js"></script>
+<script src="../src/props.js"></script>
+<script src="../src/escenarios.js"></script>
+<script src="../src/elipsis.js"></script>
+<script src="../src/escena.js"></script>
+<script>
+// WP7: Lía (Personaje2, modo pintado) se aleja de espaldas, gira por tres cuartos de espalda, perfil y tres cuartos de frente, y vuelve hacia la cámara.
+// El rumbo (yaw) sigue la dirección de la marcha: la trayectoria sale de integrar la velocidad. Se detiene de frente a las 11 s y sonríe.
+// ?modo=vector para verlo en vector.
+const I = Ilustra, q = new URLSearchParams(location.search);
+I.MODO = q.get('modo') || 'pintado';
+const esc = I.escenarios.calleLluviosa({ hora: 'atardecer', escaparateX: 330 });
+const H = 540, SUELO = esc.suelo, V = 150, PROF_Y = 0.3;
+const lia = new I.Personaje2({ preset: 'lia', altura: H, zapatos: { modelo: 'botin', color: '#2b2422' } });
+const suave = I.suave, clamp = I.clamp;
+const rumbo = t => Math.PI - (Math.PI - 0.3) * suave(clamp((t - 1.8) / 7.2, 0, 1));
+const vel = t => t < 10 ? V : t < 11 ? V * (1 - suave(t - 10)) : 0;
+// tabla de la trayectoria (Euler, paso fijo): función pura de t
+const DT = 1 / 120, N = Math.ceil(12 / DT) + 2, TX = new Float64Array(N), TZ = new Float64Array(N), TD = new Float64Array(N);
+for (let i = 1; i < N; i++) { const t = (i - 1) * DT, v = vel(t), h = rumbo(t); TX[i] = TX[i - 1] + v * Math.sin(h) * DT; TZ[i] = TZ[i - 1] + v * Math.cos(h) * DT; TD[i] = TD[i - 1] + v * DT; }
+function en(tab, t) { const k = clamp(t / DT, 0, N - 2), i = Math.floor(k); return tab[i] + (tab[i + 1] - tab[i]) * (k - i); }
+const XC = 400 + en(TX, 12) / 2, X0 = 540 - en(TX, 12) / 2;                      // centra la trayectoria en pantalla
+function estado(t) {
+  const xp = X0 + en(TX, t), z = en(TZ, t), d = en(TD, t), y = SUELO + 40 + PROF_Y * z, yaw = rumbo(t);
+  const andar = I.ciclos.poseCaminar(xp, y, d, H, 1, null, [], { zancada: 0.26, brazos: 0.3 });
+  const kParar = suave(clamp((t - 10.5) / 0.6, 0, 1));
+  const quieto = I.ciclos.poseParado(xp, y, H, 1, null, [xp + 0.045 * H, xp - 0.045 * H]);
+  const pose = kParar > 0 ? I.mezclarPoses(andar, quieto, kParar) : andar;
+  const expresion = I.mezclarExpresiones('neutra', 'alegre', suave(clamp((t - 11) / 0.8, 0, 1)));
+  return { x: xp, y, prof: z, yaw, pose, expresion, viento: 0.35, luz: esc.luz, _estadoEn: estado };
+}
+const cam = new I.Camara({ temblor: 0, x: 540, y: 1010, zoom: 1 });
+const escena = new I.Escena({ escenario: esc, camara: cam, duracion: 12, fps: 30, actores: [{ personaje: lia, estado }],
+  post: { lluvia: false, grano: 0.05, vineta: 0.45, gradacion: { fuerza: 0.1 } } });
+const dibujar = escena.draw; escena.draw = function (ctx, t) { I.dinamica.vaciarCache(); return dibujar.call(this, ctx, t); };   // cabo 3: Escena.draw (WP8) lo hará
+I.montar(escena);
+</script></body></html>

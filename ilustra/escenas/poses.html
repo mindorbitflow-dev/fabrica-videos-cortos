@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Ilustra — Catálogo de poses</title>
+<style>html,body{margin:0;background:#111;overflow:hidden}canvas{display:block;width:1080px;height:1920px}</style>
+</head><body><canvas id="lienzo" width="1080" height="1920"></canvas>
+<script src="../src/nucleo.js"></script>
+<script src="../src/pincel.js"></script>
+<script src="../src/luz.js"></script>
+<script src="../src/atmosfera.js"></script>
+<script src="../src/camara.js"></script>
+<script src="../src/esqueleto.js"></script>
+<script src="../src/personaje.js"></script>
+<script src="../src/props.js"></script>
+<script src="../src/escenarios.js"></script>
+<script src="../src/elipsis.js"></script>
+<script src="../src/escena.js"></script>
+<script>
+// Hoja de revisión: todas las poses guardadas + expresiones, sobre fondo neutro con luz de borde.
+const I = Ilustra;
+const luz = new I.Luz({ dir: [-0.5, -0.85], dirBorde: [0.9, -0.3], ambiente: '#55627a', niebla: '#7d8aa0' });
+const pj = new I.Personaje({ altura: 300, semilla: 11, piel: '#eab48c', pelo: '#3b2924', abrigo: { color: '#a8844f', largo: 0.66, cuello: true }, bufanda: { color: '#3d6b6e' }, pantalon: '#363a48' });
+const viejo = new I.Personaje({ tipo: 'anciano', altura: 290, semilla: 23, piel: '#d9a888', pelo: '#b9b4ac', peinado: 'corto', abrigo: { color: '#5f6b5a', largo: 0.4, cuello: false }, bufanda: null, pantalon: '#4a4440', ojos: '#2f2a28' });
+const nino = new I.Personaje({ tipo: 'nino', altura: 200, semilla: 31, piel: '#efbf98', pelo: '#5a3a28', peinado: 'mono', abrigo: { color: '#7a3e3a', largo: 0.5, cuello: true }, bufanda: { color: '#d9c38a' }, pantalon: '#3a4256' });
+const nombres = Object.keys(I.POSES);
+const exps = Object.keys(I.EXPRESIONES);
+const escena = { duracion: 4, fps: 30, draw(ctx, t) {
+  ctx.setTransform(1,0,0,1,0,0);
+  const g = ctx.createLinearGradient(0,0,0,1920); g.addColorStop(0,'#3a4458'); g.addColorStop(1,'#1f2533');
+  ctx.fillStyle = g; ctx.fillRect(0,0,1080,1920);
+  I.luzActual = luz;
+  ctx.font = '22px sans-serif'; ctx.fillStyle = '#c9d0dc';
+  nombres.forEach((n, i) => {
+    const cx = 140 + (i % 4) * 260, base = 470 + Math.floor(i / 4) * 400;
+    ctx.fillText(n, cx - 60, base + 40);
+    const pose = I.POSES[n];
+    pj.dibujar(ctx, t, { x: cx, y: base, dir: 1, pose, expresion: exps[i % exps.length], viento: 0.4 });
+  });
+  // expresiones en primer plano (cabezas grandes)
+  exps.forEach((e, i) => {
+    const cx = 110 + i * 140, base = 1500;
+    ctx.save(); ctx.beginPath(); ctx.rect(cx - 70, 1380, 140, 300); ctx.clip();
+    ctx.translate(cx, base); ctx.scale(2, 2); ctx.translate(-cx, -base);
+    pj.dibujar(ctx, t, { x: cx, y: base + 255, dir: i % 2 ? -1 : 1, pose: I.POSES.dePie, expresion: e, viento: 0.2, sombraSuelo: false });
+    ctx.restore();
+    ctx.fillText(e, cx - 50, 1710);
+  });
+  // tipos de cuerpo
+  viejo.dibujar(ctx, t, { x: 700, y: 1270, dir: -1, pose: I.mezclarPoses(I.POSES.dePie, I.POSES.cabizbajo, 0.5), expresion: 'pensativa' });
+  nino.dibujar(ctx, t, { x: 900, y: 1270, dir: -1, pose: I.POSES.saludar, expresion: 'alegre', viento: 0.5 });
+  ctx.fillText('anciano / niño', 700, 1310);
+  I.grano(ctx, t, { intensidad: 0.04 });
+} };
+I.montar(escena);
+</script></body></html>

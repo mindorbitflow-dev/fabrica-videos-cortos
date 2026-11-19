@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Ilustra — ejemplo mínimo</title>
+<style>html,body{margin:0;background:#111}canvas{display:block}</style></head>
+<body><canvas id="lienzo" width="1080" height="1920"></canvas>
+<script src="../dist/ilustra.js"></script>
+<script>
+const I = Ilustra;
+// 1. un escenario listo
+const escenario = I.escenarios.calleLluviosa({ hora: 'atardecer' });
+// 2. un personaje original
+const ana = new I.Personaje({ altura: 520, piel: '#e6b08a', pelo: '#2e2220', peinado: 'mono',
+  abrigo: { color: '#6f7f6a', largo: 0.6, cuello: true }, bufanda: { color: '#8a4a3a' } });
+// 3. un nuevo objeto en pocas líneas: hereda luz, textura de pincel, borde y niebla
+I.props.registrar('buzon', (ctx, x, y, o = {}) => {
+  const s = o.escala || 1, P = I.Pincel;
+  P.forma(ctx, P.rect(x - 30 * s, y - 140 * s, 60 * s, 140 * s, 6 * s), { color: '#7a2f2a', semilla: o.semilla || 5, profundidad: o.profundidad });
+  P.forma(ctx, P.rect(x - 22 * s, y - 118 * s, 44 * s, 8 * s, 3 * s), { color: '#2a2226', volumen: 0, borde: 0 });
+});
+escenario.capas.splice(escenario.capas.findIndex(c => c.actores), 0, { z: 1, dibujar: (ctx, t) => I.props.buzon(ctx, 760, escenario.suelo) });
+// 4. la escena: el personaje camina 3 s y se para
+const escena = new I.Escena({
+  escenario, duracion: 6, camara: new I.Camara({ x: 540 }),
+  actores: [{ personaje: ana, estado: t => {
+    const d = Math.min(t, 3) * 150, x = 200 + d;
+    const pose = t < 3 ? I.ciclos.poseCaminar(x, escenario.suelo, d, 520, 1) : I.ciclos.poseParado(x, escenario.suelo, 520, 1);
+    return { x, y: escenario.suelo, dir: 1, pose, expresion: t < 3 ? 'neutra' : 'alegre', viento: 0.4 };
+  } }],
+  post: { lluvia: true }
+});
+I.montar(escena);   // vista previa en vivo; render.py usa Ilustra.renderizarEn(canvas, t)
+</script></body></html>

@@ -425,7 +425,8 @@ def componer_html(p: dict) -> str:
     scripts = [(PLANTILLA / f).read_text(encoding="utf-8") for f in ("primitivas.js", "motor.js")]
     if p.get("autor"):  # las escenas de autor van antes que el motor, cada una en su <script>: un error de sintaxis no tumba el motor
         estilo = "autor"
-        base = ["kit.js", "sombra.js"] + (["vendor/three.min.js", "taller3d.js"] if conf.get("motor") == "3d" else [])
+        base = ["kit.js", "sombra.js"] + (["ilustra.js", "sombra_ilustra.js"] if conf.get("personajes") == "ilustra" else []) \
+            + (["vendor/three.min.js", "taller3d.js"] if conf.get("motor") == "3d" else [])
         scripts[:0] = [(PLANTILLA / f).read_text(encoding="utf-8") for f in base] + [escenas_js(p).read_text(encoding="utf-8")]
     js = "".join("<script>" + s.replace("</script", "<\\/script") + "</script>\n" for s in scripts)
     iconos = (PLANTILLA / "iconos.svg").read_text(encoding="utf-8")
@@ -475,7 +476,7 @@ def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, m
     render.miniatura(mp4(p), miniatura(p), min(2.0, p["duracion"] / 2))
     render.miniatura(mp4(p), portada_jpg(p), 0.5, ancho=1080)  # miniatura para subir al reel
     shutil.rmtree(carpeta(p) / "tmp_audio", ignore_errors=True)
-    if (p.get("post") or {}).get("pregunta") and cargar_nichos()[p["nicho"]].get("marca"):
+    if (p.get("post") or {}).get("pregunta") and cargar_nichos()[p["nicho"]].get("marca") and cargar_nichos()[p["nicho"]].get("post", True):
         try:  # el post es un extra: si falla, el video se entrega igual
             from src import personajes
             personajes.post(p["post"], carpeta(p))

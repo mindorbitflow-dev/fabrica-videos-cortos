@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Ilustra — Sombra y Tito en la oficina (6 s)</title>
+<style>html,body{margin:0;background:#111;overflow:hidden}canvas{display:block;width:1080px;height:1920px}</style>
+</head><body><canvas id="lienzo" width="1080" height="1920"></canvas>
+<script src="../src/nucleo.js"></script>
+<script src="../src/pincel.js"></script>
+<script src="../src/luz.js"></script>
+<script src="../src/atmosfera.js"></script>
+<script src="../src/camara.js"></script>
+<script src="../src/esqueleto.js"></script>
+<script src="../src/personaje.js"></script>
+<script src="../src/props.js"></script>
+<script src="../src/escenarios.js"></script>
+<script src="../src/elipsis.js"></script>
+<script src="../src/escena.js"></script>
+<script src="../src/reparto.js"></script>
+<script src="../src/reparto_gente.js"></script>
+<script src="../src/reparto_fauna.js"></script>
+<script>
+// 6 s: Tito entra con una carpeta, habla con Sombra; Sombra piensa, mira con la lupa, se sorprende (el sombrero salta) y señala.
+// Reutiliza el escenario interiorCalido de interior.html. Todo es función de t.
+const I = Ilustra, R = I.REPARTO, S = I.suave, cl = I.clamp, L = I.lerp;
+const esc = I.escenarios.interiorCalido({ taza: false });
+const SUELO = esc.suelo;
+const so = R.sombra({ altura: 550 }), ti = R.tito({ altura: 450 });
+const rampa = (t, a, b) => S(cl((t - a) / (b - a), 0, 1));
+
+// ---- poses de Sombra (el brazo derecho SIEMPRE por IK para poder mezclar sin saltos)
+const SP = so.poses;
+const reposo = Object.assign({}, SP.dePie, { relManoD: ['suelo', 0.17, -0.27] });
+const piensa = Object.assign({}, SP.pensativo, { relManoD: ['cabeza', 0.14, 0.2] });
+const lupa = SP.lupa;
+const sorpr = Object.assign({}, SP.sorprendido, { relManoD: ['suelo', 0.36, -0.46] });
+const senala = Object.assign({}, SP.senalar, { relManoD: ['suelo', 0.62, -0.5] });
+const mezcla = (a, b, k) => R.mezclar(a, b, k);
+
+function sombraEstado(t) {
+  let p = reposo;
+  p = mezcla(p, piensa, rampa(t, 1.9, 2.5));
+  p = mezcla(p, lupa, rampa(t, 3.6, 4.2));
+  p = mezcla(p, sorpr, rampa(t, 4.55, 4.85));
+  p = mezcla(p, senala, rampa(t, 5.05, 5.5));
+  // asentimientos y respiración extra mientras escucha / habla
+  const esc1 = rampa(t, 2.2, 2.5) * (1 - rampa(t, 3.5, 3.8));
+  p = Object.assign({}, p, { cabeza: (p.cabeza || 0) + Math.sin(t * 4.2) * 0.04 * esc1, columna: (p.columna || 0) + (t > 3.5 && t < 4.6 ? 0.06 * rampa(t, 3.5, 4.0) : 0) });
+  const ex = t < 1.5 ? 'neutra' : t < 2.0 ? 'alegre' : t < 3.6 ? 'pensativa' : t < 4.55 ? 'concentrado' : t < 5.05 ? 'asombro' : 'alegre';
+  const habla = t > 2.9 && t < 3.5 ? 0.8 : (t > 5.2 ? 0.6 * (t < 5.9 ? 1 : 0) : 0);
+  const salto = rampa(t, 4.55, 4.7) * (1 - rampa(t, 4.8, 5.2));
+  return { x: 300, y: SUELO, dir: 1, pose: p, expresion: ex, habla, mirada: t < 1.2 ? [0.5, 0] : [0.3, 0], sombreroAlto: 0.55 * salto, alto: 0 };
+}
+
+// ---- Tito: entra caminando (a la izquierda, dir = -1), se detiene y habla; todos los brazos por FK
+const carga = { brazoD: 0.3, antebrazoD: -1.25, brazoI: -0.3, antebrazoI: 1.25, prop: 'objeto' };
+const X0 = 1170, X1 = 735, TLLEGA = 2.0;
+function titoX(t) { const k = cl(t / TLLEGA, 0, 1); return L(X0, X1, 1 - (1 - k) * (1 - k)); }
+function titoEstado(t) {
+  const x = titoX(t), dist = X0 - x, H = ti.H;
+  let pose;
+  const caminando = t < TLLEGA + 0.05;
+  const w = ti.poses.camina({ e: { dist }, t, x, y: SUELO, dir: -1, H });
+  const pies = [w.objetivoPieD[0], w.objetivoPieI[0]];
+  if (caminando) pose = Object.assign({}, w, carga);
+  else {
+    const k = rampa(t, TLLEGA, TLLEGA + 0.55);          // los pies se acomodan sin deslizar de golpe
+    const fin = [x - 0.03 * H, x + 0.03 * H];
+    const pa = [L(pies[0], fin[0], k), L(pies[1], fin[1], k)];
+    pose = I.ciclos.poseParado(x, SUELO, H, -1, Object.assign({}, I.POSES.dePie, carga), pa);
+    // el pie "cercano" (D) queda por delante en el sentido de la marcha
+    const gest = Math.sin((t - 2.5) * 3.1) * 0.07 * rampa(t, 2.5, 2.7) * (1 - rampa(t, 3.7, 3.9));
+    pose.brazoD += gest; pose.antebrazoD += gest * 1.5; pose.brazoI -= gest; pose.antebrazoI -= gest * 1.5;
+    // ofrece la carpeta cuando Sombra la revisa
+    const of = rampa(t, 3.6, 4.0) * (1 - rampa(t, 4.6, 5.0));
+    pose.brazoD += 0.18 * of; pose.brazoI -= 0.18 * of; pose.columna += 0.05 * of;
+  }
+  const ex = t < 3.7 ? 'alegre' : t < 5.1 ? 'asombro' : 'alegre';
+  const habla = t > 2.5 && t < 3.6 ? 0.9 : t > 5.4 ? 0.7 : 0;
+  const hop = rampa(t, 4.6, 4.75) * (1 - rampa(t, 4.8, 5.1));
+  return { x, y: SUELO, dir: -1, pose, expresion: ex, habla, objeto: 'carpeta', dist, mirada: [0.5, 0], alto: 40 * hop, colita: Math.sin(t * 5) * 0.12, llevaObjeto: true };
+}
+const aSombra = { personaje: so, estado: sombraEstado };
+const aTito = { personaje: ti, estado: titoEstado };
+// Sombra queda detrás de Tito en el orden de dibujo cuando se cruzan: Sombra primero
+const cam = new I.Camara({ temblor: 0.4, claves: { x: [[0, 530], [6, 515]], zoom: [[0, 1.12], [6, 1.2]], y: [[0, 950], [6, 935]] } });
+const escena = new I.Escena({ escenario: esc, camara: cam, duracion: 6, fps: 30, actores: [aSombra, aTito],
+  post: { lluvia: false, grano: 0.05, vineta: 0.55, gradacion: { fuerza: 0.08, sombras: '#3a2a30', luces: '#ffd29a' } } });
+I.montar(escena);
+</script></body></html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Ilustra — Recursos de elipsis</title>
+<style>html,body{margin:0;background:#111;overflow:hidden}canvas{display:block;width:1080px;height:1920px}</style>
+</head><body><canvas id="lienzo" width="1080" height="1920"></canvas>
+<script src="../src/nucleo.js"></script>
+<script src="../src/pincel.js"></script>
+<script src="../src/luz.js"></script>
+<script src="../src/atmosfera.js"></script>
+<script src="../src/camara.js"></script>
+<script src="../src/esqueleto.js"></script>
+<script src="../src/personaje.js"></script>
+<script src="../src/props.js"></script>
+<script src="../src/escenarios.js"></script>
+<script src="../src/elipsis.js"></script>
+<script src="../src/escena.js"></script>
+<script>
+// Demostración de los recursos de elipsis en la calle de noche (4 s):
+//  - contraluz: Lía en silueta contra el escaparate; - de espaldas: el anciano mira hacia la calle;
+//  - sombra proyectada: la sombra larga del anciano sobre la acera; - plano de detalle: la cámara se acerca a la silueta.
+const I = Ilustra;
+const esc = I.escenarios.calleLluviosa({ hora: 'noche', escaparateX: 330, semilla: 6 });
+const SUELO = esc.suelo;
+const lia = new I.Personaje({ altura: 520, semilla: 11, piel: '#eab48c', pelo: '#3b2924', abrigo: { color: '#a8844f', largo: 0.66, cuello: true }, bufanda: { color: '#3d6b6e' }, pantalon: '#363a48' });
+const viejo = new I.Personaje({ tipo: 'anciano', altura: 470, semilla: 23, piel: '#d9a888', pelo: '#b9b4ac', peinado: 'corto', abrigo: { color: '#4f5a55', largo: 0.62, cuello: true }, bufanda: { color: '#7a4a3a' }, pantalon: '#3a3836' });
+const estLia = t => ({ x: 330, y: SUELO - 30, dir: 1, pose: I.mezclarPoses(I.POSES.dePie, I.POSES.cabizbajo, 0.6), expresion: 'triste', viento: 0.5, sombraSuelo: false });
+const estViejo = t => I.elipsis.deEspaldas({ x: 760, y: SUELO + 40, dir: -1, pose: I.POSES.manosBolsillos, viento: 0.3 });
+const cam = new I.Camara({ x: 520, y: 940, temblor: 0.5 });
+I.elipsis.planoDetalle(cam, [180, 560, 320, 560], 1.0, 3.2, 1);
+const escena = new I.Escena({ escenario: esc, camara: cam, duracion: 4, fps: 30,
+  actores: [
+    { personaje: lia, estado: estLia,
+      antes: () => {}, // se dibuja en contraluz desde 'extra' (ver abajo)
+    },
+    { personaje: viejo, estado: estViejo,
+      antes(ctx, t, e) { I.elipsis.sombraProyectada(ctx, c => viejo.dibujar(c, t, Object.assign({}, e, { sombraSuelo: false })), { ancla: [e.x, e.y], sesgo: 1.4, escalaY: -0.35, alfa: 0.5, desenfoque: 5 }); } }
+  ],
+  post: { lluvia: { densidad: 200, alfa: 0.28 }, grano: 0.06, vineta: 0.55 } });
+// Lía en contraluz: se sustituye su dibujo normal por silueta con borde luminoso
+escena.actores[0].personaje = { dibujar(ctx, t, e) { I.elipsis.contraluz(ctx, c => lia.dibujar(c, t, e), { fuente: [330, 900], color: '#ffc06a', radio: 420, silueta: '#1b2030' }); } };
+I.montar(escena);
+</script></body></html>
