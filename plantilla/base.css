@@ -6,7 +6,7 @@ html, body { background: #05080f; overflow: hidden; }
 /* Paleta: cada nicho la sobreescribe (fabrica.py inyecta :root) */
 :root {
   --fondo-a: #12305a; --fondo-b: #0a1628; --fondo-c: #05080f;
-  --rejilla: rgba(127,209,255,.07); --acento: #FFD23F;
+  --rejilla: rgba(127,209,255,.07); --acento: #E0B060;
 }
 
 /* Lienzo vertical 9:16 para Shorts / TikTok / Reels */
@@ -103,18 +103,18 @@ svg * { transform-box: fill-box; transform-origin: center; }
 .estilo-autor #subtitulo { font-size: 62px; top: 1260px; }
 
 /* ---- Marca "Sombra de Evidencia" (body.marca-sombra): portada serif y cierre con el logo ---- */
-.marca-sombra #subtitulo .actual { color: #D4B47A; }
+.marca-sombra #subtitulo .actual { color: #E0B060; }
 .marca-sombra .portada { font-family: 'Cormorant Garamond', serif; }
-.marca-sombra .portada .linea { font-size: 128px; line-height: .95; color: #efe7d6; text-shadow: 0 6px 24px #000, 0 3px 0 #000; }
-.marca-sombra .portada .destacado { color: #D4B47A; }
-.marca-sombra .portada .sub { color: #e2d8c4; text-shadow: 0 2px 8px #000; }
+.marca-sombra .portada .linea { font-size: 128px; line-height: .95; color: #E7DCC2; text-shadow: 0 6px 24px #000, 0 3px 0 #000; }
+.marca-sombra .portada .destacado { color: #E0B060; }
+.marca-sombra .portada .sub { color: #E7DCC2; text-shadow: 0 2px 8px #000; }
 .marca-cierre { position: absolute; left: 70px; width: 870px; top: 380px; z-index: 6; display: flex; flex-direction: column;
   align-items: center; gap: 34px; text-align: center; }
-.marca-cierre img { width: 520px; height: 520px; border-radius: 50%; box-shadow: 0 0 120px rgba(212,180,122,.25); }
+.marca-cierre img { width: 520px; height: 520px; border-radius: 50%; box-shadow: 0 0 120px rgba(224,176,96,.25); }
 .marca-cierre.con-pregunta { top: 330px; gap: 44px; }
 .marca-cierre.con-pregunta img { width: 300px; height: 300px; }
 .marca-cierre .pregunta-final { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 92px; line-height: 1.02;
-  color: #D4B47A; text-shadow: 0 4px 18px #000; }
+  color: #E0B060; text-shadow: 0 4px 18px #000; }
 .marca-cierre.sin-logo { top: 420px; }
 .marca-cierre.sin-logo .pregunta-final { font-family: inherit; font-weight: 900; font-size: 96px; color: #fff;
   text-shadow: 0 6px 0 rgba(0,0,0,.35), 0 0 30px rgba(0,0,0,.35); }
@@ -132,4 +132,4 @@ svg * { transform-box: fill-box; transform-origin: center; }
 .texto-oscuro .marca-cierre.sin-logo .pregunta-final,
 .texto-oscuro .marca-cierre.sin-logo .lema { color: #151515; text-shadow: 0 0 8px #fff, 0 6px 0 #fff, 0 -4px 0 #fff, 5px 0 0 #fff, -5px 0 0 #fff; }
 .texto-oscuro .marca-cierre.sin-logo .lema { color: #d6333a; }
-.marca-cierre .lema { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 76px; line-height: 1; color: #efe7d6; }
+.marca-cierre .lema { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 76px; line-height: 1; color: #E7DCC2; }

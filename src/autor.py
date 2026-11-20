@@ -219,12 +219,19 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
     md = _reglas(nicho).read_text(encoding="utf-8")
     relato = conf.get("formato") == "historia"
     tres_d = conf.get("motor") == "3d"
-    ejemplo = RAIZ / "ejemplos" / ("taller" if tres_d else "evidencia" if relato else "pulpo")
+    dos_d = conf.get("motor") == "2d"
+    ejemplo = RAIZ / "ejemplos" / (nicho if dos_d else "taller" if tres_d else "evidencia" if relato else "pulpo")
     kit = KIT.read_text(encoding="utf-8")
     if relato:
         kit += "\n" + (RAIZ / "plantilla" / "sombra.js").read_text(encoding="utf-8")
+        if conf.get("personajes") == "ilustra":   # decorados y props del motor nuevo (global D)
+            kit += "\n" + (RAIZ / "plantilla" / "decorados.js").read_text(encoding="utf-8")
     if tres_d:
         kit += "\n" + (RAIZ / "plantilla" / "taller3d.js").read_text(encoding="utf-8")
+    if dos_d:  # librería 2D del nicho: solo su cabecera (la API documentada), no todo el código
+        for lib in conf.get("libs2d") or []:
+            texto = (RAIZ / "plantilla" / lib).read_text(encoding="utf-8")
+            kit += "\n" + texto[:texto.find("(() => {") if "(() => {" in texto else 9000][:9000]
     avisar(f"El dibujante (Gemini) escribe el guion: {tema}")
     guion = leer_json(_gemini(router, [PROMPT_GUION.format(
         nombre=conf["nombre"], descripcion=conf["descripcion"], tono=conf["tono"], tema=tema,

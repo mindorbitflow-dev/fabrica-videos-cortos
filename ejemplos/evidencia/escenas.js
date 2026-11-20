@@ -1,57 +1,25 @@
 // "Tu diamante es publicidad" — Sombra de Evidencia (versión corta, ~55 s). Tito llega con algo cotidiano y Sombra le revela su origen.
-// Personajes y oficina fijos de S30 (plantilla/sombra.js); aquí solo las piezas de este tema.
+// Todo con el motor de ilustración: personajes y gente (S30.detective / S30.tito / S30.hombre), fondos y objetos (D = plantilla/decorados.js),
+// luz cálida y grano del kit. Los flashbacks NO dibujan formas planas a mano: componen decorados (D.fondo.*) y props (D.vitrina, D.mina...).
 (() => {
   const { W, H, TAU, clamp, lerp, prog, sale, rebote, hash, azar, alfa, mezcla } = K;
   const C = S30.C;
 
-  // ---- piezas del tema ----
-  // Diamante de talla brillante (corona + pabellón), con destello. oro: 0-1 lo tiñe de dorado.
-  function diamante(ctx, x, y, r, T, { oro = 0, brillo = 1, gira = 0 } = {}) {
-    ctx.save(); ctx.translate(x, y); ctx.scale(Math.cos(gira) * .25 + .75, 1);
-    const cara = mezcla(C.papel, C.oro, oro), sombra = mezcla(C.claro, '#a8874f', oro);
-    ctx.beginPath(); ctx.moveTo(-r, -r * .2); ctx.lineTo(-r * .55, -r * .62); ctx.lineTo(r * .55, -r * .62); ctx.lineTo(r, -r * .2); ctx.closePath(); S30.relleno(ctx, cara, Math.max(2, r * .08));
-    ctx.beginPath(); ctx.moveTo(-r, -r * .2); ctx.lineTo(0, r * .9); ctx.lineTo(r, -r * .2); ctx.closePath(); S30.relleno(ctx, sombra, Math.max(2, r * .08));
-    ctx.strokeStyle = C.tinta; ctx.lineWidth = Math.max(1.5, r * .05);
-    ctx.beginPath(); ctx.moveTo(-r * .55, -r * .62); ctx.lineTo(-r * .3, -r * .2); ctx.lineTo(0, -r * .62); ctx.lineTo(r * .3, -r * .2); ctx.lineTo(r * .55, -r * .62);
-    ctx.moveTo(-r * .3, -r * .2); ctx.lineTo(0, r * .9); ctx.lineTo(r * .3, -r * .2); ctx.stroke();
-    ctx.restore();
-    if (brillo > 0) destello(ctx, x + r * .45, y - r * .55, r * .45, brillo * Math.max(0, Math.sin(T * 3 + x * .01)));
-  }
-  function destello(ctx, x, y, r, a) {
-    if (a <= 0) return;
-    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = '#fffaf0'; ctx.beginPath();
-    for (let i = 0; i < 8; i++) { const rr = i % 2 ? r * .2 : r, an = i * Math.PI / 4; ctx.lineTo(x + Math.cos(an) * rr, y + Math.sin(an) * rr); }
-    ctx.fill(); ctx.restore();
-  }
+  // ---- piezas del tema (sobre los props del kit) ----
+  const diamante = (ctx, x, y, r, T, { oro = 0, brillo = 1, gira = 0 } = {}) => D.joya(ctx, x, y, r, { T, oro, brillo, gira });
+  // Anillo con diamante y halo ámbar. s = escala (1 ≈ 90 px de ancho). oro: 0-1.
   function anillo(ctx, x, y, s, T, { oro = 1 } = {}) {
-    if (oro > .5) K.halo(ctx, x, y - 20 * s, 90 * s, C.oro, .35 * oro);
-    ctx.beginPath(); ctx.ellipse(x, y, 40 * s, 34 * s, 0, 0, TAU); ctx.strokeStyle = mezcla('#5f5850', C.oro, oro); ctx.lineWidth = 11 * s; ctx.stroke();
-    ctx.strokeStyle = C.tinta; ctx.lineWidth = 2.5 * s; ctx.stroke();
-    diamante(ctx, x, y - 46 * s, 22 * s, T);
-  }
-  // Fondo del flashback: papel envejecido oscuro con un foco de luz.
-  function pasado(ctx, T, { x = 540, y = 700 } = {}) {
-    K.fondo(ctx, '#3a352f', '#14120f', '#26221d');
-    K.halo(ctx, x, y, 700, '#efe7d6', .12);
+    if (oro > .5) K.halo(ctx, x, y - 20 * s, 110 * s, C.oro, .3 * oro);
+    D.joya(ctx, x, y - 20 * s, 44 * s, { tipo: 'anillo', oro, T });
   }
   const ano = (ctx, txt, t, y = 420, tam = 64) => S30.titulo(ctx, txt, 540, y, { tam, opacidad: prog(t, .05, .4) });
   const pastilla = (ctx, txt, x, y, a, oro = false) =>
     K.pastilla(ctx, txt, x, y, { tam: 36, fondo: oro ? C.oro : C.papel, color: C.tinta, opacidad: a, escala: rebote(a) });
   const zoom = (ctx, t, d, cx, cy, z0, z1, fn) => K.camara(ctx, cx, cy, lerp(z0, z1, prog(t, 0, d)), fn);
+  // Estrella de cine: S30.mujer (motor nuevo) con el brazo en alto sosteniendo un diamante.
   function mujer(ctx, x, y, s, T) {
-    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    ctx.beginPath(); ctx.moveTo(-40, -300); ctx.quadraticCurveTo(-30, -150, -110, 0); ctx.lineTo(110, 0); ctx.quadraticCurveTo(30, -150, 40, -300); ctx.closePath();
-    S30.relleno(ctx, C.tinta, 0);
-    ctx.fillStyle = 'rgba(239,231,214,.12)'; ctx.beginPath(); ctx.moveTo(10, -280); ctx.quadraticCurveTo(20, -140, 70, -10); ctx.lineTo(90, -10); ctx.quadraticCurveTo(40, -150, 30, -290); ctx.fill();
-    S30.mangueraBlanca(ctx, 34, -280, 120, -380 + Math.sin(T * 2) * 6, -20, 16);
-    S30.guante(ctx, 120, -384 + Math.sin(T * 2) * 6, 20, -.4);
-    diamante(ctx, 126, -412 + Math.sin(T * 2) * 6, 14, T);
-    ctx.beginPath(); ctx.ellipse(0, -350, 46, 52, 0, 0, TAU); S30.relleno(ctx, C.papel, 5);
-    ctx.beginPath(); ctx.ellipse(-6, -392, 60, 34, -.2, Math.PI, TAU); ctx.fillStyle = C.tinta; ctx.fill();
-    ctx.beginPath(); ctx.arc(-44, -360, 26, 0, TAU); ctx.fill();
-    S30.ojo(ctx, 6, -356, 8, 14, { abre: .55, mira: .4 }); S30.ojo(ctx, 26, -356, 8, 14, { abre: .55, mira: .4 });
-    ctx.beginPath(); ctx.ellipse(20, -326, 10, 6, 0, 0, TAU); ctx.fillStyle = '#8a2f2a'; ctx.fill();
-    ctx.restore();
+    const J = S30.mujer(ctx, x, y, s, { T, dir: -1, semilla: 12, pose: 'saludar', cara: 'sonrisa' });
+    diamante(ctx, J.dedosD.x, J.dedosD.y - 26, 16, T);
   }
   function grilla(ctx, n, dorados, t, T, { cols = 5, x0 = 190, y0 = 520, paso = 175, r = 46, ritmo = .12, aro = false } = {}) {
     for (let i = 0; i < n; i++) {
@@ -82,31 +50,26 @@
       });
       S30.pelicula(ctx, T);
     },
-    // 3. 1870, Sudáfrica: la mina gigante.
+    // 3. 1870, Sudáfrica: la mina gigante (mina a cielo abierto en terrazas + obreros del reparto).
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T, { y: 500 });
+      D.fondo.exterior(ctx, T, { tipo: 'mina', hora: 'dia' });
       zoom(ctx, t, d, 540, 820, 1, 1.15, () => {
-        for (let i = 0; i < 7; i++) {
-          ctx.beginPath(); ctx.ellipse(540, 760 + i * 40, 470 - i * 58, 230 - i * 30, 0, 0, TAU);
-          S30.relleno(ctx, i % 2 ? '#4a443c' : '#6f685f', 5);
-        }
-        ctx.beginPath(); ctx.ellipse(540, 1040, 70, 30, 0, 0, TAU); ctx.fillStyle = C.tinta; ctx.fill();
+        D.mina(ctx, 540, 760, 1, { T, niveles: 7 });
         for (let i = 0; i < 14; i++) {
           const a = hash(i) * TAU, nivel = Math.floor(hash(i + 3) * 6), rx = 470 - nivel * 58, ry = 230 - nivel * 30;
           const px = 540 + Math.cos(a) * rx * .92, py = 760 + nivel * 40 + Math.sin(a) * ry * .92 + 10;
-          ctx.fillStyle = C.tinta; ctx.beginPath(); ctx.arc(px, py - 24, 8, 0, TAU); ctx.fill(); ctx.fillRect(px - 6, py - 18, 12, 22);
-          const golpe = Math.sin(T * 6 + i) * .6; ctx.strokeStyle = C.tinta; ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.moveTo(px, py - 14); ctx.lineTo(px + Math.cos(golpe - 1) * 22, py - 14 + Math.sin(golpe - 1) * 22); ctx.stroke();
+          S30.hombre(ctx, px, py + 8, .16, { T, semilla: 60 + i, variante: 'hombre', dir: px < 540 ? 1 : -1, gesto: Math.sin(T * 5 + i) > .3 ? 'senala' : 'quieto' });
         }
       });
       ano(ctx, '1870 · SUDÁFRICA', t);
       S30.pelicula(ctx, T);
     },
-    // 4. Nueve de cada diez diamantes.
+    // 4. Nueve de cada diez diamantes: bandeja de terciopelo; nueve se vuelven ámbar.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T);
+      D.fondo.abstracto(ctx, T, { tema: 'salvia', y: 700 });
+      D.bandeja(ctx, 540, 730, 1, { ancho: 920, alto: 380 });
       grilla(ctx, 10, 9, t, T, { cols: 5, x0: 180, y0: 640, paso: 180, r: 58, ritmo: d * .06 });
       pastilla(ctx, '9 DE CADA 10', 540, 420, prog(t, d * .65, d * .65 + .3), true);
       S30.pelicula(ctx, T);
@@ -114,19 +77,13 @@
     // 5. Escasos en la vitrina, abundantes en la bodega.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      ctx.fillStyle = '#1c1915'; ctx.fillRect(110, 330, 860, 380); ctx.strokeStyle = C.oro; ctx.lineWidth = 8; ctx.strokeRect(110, 330, 860, 380);
-      const g = ctx.createLinearGradient(0, 330, 0, 710); g.addColorStop(0, alfa(C.oro, .22)); g.addColorStop(1, alfa(C.oro, 0));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(500, 330); ctx.lineTo(580, 330); ctx.lineTo(700, 700); ctx.lineTo(380, 700); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(540, 640, 120, 30, 0, 0, TAU); ctx.fillStyle = '#5a1f1a'; ctx.fill();
-      diamante(ctx, 540, 590, 48, T, { gira: T * 1.5 });
+      D.fondo.tienda(ctx, T, {});
+      D.vitrina(ctx, 540, 830, 1, { T });
+      K.halo(ctx, 540, 590, 260, C.oro, .22);
       pastilla(ctx, 'VITRINA', 540, 300, prog(t, .1, .4), true);
-      ctx.fillStyle = '#2a2622'; ctx.fillRect(110, 780, 860, 400);
+      D.estante(ctx, 540, 1200, 1, { baldas: 3 });
       const llena = prog(t, d * .4, d * .9);
-      for (let f = 0; f < 3; f++) {
-        ctx.fillStyle = C.tinta; ctx.fillRect(110, 900 + f * 120, 860, 12);
-        for (let i = 0; i < 14; i++) if ((f * 14 + i) / 42 < llena) diamante(ctx, 150 + i * 60, 880 + f * 120, 20, T, { brillo: 0 });
-      }
+      for (let f = 0; f < 3; f++) for (let i = 0; i < 14; i++) if ((f * 14 + i) / 42 < llena) diamante(ctx, 150 + i * 60, 1200 - 400 + (f + 1) * 400 / 3 - 12 - 22, 20, T, { brillo: 0 });
       pastilla(ctx, 'BODEGA', 540, 770, prog(t, d * .4, d * .4 + .3));
       S30.pelicula(ctx, T);
     },
@@ -140,69 +97,46 @@
       });
       S30.pelicula(ctx, T);
     },
-    // 7. La agencia de publicidad.
+    // 7. La agencia de publicidad: sala de juntas, caballete con la idea y los publicistas detrás de la mesa.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T, { y: 520 });
-      ctx.fillStyle = C.papel; ctx.fillRect(360, 360, 360, 260); ctx.strokeStyle = C.tinta; ctx.lineWidth = 7; ctx.strokeRect(360, 360, 360, 260);
-      ctx.beginPath(); ctx.moveTo(400, 640); ctx.lineTo(380, 760); ctx.moveTo(680, 640); ctx.lineTo(700, 760); ctx.stroke();
+      D.fondo.juntas(ctx, T, { hora: 'atardecer' });
       const dibuja = prog(t, d * .2, d * .8);
-      ctx.save(); ctx.beginPath(); ctx.rect(360, 360, 360 * dibuja, 260); ctx.clip();
-      ctx.beginPath(); ctx.moveTo(540, 580); ctx.bezierCurveTo(420, 500, 420, 400, 540, 450); ctx.bezierCurveTo(660, 400, 660, 500, 540, 580);
-      ctx.strokeStyle = '#8a2f2a'; ctx.lineWidth = 8; ctx.stroke();
-      diamante(ctx, 540, 500, 30, T, { brillo: 0 });
-      ctx.restore();
+      D.pizarra(ctx, 540, 720, 1, { ancho: 380, alto: 270, dibuja: (c, w, h) => {
+        c.save(); c.beginPath(); c.rect(-w / 2, -h / 2, w * dibuja, h); c.clip();
+        c.beginPath(); c.moveTo(0, 90); c.bezierCurveTo(-130, 10, -120, -90, 0, -40); c.bezierCurveTo(120, -90, 130, 10, 0, 90);
+        c.strokeStyle = C.terracota; c.lineWidth = 9; c.stroke(); D.joya(c, 0, 5, 34, { brillo: 0 }); c.restore(); } });
       for (let i = 0; i < 4; i++) S30.hombre(ctx, 200 + i * 230, 1180, .82, { T, semilla: 20 + i, dir: i < 2 ? 1 : -1, gesto: i === 1 ? 'senala' : 'quieto', cara: i === 2 ? 'sonrisa' : 'serio' });
-      ctx.fillStyle = '#3d362f'; ctx.fillRect(60, 1080, 960, 30); ctx.fillStyle = '#231f1b'; ctx.fillRect(60, 1110, 960, 140);
-      ctx.strokeStyle = C.tinta; ctx.lineWidth = 6; ctx.strokeRect(60, 1080, 960, 170);
+      D.mesaJuntas(ctx, 540, 1250, 1, { T });
       pastilla(ctx, 'AGENCIA DE PUBLICIDAD', 540, 300, prog(t, .1, .4), true);
       S30.pelicula(ctx, T);
     },
-    // 8. Joyas prestadas a estrellas de cine.
+    // 8. Joyas prestadas a estrellas de cine: plató con foco, cámara y la estrella.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T, { x: 720, y: 760 });
-      const g = ctx.createLinearGradient(160, 420, 760, 900); g.addColorStop(0, alfa(C.papel, .35)); g.addColorStop(1, alfa(C.papel, 0));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(150, 400); ctx.lineTo(220, 360); ctx.lineTo(960, 900); ctx.lineTo(560, 1200); ctx.fill();
-      ctx.fillStyle = C.tinta; ctx.beginPath(); ctx.ellipse(170, 390, 60, 46, -.6, 0, TAU); ctx.fill();
+      D.fondo.estudio(ctx, T, {});
+      ctx.strokeStyle = C.tinta; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(170, 60); ctx.lineTo(170, 380); ctx.stroke();
+      D.foco(ctx, 170, 420, 1.1, { T, ang: .97, largo: 1000 });
+      D.camaraCine(ctx, 250, 1240, 1, { T });
       mujer(ctx, 720, 1200, 1.15, T);
-      ctx.save(); ctx.translate(250, 860);
-      ctx.strokeStyle = C.tinta; ctx.lineWidth = 10; for (const a of [-.35, 0, .35]) { ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(Math.sin(a) * 200, 380); ctx.stroke(); }
-      K.redondo(ctx, -110, -40, 200, 120, 14); S30.relleno(ctx, '#2a2622', 6);
-      for (const [rx, ry] of [[-60, -110], [40, -110]]) {
-        ctx.save(); ctx.translate(rx, ry); ctx.rotate(T * 3); ctx.beginPath(); ctx.arc(0, 0, 56, 0, TAU); S30.relleno(ctx, '#3a352f', 6);
-        ctx.fillStyle = C.tinta; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(Math.cos(i * TAU / 5) * 30, Math.sin(i * TAU / 5) * 30, 10, 0, TAU); ctx.fill(); } ctx.restore();
-      }
-      ctx.beginPath(); ctx.moveTo(90, 0); ctx.lineTo(170, -30); ctx.lineTo(170, 50); ctx.lineTo(90, 30); ctx.closePath(); S30.relleno(ctx, '#3a352f', 6);
-      ctx.restore();
       pastilla(ctx, 'HOLLYWOOD', 720, 340, prog(t, .1, .4), true);
       S30.pelicula(ctx, T);
     },
-    // 9. 1947: la máquina de escribir.
+    // 9. 1947: la máquina de escribir sobre una mesa de despacho.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T);
-      const texto = 'A DIAMOND IS FOREVER', n = Math.floor(texto.length * prog(t, d * .15, d * .95));
+      D.fondo.juntas(ctx, T, { hora: 'noche', semilla: 9 });
       zoom(ctx, t, d, 540, 760, 1, 1.12, () => {
-        ctx.fillStyle = C.papel; ctx.fillRect(250, 360, 580, 420); ctx.strokeStyle = C.tinta; ctx.lineWidth = 6; ctx.strokeRect(250, 360, 580, 420);
-        ctx.font = '400 40px "Space Mono", monospace'; ctx.fillStyle = C.tinta; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-        ctx.fillText(texto.slice(0, n), 290, 520);
-        if (Math.sin(T * 10) > 0) ctx.fillRect(290 + ctx.measureText(texto.slice(0, n)).width + 4, 500, 4, 40);
-        K.redondo(ctx, 150, 740, 780, 90, 30); S30.relleno(ctx, '#2a2622', 7);
-        K.redondo(ctx, 110, 820, 860, 300, 40); S30.relleno(ctx, C.tinta, 0);
-        for (let f = 0; f < 3; f++) for (let i = 0; i < 10 - f; i++) {
-          const x = 220 + f * 34 + i * 70, y = 880 + f * 70, tecla = n > 0 && hash(n + i + f) < .12;
-          ctx.beginPath(); ctx.arc(x, y + (tecla ? 6 : 0), 26, 0, TAU); S30.relleno(ctx, C.papel, 4);
-        }
+        D.mesaJuntas(ctx, 540, 1292, 1, { ancho: 960 });
+        D.maquinaEscribir(ctx, 540, 1120, 1, { T, texto: 'A DIAMOND IS FOREVER', n: prog(t, d * .15, d * .95) });
       });
-      ano(ctx, '1947', t, 300, 80);
+      ano(ctx, '1947', t, 210, 80);
       S30.pelicula(ctx, T);
     },
     // 10. La frase.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T, .5);
-      ctx.fillStyle = C.tinta; ctx.fillRect(-20, -20, W + 40, H + 40);
-      K.halo(ctx, 540, 640, 620, C.oro, .25 * prog(t, 0, .6));
+      D.fondo.abstracto(ctx, T, { tema: 'noche', y: 640, luz: prog(t, 0, .6) + .4 });
       diamante(ctx, 540, 520, 110, T, { gira: T * 1.4, oro: .15 });
       const a = prog(t, .15, .7), s = lerp(1.15, 1, sale(a));
       ctx.save(); ctx.globalAlpha = a; ctx.translate(540, 860); ctx.scale(s, s);
@@ -211,61 +145,40 @@
       ctx.restore();
       S30.pelicula(ctx, T, { fuerza: .7 });
     },
-    // 11. Nunca lo vendas: el cajón con candado.
+    // 11. Nunca lo vendas: el cajón con el anillo y el candado (sala del banco).
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T);
+      D.fondo.banco(ctx, T, {});
       const cierra = sale(prog(t, d * .2, d * .6));
-      ctx.fillStyle = '#3d362f'; ctx.fillRect(140, 560, 800, 520); ctx.strokeStyle = C.tinta; ctx.lineWidth = 8; ctx.strokeRect(140, 560, 800, 520);
-      const dy = lerp(240, 0, cierra);
-      ctx.save(); ctx.translate(0, dy);
-      ctx.fillStyle = '#231f1b'; ctx.fillRect(200, 700, 680, 140);
-      anillo(ctx, 540, 760, 1.3, T);
-      ctx.fillStyle = '#4a443c'; ctx.fillRect(180, 840, 720, 200); ctx.strokeRect(180, 840, 720, 200);
-      ctx.beginPath(); ctx.ellipse(540, 940, 60, 22, 0, 0, TAU); S30.relleno(ctx, C.oro, 5);
-      ctx.restore();
+      D.cajon(ctx, 540, 1080, 1, { cierra, T });
       const cand = prog(t, d * .65, d * .8);
-      if (cand > 0) {
-        ctx.save(); ctx.translate(540, 900); ctx.scale(rebote(cand), rebote(cand));
-        ctx.beginPath(); ctx.arc(0, -50, 52, Math.PI, 0); ctx.strokeStyle = C.claro; ctx.lineWidth = 18; ctx.stroke();
-        K.redondo(ctx, -78, -50, 156, 130, 22); S30.relleno(ctx, C.tinta, 0);
-        ctx.beginPath(); ctx.arc(0, 0, 15, 0, TAU); ctx.fillStyle = C.oro; ctx.fill(); ctx.fillRect(-6, 4, 12, 40);
-        ctx.restore();
-      }
+      if (cand > 0) { ctx.save(); ctx.translate(540, 900); ctx.scale(rebote(cand), rebote(cand)); D.candado(ctx, 0, 0, 1, {}); ctx.restore(); }
       pastilla(ctx, 'NUNCA LO VENDAS', 540, 420, prog(t, d * .3, d * .3 + .3), true);
       S30.pelicula(ctx, T);
     },
-    // 12. Si todos revendieran, el precio se derrumbaría.
+    // 12. Si todos revendieran, el precio se derrumbaría: calle, tienda "COMPRAMOS", gente en fila y gráfica que cae.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T, { y: 600 });
-      ctx.fillStyle = '#4a443c'; ctx.fillRect(640, 420, 340, 520); ctx.strokeStyle = C.tinta; ctx.lineWidth = 7; ctx.strokeRect(640, 420, 340, 520);
-      ctx.fillStyle = C.tinta; ctx.fillRect(740, 700, 140, 240);
-      S30.titulo(ctx, 'COMPRAMOS', 810, 480, { tam: 34, color: C.papel });
+      D.fondo.calle(ctx, T, { hora: 'atardecer' });
+      D.fachada(ctx, 800, 1190, 1.25, { letrero: 'COMPRAMOS', ancho: 340, alto: 520 });
+      D.grafica(ctx, 260, 560, .85, { tipo: 'linea', valores: [.9, .75, .5, .25, .08], progreso: prog(t, d * .45, d * .95), color: C.terracota });
       for (let i = 0; i < 6; i++) {
         const x = lerp(-80 - i * 120, 560 - i * 92, sale(prog(t, 0, d * .8))), y = 1180 + (i % 2) * 40;
-        S30.hombre(ctx, x, y, .6, { T, semilla: 40 + i, gesto: 'senala' });
+        S30.hombre(ctx, x, y, .6, { T, semilla: 40 + i, paso: T * 1.6 + i * .7, cara: i % 2 ? 'sonrisa' : 'serio' });
       }
-      const caida = prog(t, d * .45, d * .95), pts = K.ruta([[160, 380], [300, 400], [420, 560], [540, 820]], 30);
-      K.trazo(ctx, pts.slice(0, Math.max(2, Math.round(caida * 30))), '#C2503A', 12);
       S30.pelicula(ctx, T);
     },
     // 13. Los dos sueldos: el anuncio de periódico de los años ochenta.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      pasado(ctx, T);
+      D.fondo.abstracto(ctx, T, { tema: 'tierra', y: 760 });
       zoom(ctx, t, d, 540, 760, .95, 1.1, () => {
         ctx.save(); ctx.translate(540, 760); ctx.rotate(-.05 + Math.sin(T) * .01);
-        ctx.fillStyle = '#e2d8c4'; ctx.fillRect(-380, -440, 760, 860); ctx.strokeStyle = C.tinta; ctx.lineWidth = 6; ctx.strokeRect(-380, -440, 760, 860);
-        ctx.fillStyle = C.tinta; ctx.fillRect(-340, -400, 680, 10); ctx.fillRect(-340, 360, 680, 6);
-        ctx.font = '700 66px "Cormorant Garamond", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('¿Dos meses de sueldo?', 0, -320);
-        ctx.font = '400 30px "Space Mono", monospace'; ctx.fillText('Un precio pequeño', 0, -250); ctx.fillText('para algo que dura para siempre', 0, -210);
-        anillo(ctx, 0, 60, 3.2, T);
-        ctx.fillStyle = 'rgba(13,12,11,.3)'; for (let i = 0; i < 5; i++) ctx.fillRect(-340, 250 + i * 20, 300 + hash(i) * 380, 8);
+        D.anuncio(ctx, 0, 0, 760, 860, { titular: '¿Dos meses de sueldo?', sub: ['Un precio pequeño', 'para algo que dura para siempre'], lineas: 5 });
+        anillo(ctx, 0, 70, 2.6, T);
         ctx.restore();
       });
-      ano(ctx, 'AÑOS 80', t, 300, 60);
+      ano(ctx, 'AÑOS 80', t, 200, 60);
       S30.pelicula(ctx, T);
     },
     // 14. La lección de Sombra.
@@ -278,10 +191,9 @@
       }));
       S30.pelicula(ctx, T);
     },
-    // 15. Cierre: negro con halo; el logo y la pregunta los pone la marca.
+    // 15. Cierre: azul noche con halo ámbar; el logo y la pregunta los pone la marca.
     (ctx, t, d, K, T) => {
-      ctx.fillStyle = C.tinta; ctx.fillRect(0, 0, W, H);
-      K.halo(ctx, 540, 660, 620, C.oro, .16);
+      D.fondo.abstracto(ctx, T, { tema: 'noche', y: 660, luz: .9 });
       S30.pelicula(ctx, T, { fuerza: .7 });
     },
   ];

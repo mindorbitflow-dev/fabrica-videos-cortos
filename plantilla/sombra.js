@@ -1,16 +1,20 @@
-// Estilo "caricatura de los años 30" (blanco y negro, brazos de manguera, ojos de pastel cortado, película vieja) para la marca
-// Sombra de Evidencia. Lo usan las escenas de autor como S30.* junto con K (kit.js). Todo depende solo del tiempo recibido.
+// Estilo de caricatura (contornos gruesos, brazos de manguera, ojos de pastel cortado) para la marca Sombra de Evidencia.
+// Estas funciones son la versión de respaldo. En el video, plantilla/sombra_ilustra.js las reemplaza: recolorea S30.C con una paleta sobria
+// (azul grisáceo, tierra cálida, ámbar #E0B060, crema), cambia pelicula/oficina por el escenario interior cálido del kit y dibuja a Sombra,
+// Tito y la gente (S30.hombre) con el motor nuevo (I.REPARTO). Aquí C trae la paleta noir de respaldo; no copies sus colores.
+// Los fondos y objetos del flashback (D.fondo.*, D.vitrina, D.mina...) están en plantilla/decorados.js (API en su cabecera); no se dibujan a mano.
+// Lo usan las escenas de autor como S30.* junto con K (kit.js). Todo depende solo del tiempo recibido.
 window.S30 = (() => {
   const { W, H, TAU, clamp, lerp, hash, azar, alfa, sale } = K;
   const C = { tinta: '#0d0c0b', papel: '#efe7d6', medio: '#34302b', gris: '#8a8278', claro: '#cfc6b4', oro: '#D4B47A' };
 
-  // ---- película ----
-  // Vaivén del proyector: llamar al empezar la escena, antes de dibujar.
+  // ---- acabado ----
+  // Vaivén de cámara: llamar al empezar la escena, antes de dibujar.
   function vaiven(ctx, T, fuerza = 1) {
     const p = Math.floor(T * 12);
     ctx.translate((hash(p) - .5) * 5 * fuerza, (hash(p + 3) - .5) * 7 * fuerza);
   }
-  // Acabado de película vieja: tinte sepia, parpadeo, rayones, polvo, grano y viñeta. Llamar al final de cada escena.
+  // Acabado de cada escena (en color: saturación, viñeta índigo suave y un poco de grano; sin sepia ni rayones). Llamar al final de cada escena.
   function pelicula(ctx, T, { fuerza = 1 } = {}) {
     const p = Math.floor(T * 12);
     ctx.save();
@@ -34,7 +38,7 @@ window.S30 = (() => {
     K.acabado(ctx, T, { grano: .15 * fuerza, vineta: .78 });
     ctx.restore();
   }
-  // Cierre de iris: con k de 0 a 1 el círculo se cierra sobre (x, y) y el resto queda negro.
+  // Cierre de iris: con k de 0 a 1 el círculo se cierra sobre (x, y) y el resto queda de color tinta (índigo oscuro).
   function iris(ctx, k, x = W / 2, y = 760) {
     if (k <= 0) return;
     const r = Math.max(0, lerp(Math.hypot(W, H), 0, K.sale(k)));
@@ -296,7 +300,7 @@ window.S30 = (() => {
     ctx.restore();
   }
 
-  // ---- gente de época (multitudes, banqueros, obreros): sombrero, traje y cara de caricatura ----
+  // ---- gente de época (multitudes, banqueros, obreros) ---- (en el video la dibuja I.REPARTO.gente: hombre, mujer, anciano; ver sombra_ilustra.js)
   // o: T, dir, semilla (varía bigote, cejas y altura), gesto 'quieto' | 'apreton' (brazo extendido) | 'senala', cara 'serio' | 'sonrisa'.
   function hombre(ctx, x, y, s, o = {}) {
     const { T = 0, dir = 1, semilla = 1, gesto = 'quieto', cara = 'serio' } = o;
@@ -331,7 +335,7 @@ window.S30 = (() => {
     ctx.restore();
   }
 
-  // ---- escenario fijo: la oficina noir de Sombra (foco colgante, persianas, ciudad de noche, escritorio) ----
+  // ---- escenario fijo: la oficina de Sombra (lámpara colgante, ventana con la ciudad al atardecer, estante de libros, escritorio) ----
   // o: luz 0-1 (foco), escritorio (bool). Dibuja todo el fondo; los personajes van encima (el escritorio, si se pide, va con
   // `escritorio(ctx, T)` DESPUÉS del personaje que está detrás de él).
   function oficina(ctx, T, { luz = 1 } = {}) {

@@ -97,6 +97,10 @@ def auto(nicho: str | None, musica: str, cantidad: int = 1) -> None:
             print(f"Listo: {fabrica.mp4(p)} ({p['duracion']} s, voz {p['voz_usada']})")
             correo.enviar_video(p, enlace)
             print("Correo enviado.")
+            if os.getenv("GITHUB_ACTIONS"):   # el tema queda en GitHub apenas sale el correo: el respaldo y las tandas siguientes no lo repiten
+                from src import subir_historial
+                if not subir_historial.subir():
+                    print("Aviso: no se pudo subir el historial ahora; se reintenta al final de la ejecución.")
             if correo.enviar_post(p):
                 print("Post enviado.")
         except Exception as error:

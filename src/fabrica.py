@@ -250,7 +250,7 @@ def hoja(p: dict, por_escena: Optional[int] = None) -> tuple[list[Path], list[st
     """Hojas de contacto del video (varios cuadros por escena, sin voz) para revisar el dibujo antes de renderizar.
     Devuelve (imágenes, errores de JavaScript de las escenas)."""
     if por_escena is None:   # 3D: inicio y final de cada escena bastan (menos imágenes que revisar = menos uso del plan)
-        por_escena = 2 if cargar_nichos()[p["nicho"]].get("motor") == "3d" else 3
+        por_escena = 2 if cargar_nichos()[p["nicho"]].get("motor") in ("3d", "2d") else 3
     html = carpeta(p) / "video.html"
     html.write_text(componer_html(p), encoding="utf-8")
     return render.hoja_contacto(html, carpeta(p) / "hojas", por_escena)
@@ -425,8 +425,11 @@ def componer_html(p: dict) -> str:
     scripts = [(PLANTILLA / f).read_text(encoding="utf-8") for f in ("primitivas.js", "motor.js")]
     if p.get("autor"):  # las escenas de autor van antes que el motor, cada una en su <script>: un error de sintaxis no tumba el motor
         estilo = "autor"
-        base = ["kit.js", "sombra.js"] + (["ilustra.js", "sombra_ilustra.js"] if conf.get("personajes") == "ilustra" else []) \
-            + (["vendor/three.min.js", "taller3d.js"] if conf.get("motor") == "3d" else [])
+        if conf.get("motor") == "2d":   # motor de ilustración 2D (taller2d.js / sobrevive2d.js): sin three.js ni caricaturas de Sombra
+            base = ["kit.js", "ilustra.js"] + list(conf.get("libs2d") or [])
+        else:
+            base = ["kit.js", "sombra.js"] + (["ilustra.js", "sombra_ilustra.js", "decorados.js"] if conf.get("personajes") == "ilustra" else []) \
+                + (["vendor/three.min.js", "taller3d.js"] if conf.get("motor") == "3d" else [])
         scripts[:0] = [(PLANTILLA / f).read_text(encoding="utf-8") for f in base] + [escenas_js(p).read_text(encoding="utf-8")]
     js = "".join("<script>" + s.replace("</script", "<\\/script") + "</script>\n" for s in scripts)
     iconos = (PLANTILLA / "iconos.svg").read_text(encoding="utf-8")
