@@ -10,12 +10,6 @@
   let plan = [];
   let ultimoSub = '';
 
-  // Escenas procedurales (plantilla/primitivas.js): una escena puede traer su descripción en
-  // <script type="application/json" class="prim">. Se dibuja en un canvas de fondo, bajo el SVG y los subtítulos.
-  const prims = escenas.map(e => {
-    const s = e.querySelector('script.prim');
-    try { return s ? JSON.parse(s.textContent) : null; } catch (err) { console.error('escena prim inválida', err); return null; }
-  });
   // Escenas de autor (proyectos/<id>/escenas.js): window.ESCENAS[i] = (ctx, t, dur, K, T) => {...} dibuja la escena i a medida.
   const autor = (window.ESCENAS || []).slice();
   window.__errores = [];
@@ -23,7 +17,7 @@
   else if (window.ESCENAS && autor.length !== escenas.length)
     window.__errores.push(`window.ESCENAS tiene ${autor.length} funciones y el guion ${escenas.length} escenas`);
   let canvas = null, buffer = null, escenaPrevia = -1;
-  if ((prims.some(Boolean) && window.Primitivas) || autor.some(Boolean)) {
+  if (autor.some(Boolean)) {
     canvas = document.createElement('canvas');
     canvas.id = 'prim'; canvas.width = 1080; canvas.height = 1920;
     lienzo.prepend(canvas);
@@ -32,17 +26,15 @@
   // Dibuja la escena en un búfer y la funde sobre el cuadro anterior: entre escenas queda un fundido corto.
   function dibujarPrim(i, local, dur, t) {
     if (!canvas) return;
-    if (!prims[i] && !autor[i]) { canvas.style.visibility = 'hidden'; escenaPrevia = -1; return; }
+    if (!autor[i]) { canvas.style.visibility = 'hidden'; escenaPrevia = -1; return; }
     canvas.style.visibility = 'visible';
     try {
-      if (autor[i]) {
-        const c = buffer.getContext('2d');
-        c.save(); c.clearRect(0, 0, 1080, 1920);
-        try { autor[i](c, Math.max(0, local), dur, window.K, t); } finally { c.restore(); }
-      } else Primitivas.dibujar(buffer, prims[i], Math.max(0, local));
+      const c = buffer.getContext('2d');
+      c.save(); c.clearRect(0, 0, 1080, 1920);
+      try { autor[i](c, Math.max(0, local), dur, window.K, t); } finally { c.restore(); }
     } catch (err) {
       console.error('escena ' + (i + 1), err); window.__errores.push(`escena ${i + 1}: ${err && err.stack || err}`);
-      prims[i] = null; autor[i] = null; return;
+      autor[i] = null; return;
     }
     const ctx = canvas.getContext('2d');
     ctx.globalAlpha = escenaPrevia === -1 || escenaPrevia === i ? 1 : Math.min(1, local / 0.35);
@@ -116,7 +108,7 @@
   }
 
   // El render espera a que los sprites (ilustraciones recortadas) de las escenas estén decodificados.
-  window.__imagenesListas = Promise.all([window.Primitivas ? Primitivas.precargar(prims) : null, window.K ? K.listo : null, window.S30 ? S30.listo : null]);
+  window.__imagenesListas = Promise.all([window.K ? K.listo : null, window.S30 ? S30.listo : null]);
   window.__estimar = estimar;
   window.__textos = () => escenas.map(e => e.dataset.voz.trim());
   window.__preparar = preparar;

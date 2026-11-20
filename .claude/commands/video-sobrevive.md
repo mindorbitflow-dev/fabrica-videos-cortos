@@ -1,15 +1,15 @@
 ---
-description: "¿Sobrevivirías?": una situación extrema en 3D con personas; el mito falla y esto es lo que te salva
+description: "¿Sobrevivirías?": una situación extrema ilustrada en 2D con una persona; el mito falla y esto es lo que te salva
 argument-hint: "sobrevive <tema>"
 ---
 
 Deja escrito, dibujado y revisado UN video de la página **¿Sobrevivirías?**, sin pedir confirmaciones ni hacer preguntas
 (nadie está mirando: lo lanza la fábrica, `src/autor.py`, que después lo renderiza y lo envía por correo). `$ARGUMENTS` =
-`sobrevive` y el tema. Todo lo que necesitas está aquí, en `plantilla/taller3d.js` y en `ejemplos/sobrevive/`: no leas otros
+`sobrevive` y el tema. Todo lo que necesitas está aquí, en `plantilla/sobrevive2d.js` (librería `V`) y en `ejemplos/sobrevive/`: no leas otros
 archivos.
 
 **La página:** te pone en una situación extrema real (un ascensor que cae, un rayo, hielo que se rompe, una corriente que te
-arrastra, el ataque de un animal) y te muestra en 3D, con una persona, por qué lo que casi todos harían falla y qué te salva de verdad. Tono directo y
+arrastra, el ataque de un animal) y te muestra ilustrado en 2D, con una persona, por qué lo que casi todos harían falla y qué te salva de verdad. Tono directo y
 con tensión, en segunda persona ("tú"), frases cortas. La persona protagonista es "tú": camiseta amarilla (`#f4c430`) y
 pantalón azul oscuro, siempre la misma.
 
@@ -42,41 +42,29 @@ pantalón azul oscuro, siempre la misma.
 ## 2. Proyecto
 `python run.py --nicho sobrevive --guion proyectos/guion_nuevo.json` imprime el id y la ruta de `proyectos/<id>/escenas.js`.
 
-## 3. Dibujo 3D (`proyectos/<id>/escenas.js`)
-Léelo una vez: `plantilla/taller3d.js` (API de `T3` y `P`, incluida `P.persona`) y `ejemplos/sobrevive/escenas.js`.
-- `window.ESCENAS = [...]`: UNA función por escena, en orden: `(ctx, t, d, K, T) => T3.cuadro(ctx, T, { camara, mundo },
-  P => {...})`. `t` = segundos de la escena, `d` = su duración (anima con fracciones de `d`), `T` = segundos del video. Solo
-  funciones del tiempo: prohibido `Math.random()`, `Date` y estado entre cuadros.
-- **La persona:** `P.persona({ pose, pos, rot, T, susto, inclina, art, colores })` con poses `parado`, `camina`, `corre`,
-  `salta`, `cae`, `agachado`, `protege`, `sentado`, `acostado` (boca arriba). Usa siempre los mismos colores (función
-  `persona()` del ejemplo). `susto` 0-1 en el peligro; `art` para ajustar brazos y piernas a mano.
-- **Animales:** `P.animal({ tipo, accion, pos, rot, T, boca })` con `tipo` `oso`, `perro`, `lobo`, `tigre`, `toro`,
-  `cocodrilo`, `tiburon`, `serpiente` y `accion` `quieto`, `camina`, `corre`, `ataca` (embiste con la boca abierta) o
-  `erguido` (oso de pie); `ajuste` cambia colores y forma (puma = `tigre` con `{ col: '#c8955a', vientre: '#f1dcb5',
-  rayas: false }`); `P.enjambre({ pos, T })` para abejas. En un ataque, corta antes del contacto (polvo, temblor o cambio
-  de plano): nunca mordidas ni heridas.
-- Define primero el escenario como funciones reutilizables (como `pozo()` y `cabina()` del ejemplo) y úsalas en todas las
-  escenas. Formas con `caja`, `cilindro`, `cono`, `esfera`, `toro`, `disco`, `tubo`, `grupo`; agua, hielo, humo o vidrio con
-  `opacidad`; fuego, rayos, chispas y luces con `brillo`.
-- Fuerzas y movimiento: `flecha` (rojo `#e5484d` lo que te hace daño, verde `#5fbf6a` lo que te salva), `viento`, `polvo`,
-  `T3.caida(t, altura)`, `T3.tiembla(T, fuerza)` (cámara o suelo que tiembla), `T3.orbita(...)`.
-- `mundo`: afuera `{ pasto, arboles, muro, cielo }`; adentro `{ interior: true }`; escenas oscuras con `cielo` oscuro (como
-  `OSCURO` del ejemplo). Varía el plano en cada escena (dentro, de corte, desde arriba, primer plano de la persona) y en cada
-  momento de peligro cambia algo grande.
-- **Cámara**: cuadro vertical (poco ancho). Persona entera: cámara a 4-7 m, `fov` 45-50; escenario grande, más lejos. Los
-  subtítulos van ARRIBA (y=170-400): deja esa franja libre y pon la acción entre y=450 y y=1600. La escena 1 no lleva título:
-  la situación se ve desde el primer cuadro.
-- **Sin rótulos ni textos flotantes** dentro de las escenas: se entiende por la imagen y la voz. La última escena sin texto: la
-  pregunta la pone el sistema arriba; deja a la persona abajo.
-- **Colores vivos que llamen la atención:** saturados y con contraste (rojos, naranjas, turquesas, amarillos, azules
-  intensos). Nada de crema, beige ni gris claro en lo importante; el fondo con color, no gris. El motor ya realza la saturación.
+## 3. Dibujo 2D ilustrado (`proyectos/<id>/escenas.js`)
+Léelo una vez: `plantilla/sobrevive2d.js` (cabecera = API de `V`) y `ejemplos/sobrevive/escenas.js`. **No se usan three.js, `T3` ni `P`.**
+- `window.ESCENAS = [...]`: UNA función por escena, en orden: `(ctx, t, d, K, T) => V.cuadro(ctx, T, { x, y, z, tiembla, ... }, () => {...})`.
+  `t` = segundos de la escena, `d` = su duración (anima con fracciones de `d`: `K.prog(t, a, b)`), `T` = segundos del video. Solo funciones del
+  tiempo: **prohibido `Math.random()`, `Date` y estado entre cuadros.** El mundo es el cuadro de 1080x1920 px; los pies/base de todo están en (x, y).
+- `V.cuadro(ctx, T, {x,y,z,rot,tiembla,rojo,flash,oscuro,luz}, fn)`: cámara (centro, zoom, giro, temblor en px) + acabado (luz cálida, viñeta, grano); varía el plano en cada escena.
+- `V.tu(ctx, x, y, h, {pose, pose2, k, susto, dir, T, dist, mira, cara})`: tú (camiseta amarilla, pantalón azul oscuro, siempre igual), `h` = alto en px (550-700). Poses `dePie camina corre saltar caer caerAtras agacharse protegerse sentarse tendido susto senalar`; `pose2`+`k` interpola; `susto` 0-1.
+- `V.animal(ctx, tipo, x, y, esc, {accion, dir, T, dist, boca, alto, ajuste})`: `tipo` oso perro lobo tigre puma toro cocodrilo tiburon serpiente; `esc` = px por metro (tú = h/1.7); `accion` quieto camina corre ataca erguido. **Corta antes del contacto** (polvo, temblor, cambio de plano): nunca mordidas ni heridas. `V.enjambre(ctx, T, {x,y,r,n,esc})` = abejas.
+- `V.fondo(tipo, ctx, T, o)`: escenarios `pozo` (ascensor), `campo` (tormenta), `lago`, `rio`, `bosque`, `montana`, `interior` (sismo), `carretera`, `mar`, `desierto`, `incendio`, `plano` (diagramas y flechas). El suelo queda cerca de y=1250.
+- Props: `V.ascensor` (cabina con tú dentro), `V.resorte`, `V.cable`, `V.rascacielos`, `V.edificio`, `V.auto`, `V.arbol`, `V.roca`, `V.bote`, `V.escalera`.
+- Efectos: `V.lluvia`, `V.nieve`, `V.rayo`+`V.flash`, `V.humo`, `V.fuego`, `V.chispas`, `V.polvo`, `V.grietas` (hielo, muro), `V.burbujas`, `V.agua` (superficie con transparencia y olas: dibújala DESPUÉS de lo sumergido).
+- Fuerzas: `V.flecha(ctx, x0, y0, x1, y1, {color, ancho, k})` (rojo `V.COL.peligro` = lo que te daña, verde `V.COL.ok` = lo que te salva) y `V.aro(ctx, x, y, r, T, {k})` para resaltar rodillas, cabeza, etc.
+- **Zonas seguras:** subtítulos ARRIBA (y≈170-400, letras blancas: `V.cuadro` ya oscurece esa franja; deja el fondo sin detalles claros ahí). Lo importante (tú, el peligro) entre **y=300 y 1250 y x=80-940**; lo de abajo (y>1500) lo tapa la app. La escena 1 no lleva título: la situación se ve desde el primer cuadro. En la última escena la pregunta del sistema ocupa y≈420-1000: deja a la persona pequeña y abajo (y≈1500).
+- **Sin rótulos ni textos** dentro de las escenas: se entiende por la imagen y la voz.
+- **Paleta sobria y cálida** (azul-grisáceo, tierra, ámbar; rojo y verde apagados solo para daño/salvación): no inventes colores chillones; usa `V.COL`. El peligro debe verse claro por composición (tamaño, cámara, flecha), no por color saturado.
+- Define primero helpers reutilizables (como `cabina()` del ejemplo) y úsalos en todas las escenas; cachea nada a mano (`V` ya cachea lo estático). Rendimiento: ≤ ~250 ms por cuadro; evita zooms > 2 con muchos brillos.
 - Escribe el archivo de una vez, reutilizando funciones; nada de comentarios largos.
 
 ## 4. Revisión
 `python run.py --hoja <id>` genera `proyectos/<id>/hojas/hoja_*.jpg` (inicio y final de cada escena) y lista los errores de
 JavaScript. Ábrelas con Read y corrige lo que no cumpla: se reconoce lo que dice la voz; la persona se ve igual en todas las
 escenas y entera cuando importa; nada cortado ni tapado por los subtítulos; nada de sangre ni heridas; ningún texto dentro de
-las escenas; algo cambia entre el inicio y el final. **Si no hay errores y todo se ve, una sola revisión basta.**
+las escenas; subtítulos legibles (franja superior oscura); algo cambia entre el inicio y el final. **Si no hay errores y todo se ve, una sola revisión basta.**
 
 ## 5. Entrega
 No renderices: la fábrica lo hace. Termina con una sola línea `PROYECTO: <id>`.

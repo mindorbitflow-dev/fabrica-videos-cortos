@@ -3,8 +3,6 @@ description: Escribe el guion y dibuja a medida las escenas de un video corto ex
 argument-hint: "<nicho> <tema>"
 ---
 
-Para el nicho `taller` (Así se fabrica) usa `/video-taller`: estas reglas son para los demás nichos.
-
 Deja dibujado y revisado UN video de autor, sin pedir confirmaciones ni hacer preguntas (nadie está mirando: lo lanza la fábrica,
 `src/autor.py`, que después lo renderiza y lo envía por correo). Argumentos: `$ARGUMENTS` = la primera palabra es el nicho
 (clave de `config/nichos.yaml`; lee ahí su tono y su frase de cierre) y el resto es el tema.
@@ -86,7 +84,7 @@ y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evi
   concreto (un modelo, una cifra, un sí o un no, un nombre), máx. 16 palabras, dicha por la voz. Que sea fácil de contestar
   y deje espacio para contar más: "¿A ti te pasó? Escribe qué iPhone tenías." / "¿Todavía compras productos 'sin grasa'?
   Comenta YO y cuéntanos cuál." / "¿Cuántos sueldos costó el anillo en tu casa? Escríbelo.".
-  La marca la pone en grande en pantalla junto al logo; tú solo dibujas el fondo (negro con halo, como el ejemplo).
+  La marca la pone en grande en pantalla junto al logo; tú solo dibujas el fondo (azul noche con halo ámbar, como el ejemplo).
 - Años y cifras siempre con dígitos (1938, 9 de cada 10, 1.000 horas): así coinciden con lo que oye el reconocedor de voz y
   se leen mejor en los subtítulos.
 - Diálogos dentro de la narración, con raya o comillas ("Gasté dos sueldos en este anillo", dijo Tito). Un solo narrador lee todo.
@@ -130,27 +128,60 @@ y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evi
 - Rótulos: pocos, cortos, en mayúsculas, de 32 px o más (`K.rotulo`, `K.pastilla`). Nombran lo que se ve; no repiten la voz.
 - Termina cada escena con `K.acabado(ctx, T)` (grano y viñeta).
 
-### Si el nicho tiene `formato: historia`: caricatura de los años 30, noir
-Ejemplo completo para imitar: `ejemplos/evidencia/` (léelo entero antes de dibujar; `ejemplos/misterio/` tiene más piezas). Usa
-`S30` (`plantilla/sombra.js`):
-- Blanco y negro con tinte sepia; el único color es el oro de la marca (`S30.C.oro`) para la luz, el dinero, los datos clave.
-  Contornos negros gruesos, formas redondas, brazos de manguera (`S30.manguera`), ojos de pastel cortado (`S30.ojo`), guantes.
-- Personajes fijos, nunca los redibujes: `S30.detective(...)` (Sombra) y `S30.tito(...)` (el cerdito: `boca`, `orejas`, `objeto`
-  para lo que trae en las manos). Para la gente del flashback (empresarios, obreros, público) usa `S30.hombre(...)` con distintas
-  `semilla`. Las escenas de oficina usan `S30.oficina(ctx, T)` y `S30.escritorio(ctx, T)` (encima del que está sentado detrás).
+### Si el nicho tiene `formato: historia`: ilustración sobria y cinematográfica
+Ejemplo completo para imitar: `ejemplos/evidencia/` (léelo entero antes de dibujar). Usa
+`S30` (`plantilla/sombra.js`; el color y los personajes los pone `plantilla/sombra_ilustra.js`):
+- NO es noir ni blanco y negro, y tampoco "dibujito eléctrico": nada de sepia, grises sucios, película vieja ni violeta/magenta/turquesa
+  o amarillo neón. Es color apagado y cálido, como una película de animación: azul grisáceo, tierra cálida, luz ámbar de lámpara o
+  ventana y grano suave. Paleta (ya cargada en `S30.C`; úsala, no inventes otra): tinta azul noche `C.tinta`, papel crema `C.papel`,
+  ámbar `C.oro` (#E0B060: dato clave, dinero, luz, rótulos), `C.acero` y `C.medio` (azules), `C.gris`, `C.niebla` y `C.claro`
+  (azul grisáceo claro), `C.terracota`, `C.cobre`, `C.ocre`, `C.arena` (tierras), `C.salvia`, `C.musgo` (verdes apagados), `C.ciruela`,
+  `C.noche`. Los fondos son degradados oscuros-apagados en azul grisáceo, tierra, salvia o ciruela (`D.fondo.*` y, para
+  infografías, `D.fondo.abstracto`); nunca un fondo plano ni de color saturado. Cada escena mezcla 3-4 tonos de la paleta y un
+  acento ámbar; los objetos son props de `D` (con volumen, luz de borde y textura), nunca formas planas.
+  Evita colores literales saturados, grises neutros y negro puro (#000, rgba negro): usa `C.*` o `alfa(C.tinta, a)`.
+- Personajes fijos, nunca los redibujes ni los dibujes a mano (nada de brazos de manguera para personas): `S30.detective(...)` (Sombra) y
+  `S30.tito(...)` (el cerdito: `boca`, `orejas`, `objeto` para lo que trae en las manos). Para la gente del flashback (empresarios, obreros,
+  público, una estrella de cine) usa `S30.hombre(ctx, x, y, s, o)`: dibuja con el motor nuevo `I.REPARTO.gente` (adulto ≈ 430·s de alto) y
+  varía solo según `semilla` (hombre, mujer o anciano, con ropa, pelo y piel distintos; `variante: 'hombre'|'mujer'|'anciano'|'nino'` la
+  fija; `S30.mujer` es atajo). Opciones: `T`, `dir`, `semilla`, `gesto` 'quieto'|'senala'|'apreton', `cara` 'serio'|'sonrisa',
+  `paso` (fase de caminata; con `corre`), `brazos: 'arriba'`, `susto`, `habla`, o `pose` por nombre (dePie, camina, corre, senalar, saludar, susto,
+  cabizbajo, manosBolsillos). Devuelve las articulaciones `J` (p. ej. `J.dedosD` para poner un objeto en la mano). Para multitudes lejanas
+  usa escala pequeña (.15-.3); no hace falta dibujar siluetas a mano.
+  Las escenas de oficina usan `S30.oficina(ctx, T)` (el interior cálido del kit: suelo en y≈1250, ventana a la derecha) y
+  `S30.escritorio(ctx, T)` (encima del que está sentado detrás).
+- **Decorados y props (global `D`, `plantilla/decorados.js`): es la forma OBLIGATORIA de dibujar fondos y objetos del flashback.** Todo el
+  video debe verse como un solo mundo (el del kit: pincel con volumen, luz de borde, textura, luz cálida, grano). Prohibido: fondos
+  planos de degradado (`K.fondo`, `fillRect` a pantalla completa) sin decorado, y dibujar a mano con `fillRect`/`arc`/`relleno` un objeto
+  que ya existe como prop. Solo para lo que no exista, usa `P.forma`-estilo (`D.F(ctx, puntos, color, {...})` y `K.curva`) con colores de `S30.C`.
+  Compón varios props por escena (fondo + 1-3 props grandes + gente) y termina con `S30.pelicula`. Funciones (todas con `T` en `o` cuando animan):
+  - Fondos, `D.fondo.<tipo>(ctx, T, {hora:'dia'|'atardecer'|'noche', semilla})`, llenan el cuadro con el suelo en y=1250:
+    `calle` (`clima:'seco'|'lluvia'|'niebla'`), `juntas` (sala de juntas con ventana), `fabrica`, `tienda`, `banco` (mármol y columnas), `laboratorio`,
+    `estudio` (plató), `oficina` (la de Sombra), `exterior` (`tipo:'campo'|'mina'|'cantera'`), `cielo`, `abstracto` (`tema:'azul'|'tierra'|'salvia'|'ciruela'|'noche'`,
+    `x`, `y` = dónde cae la luz; para infografías, frases y años).
+  - Props, `D.<prop>(ctx, x, y, escala, o)` con (x, y) = punto de apoyo inferior central (centro en joya, reloj y engranaje):
+    `D.joya(ctx,x,y,r,{oro,gira,tipo:'diamante'|'anillo',T})` joya con destello · `D.vitrina(ctx,x,y,s)` vitrina con joya (cristal 860 de ancho) · `D.cajon(ctx,x,y,s,{cierra:0-1})` cajón con anillo
+    que se cierra · `D.candado(ctx,x,y,s)` · `D.papel/periodico/anuncio(ctx,x,y,w,h,{giro,titular,sub:[a,b],lineas})` hoja con texto (x, y = centro) ·
+    `D.monedas(ctx,x,y,s,{n})` · `D.billetes(ctx,x,y,s,{n})` · `D.caja_registradora` · `D.camaraCine(ctx,x,y,s,{T})` cámara con carretes · `D.foco(ctx,x,y,s,{ang,largo,T})` foco con haz ·
+    `D.engranaje(ctx,x,y,r,{vel,T})` · `D.maquina(ctx,x,y,s,{T})` máquina con engranajes y humo · `D.camion` · `D.fachada(ctx,x,y,s,{letrero,color})` edificio con letrero y puerta ·
+    `D.puertaLetrero(ctx,x,y,s,{texto})` · `D.reloj(ctx,x,y,r,{hora|T})` · `D.telefono` · `D.grafica(ctx,x,y,s,{valores,progreso:0-1,tipo:'barras'|'linea'})` gráfica de barras
+    con volumen o de línea (x, y = centro) · `D.pizarra(ctx,x,y,s,{dibuja:(ctx,w,h)=>{}})` caballete (dibuja en el tablero, origen en su centro) ·
+    `D.mesaJuntas(ctx,x,y,s,{ancho})` / `D.mesa` · `D.estante(ctx,x,y,s,{baldas})` · `D.caja(ctx,x,y,s)` · `D.bandeja(ctx,x,y,s)` bandeja de terciopelo para joyas (centro) ·
+    `D.maquinaEscribir(ctx,x,y,s,{texto,n:0-1})` · `D.mina(ctx,x,y,s,{niveles})` mina a cielo abierto en terrazas (x, y = borde superior; los obreros van con `S30.hombre` a escala .16).
+  - Rendimiento: lo estático se cachea solo; no crees objetos nuevos por cuadro. Para animar tamaño usa `ctx.scale` o la escala (se cuantiza), no valores distintos en cada cuadro.
 - **Escena 1: Tito grande y con una emoción EXAGERADA que cambia según el tema**, desde el primer cuadro (el video no lleva título encima: arranca directo en el gancho).
   No repitas siempre la misma: elige la que pide la historia (indignado porque le cobraron de más, horrorizado al ver la
   etiqueta, orgulloso y feliz justo antes de enterarse, desesperado con el teléfono lento, confundido, furioso, muerto de
-  vergüenza). Exagérala como caricatura de los 30: salto con `susto`, brazos arriba, boca en 'o', orejas caídas, temblor,
+  vergüenza). Exagérala como caricatura animada: salto con `susto`, brazos arriba, boca en 'o', orejas caídas, temblor,
   el objeto apretado o a punto de caerse. Asustado es solo una opción más. Ningún rótulo informativo ("CASO REAL", años) en la escena 1: el gancho es la imagen y la voz.
 - El flashback es donde está la riqueza visual: edificios, fábricas, salas de juntas, anuncios de época, máquinas, contadores,
   gráficas, mapas. Cada escena con fondo completo (nada de fondos vacíos), un elemento principal grande y movimiento.
 - Ritmo rápido: cada escena dura 2-4 s; que algo pase desde el primer cuadro (zoom de cámara con `K.camara`, objeto que entra,
   número que cuenta, sello que golpea). No repitas el mismo plano dos escenas seguidas.
-- Cada escena empieza con `S30.vaiven(ctx, T)` y termina con `S30.pelicula(ctx, T)`. En el `remate` puedes cerrar con `S30.iris`.
-- La marca solo pone el logo y la pregunta final en la última escena: esa escena lleva solo fondo negro con un halo dorado (como
-  los ejemplos); no escribas texto en ella.
-- Rótulos con `K.pastilla` (fondo papel o dorado) y títulos o años con `S30.titulo` (Cinzel dorada).
+- Cada escena empieza con `S30.vaiven(ctx, T)` (leve vaivén de cámara) y termina con `S30.pelicula(ctx, T)` (acabado cinematográfico: viñeta suave, leve calidez y grano fino; sin rayones). En el `remate` puedes cerrar con `S30.iris`.
+- La marca solo pone el logo y la pregunta final en la última escena: esa escena lleva solo un fondo azul noche (`#232c3a` → `#12171f`) con un halo ámbar
+  `C.oro` (como los ejemplos); no escribas texto en ella.
+- Rótulos con `K.pastilla` (fondo crema o ámbar) y títulos o años con `S30.titulo` (Cinzel ámbar).
 
 ## 4. Revisión con tus propios ojos (obligatoria)
 `python run.py --hoja <id>` genera `proyectos/<id>/hojas/hoja_*.jpg` (3 cuadros por escena) y lista los errores de JavaScript.

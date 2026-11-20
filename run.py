@@ -1,17 +1,16 @@
 """Fábrica de Videos Cortos Explicativos (HTML animado → MP4).
 
 Uso:
-  python run.py                                      -> Interfaz web en http://localhost:8502
-  python run.py --nicho ciencia --tema aleatorio     -> Un video completo por consola
-  python run.py --nicho cuerpo --tema "Por qué bostezamos"
-  python run.py --nicho dinero --lote 5              -> 5 videos con temas nuevos
+  python run.py --nicho estafa --tema aleatorio      -> Un video completo por consola
+  python run.py --nicho sobrevive --tema "El rayo en campo abierto"
+  python run.py --nicho evidencia --lote 5           -> 5 videos con temas nuevos
   python run.py --auto                               -> Modo GitHub Actions: rota el nicho, fabrica y envía por correo
-  python run.py --auto --nicho ciencia               -> Igual, con un nicho fijo
+  python run.py --auto --nicho estafa                -> Igual, con un nicho fijo
   python run.py --auto --cantidad 2                  -> Dos videos seguidos, cada uno por correo
   python run.py --check                              -> Diagnóstico (ffmpeg, Chromium, IA, voz)
 
 Videos de autor (escenas dibujadas a medida en proyectos/<id>/escenas.js; ver .claude/commands/video.md):
-  python run.py --nicho biologia --guion guion.json  -> Crea el proyecto con ese guion e imprime su id
+  python run.py --nicho estafa --guion guion.json    -> Crea el proyecto con ese guion e imprime su id
   python run.py --hoja ID                            -> Hojas de contacto para revisar el dibujo (y errores de las escenas)
   python run.py --render ID [--correo]               -> Voz + MP4 (y lo envía por correo)
 Con el programa `claude` instalado, --auto y --nicho usan solos este camino (src/autor.py).
@@ -19,7 +18,6 @@ Con el programa `claude` instalado, --auto y --nicho usan solos este camino (src
 
 import argparse
 import os
-import subprocess
 import sys
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -57,7 +55,7 @@ def check() -> None:
         ok, motivo = router.ping(proveedor)
         print(f"IA {proveedor}: {'OK' if ok else motivo}")
     if not router.has_any:
-        print("IA: sin claves en .env (puedes escribir guiones a mano en la interfaz)")
+        print("IA: sin claves en .env (el dibujante necesita `claude` o GEMINI_API_KEY)")
 
 
 def auto(nicho: str | None, musica: str, cantidad: int = 1) -> None:
@@ -174,7 +172,6 @@ def main() -> None:
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--auto", action="store_true", help="Videos con nicho rotativo y envío por correo (ver --cantidad)")
     ap.add_argument("--cantidad", type=int, default=1, help="Con --auto: cuántos videos fabricar en esta ejecución")
-    ap.add_argument("--puerto", default="8502")
     ap.add_argument("--guion", help="Archivo JSON con un guion ya escrito: crea un proyecto de autor (requiere --nicho)")
     ap.add_argument("--hoja", metavar="ID", help="Hojas de contacto de un proyecto")
     ap.add_argument("--render", metavar="ID", help="Renderiza un proyecto ya dibujado")
@@ -202,8 +199,7 @@ def main() -> None:
     if args.hoja or args.render or args.guion or args.ejemplo:
         return autor(args)
     if not args.nicho:
-        subprocess.run([sys.executable, "-m", "streamlit", "run", os.path.join("src", "ui.py"),
-                        "--server.port", args.puerto, "--browser.gatherUsageStats", "false"])
+        ap.print_help()
         return
 
     from src import fabrica
@@ -219,9 +215,6 @@ def main() -> None:
         try:
             p = fabrica.fabricar(args.nicho, tema, router, musica=args.musica)
             print(f"Listo: {fabrica.mp4(p)}\n\n{fabrica.texto_publicacion(p)}")
-            respaldos = sum(e.get("origen") == "respaldo" for e in p["escenas"])
-            if respaldos:
-                print(f"Aviso: {respaldos} escena(s) con animación de respaldo (texto). Puedes rehacerlas en la interfaz.")
         except Exception as error:
             fallidos += 1
             print(f"ERROR: {error}")

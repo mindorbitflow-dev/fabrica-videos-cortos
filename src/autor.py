@@ -217,17 +217,13 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
     from src.guionista import leer_json
     conf = fabrica.cargar_nichos()[nicho]
     md = _reglas(nicho).read_text(encoding="utf-8")
-    relato = conf.get("formato") == "historia"
-    tres_d = conf.get("motor") == "3d"
+    ilustra = conf.get("personajes") == "ilustra"   # Sombra, la gente y los decorados del kit de ilustración (S30 y D)
     dos_d = conf.get("motor") == "2d"
-    ejemplo = RAIZ / "ejemplos" / (nicho if dos_d else "taller" if tres_d else "evidencia" if relato else "pulpo")
+    ejemplo = RAIZ / "ejemplos" / (nicho if (RAIZ / "ejemplos" / nicho).is_dir() else "pulpo")   # el ejemplo propio del nicho, si lo tiene
     kit = KIT.read_text(encoding="utf-8")
-    if relato:
+    if ilustra:
         kit += "\n" + (RAIZ / "plantilla" / "sombra.js").read_text(encoding="utf-8")
-        if conf.get("personajes") == "ilustra":   # decorados y props del motor nuevo (global D)
-            kit += "\n" + (RAIZ / "plantilla" / "decorados.js").read_text(encoding="utf-8")
-    if tres_d:
-        kit += "\n" + (RAIZ / "plantilla" / "taller3d.js").read_text(encoding="utf-8")
+        kit += "\n" + (RAIZ / "plantilla" / "decorados.js").read_text(encoding="utf-8")
     if dos_d:  # librería 2D del nicho: solo su cabecera (la API documentada), no todo el código
         for lib in conf.get("libs2d") or []:
             texto = (RAIZ / "plantilla" / lib).read_text(encoding="utf-8")

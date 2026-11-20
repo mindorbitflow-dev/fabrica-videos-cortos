@@ -1,180 +1,84 @@
-# 🎬 Fábrica de Videos Cortos Explicativos
+# 🎬 Fábrica de Videos Cortos
 
-Videos verticales (1080×1920, de 60 a 120 s) que explican un tema con **escenas procedurales en canvas**
-(cámara continua, campos de células, partículas, figuras, redes...), voz neuronal gratis, música de fondo y
-subtítulos palabra por palabra. Todo gratis.
+Videos verticales (1080×1920, de 55 a 90 s) con **escenas dibujadas a medida para cada tema** (canvas 2D con el motor de
+ilustración: pincel con volumen, luz cálida de borde, colores apagados y grano), voz neuronal, música de fondo y subtítulos palabra
+por palabra. Claude Code escribe el guion y el dibujo de cada escena, mira sus propias hojas de contacto y corrige; la fábrica
+renderiza el MP4 y lo envía por correo.
+
+## Las tres páginas (nichos activos)
+| Nicho | Página | Qué cuenta | Reglas | Ejemplo |
+|---|---|---|---|---|
+| `evidencia` | 🔍 Sombra de Evidencia | Tito (cerdito) llega con algo cotidiano y el detective Sombra revela su origen oculto: historias reales de negocios, publicidad y dinero | `.claude/commands/video.md` | `ejemplos/evidencia/` |
+| `sobrevive` | 🆘 ¿Sobrevivirías? | Una situación extrema en segunda persona: lo que casi todos harían falla y lo que de verdad te salva | `.claude/commands/video-sobrevive.md` | `ejemplos/sobrevive/` |
+| `estafa` | 🚨 Así te estafan | Una estafa cotidiana con Marta: cómo funciona el truco, la señal que lo delata y qué hacer. Pensada para que se la manden a su mamá | `.claude/commands/video-estafa.md` | `ejemplos/estafa/` |
+
+Los demás nichos de `config/nichos.yaml` (`biologia`, `cotidiano`, `ciencia`, `cuerpo`, `tecnologia`, `dinero`, `mente`) tienen
+`auto: false`: no entran en la rotación, pero se pueden fabricar a mano con `/video <nicho>` (usan `.claude/commands/video.md` y
+`ejemplos/pulpo/`).
 
 ## Uso
 ```bash
-python run.py                                    # Interfaz en http://localhost:8502
-python run.py --nicho ciencia --tema aleatorio   # un video completo por consola
-python run.py --nicho cuerpo --tema "Por qué bostezamos"
-python run.py --nicho dinero --lote 5            # 5 videos con temas nuevos, sin repetir
-python run.py --check                            # diagnóstico: ffmpeg, Chromium, voz, IA
+claude "/video-estafa estafa"                 # un video de Así te estafan (el tema lo elige Claude)
+claude "/video evidencia Tu anillo de diamante es publicidad"
+python run.py --nicho estafa --tema aleatorio # lo mismo desde la consola (dibuja Claude Code o, sin él, Gemini)
+python run.py --guion guion.json --nicho estafa   # crea el proyecto desde un guion ya escrito
+python run.py --hoja ID                       # hojas de contacto para revisar el dibujo (y errores de las escenas)
+python run.py --render ID [--correo]          # voz + MP4 (y lo envía por correo)
+python run.py --ejemplo estafa [--correo]     # renderiza ejemplos/estafa como si fuera un video nuevo
+python run.py --check                         # diagnóstico: ffmpeg, Chromium, voz, IA
 ```
-
-## Sombra de Evidencia (lo que fabrica el automático)
-Desde 2026-11-10 el automático solo fabrica el nicho `evidencia`: el cerdito Tito llega a la oficina del detective Sombra con
-algo cotidiano y Sombra le revela su origen oculto (historias reales y documentadas de negocios, publicidad, dinero y psicología,
-contadas como una conspiración), en caricatura blanco y negro de los años 30 con ambiente noir. 14-18 escenas rápidas, 50-65 s
-(Meta empuja los Reels de 35-70 s) y final con una pregunta para comentar (`final: pregunta`), no "síguenos".
-- `plantilla/sombra.js`: personajes fijos (detective Sombra, cerdito Tito, gente de época), oficina noir, luna, olas, niebla,
-  película vieja e iris.
-- Marca (`marca: sombra` en el nicho): portada serif y cierre con el logo (`assets/marca/sombra.jpg`).
-- Voz normal (Gemini Charon). `estilo_voz` en el nicho es opcional (en inglés, "Say in a ... voice"; solo el modelo 2.5 lo aplica
-  sin leerlo en voz alta).
-- **Post del mismo tema**: el guion trae `post` (pregunta de Tito, revelación de Sombra, texto); la fábrica dibuja una viñeta de
-  dos cuadros de 1080x1350 (`src/personajes.py`) y la envía en un correo aparte, junto con cada video.
-- Paquete de personajes para publicaciones propias: `python run.py --personajes --correo` (posts y recortes PNG sin fondo).
-- Los temas salen de `ideas:` en orden (de más a menos viral): los primeros son los de marcas conocidas y los que tocan el bolsillo.
-- Ejemplo completo: `ejemplos/evidencia/` ("Tu diamante es publicidad"); `ejemplos/misterio/` es un relato anterior con más piezas.
-- Música: pon pistas de suspenso sin derechos de autor en `assets/musica/` (hoy solo hay un ambiente).
-
-## Así se fabrica — Taller 3D (nicho `taller`)
-Cómo funciona una máquina armándola desde cero en un mundo 3D: empieza terminada, se reduce a lo mínimo y cada pieza aparece
-porque sin ella algo falla a la vista (no se levanta, da una maroma, derrapa, choca). 18-24 escenas, 90-130 s.
-- `plantilla/taller3d.js` (`T3`): three.js en modo inmediato (sin estado) sobre el mismo canvas de las escenas de autor. Mundo
-  (pasto, muro, árboles, pista), cámara, piezas (caja, cilindro, tubo, hélice con disco borroso, rueda, flecha de fuerza, viento,
-  polvo) y el piloto de la página (un patito de hule provisional). three.js va en `plantilla/vendor/` (licencia MIT).
-- Ejemplo completo: `ejemplos/taller/` ("Cómo vuela un avión"). Reglas del guion y del dibujo en `.claude/commands/video.md`.
-- En la rotación automática (`auto: true`): alterna con Evidencia en los mismos horarios.
-- Render: el 3D se dibuja al 75 % y se escala (`T3_CALIDAD`); ~0,2 s por cuadro, unos 10-12 min para un video de 100 s.
-- Reglas propias y cortas: `.claude/commands/video-taller.md` (`comando: video-taller` en el nicho). Cualquier objeto,
-  electrodoméstico o máquina; `mundo: { interior: true }` para objetos de casa. El correo trae el consumo de Claude de cada video.
-- Ahorro del plan: `modelo: sonnet` en el nicho (Claude Code usa Sonnet en vez de Opus), hojas de 2 cuadros por escena y una
-  sola revisión si no hay errores. `texto: oscuro` pone subtítulos, portada y pregunta final en letras oscuras.
-
-## ¿Sobrevivirías? (nicho `sobrevive`)
-Situaciones extremas en segunda persona, en 3D con personas: lo que casi todos harían falla y lo que de verdad te salva.
-- Personas: `P.persona({ pose, ... })` en `plantilla/taller3d.js` (parado, camina, corre, salta, cae, agachado, protege, sentado,
-  acostado; `susto` en la cara). Reglas en `.claude/commands/video-sobrevive.md`; ejemplo en `ejemplos/sobrevive/` (el ascensor).
-- Sin sangre ni heridas: el golpe se corta con polvo o temblor. Consejos según rescatistas y física.
-
-## Videos de autor (la calidad de referencia)
-Los videos que funcionan en redes (1Cell1Life y similares) son ilustración vectorial dibujada por código **a medida para cada tema**.
-Eso no lo logra una IA gratuita rellenando plantillas, así que el camino de calidad es otro: Claude Code escribe el guion y el
-dibujo de cada escena, mira el resultado y lo corrige antes de renderizar.
-
-```bash
-claude "/video biologia"                               # un video completo (tema de la lista de ideas del nicho)
-claude "/video cuerpo Por qué bostezamos --correo"     # tema propio y envío por correo
-claude -p "/video biologia --correo" --permission-mode acceptEdits   # sin supervisión (para programarlo)
-```
-- `.claude/commands/video.md`: el procedimiento completo (guion → dibujo → revisión visual → MP4).
-- `plantilla/kit.js`: utilidades de dibujo (cámara, curvas, extremidades, rutas, rótulos, grano).
-- `proyectos/<id>/escenas.js`: una función de dibujo por escena. Ejemplo completo en `ejemplos/pulpo/`.
-- `python run.py --hoja ID` (hojas de contacto para revisar) y `python run.py --render ID [--correo]`.
-
-**Automático (GitHub Actions, sin el PC encendido):** `run.py --auto` usa el dibujante (`src/autor.py`) cuando encuentra el
-programa `claude`. En GitHub se instala solo y se autentica con el secret `CLAUDE_CODE_OAUTH_TOKEN`: el token de tu suscripción de
-Claude (se genera con `claude setup-token`; no es una API key y no tiene cobro aparte, pero cada video gasta del límite de uso
-del plan). Sin ese secret, el dibujante usa **Gemini gratis** (`GEMINI_API_KEY`): escribe el guion y el código de las
-escenas con el kit y el ejemplo del pulpo como guía, mira sus hojas de contacto con visión y corrige (hasta 3 rondas). Si
-el dibujo sigue con errores de código, el video no se entrega y llega el correo de error.
-
-El resto de este documento describe la fábrica automática anterior (IA gratuita + objetos planos), que sigue funcionando pero
-no alcanza esa calidad.
-
-## Flujo en la interfaz
-**🎬 Crear**: nicho → tema (o 🎲) → ✍️ Guion con IA (o 📝 manual) → revisa y edita → 🎨 Animar
-→ vista previa → 🎞️ Renderizar MP4 → copia el texto de publicación.
-Cada escena se puede **🔁 rehacer** sola. Si cambias "Qué se dibuja", esa escena queda pendiente de animar.
-
-**🖼️ Galería**: todos los proyectos con miniatura, video, descarga y texto para publicar.
-**🏭 Lote**: varios videos seguidos (temas de la IA o tu lista).
-**🧭 Nichos**: tono, voz, frase de cierre, paleta de colores y banco de ideas (`config/nichos.yaml`).
-
-## Zona segura (TikTok, Reels y Shorts)
-Todo se diseña dentro de la zona que no tapa la interfaz de ninguna de las tres apps (lienzo 1080×1920):
-libres ~250 px arriba, ~420 px abajo, ~140 px a la derecha (botones) y 70 px a la izquierda.
-Título 260-430 · dibujo 430-1190 (el canvas ocupa todo el cuadro; la cámara centra el protagonista en y=810) ·
-subtítulos 1210-1440 · portada 860-1240. Las etiquetas, los números y la barra de escala se recortan solos a la zona.
-
-## Revisión automática (la fábrica verifica su propio resultado)
-1. **Historia** (`src/director.py`): la IA decide qué pasa en cada escena con un vocabulario fijo (acciones, plano, cámara,
-   escenario; `src/historia.py` lo convierte en rutas, cámara continua y paisajes planos). Cada protagonista sale de una
-   de tres fuentes: la **biblioteca propia** (`src/objetos.py`, dibujada a mano con piezas que giran), las **ilustraciones
-   abiertas** (`src/emojis.py`: Fluent Emoji Flat de Microsoft, MIT, y Noto Emoji de Google, Apache 2.0, por la API
-   pública de Iconify; licencias en `assets/emojis/LICENCIAS.md`) o un objeto que **la IA diseña como piezas planas**
-   (`src/objetos_ia.py`). Todo objeto se verifica con una IA con visión *a ciegas* (`src/vision.py`: primero dice qué ve,
-   sin saber qué debería ser). Una segunda pasada revisa que cada protagonista sea lo que dice la voz y, si no, la IA
-   replantea (hasta 3 rondas).
-2. **Control final** (`src/control.py`): cada escena armada se dibuja como la verá el público y una IA con visión describe
-   qué ve (objeto, color, tamaño) para compararlo con la voz y el rótulo. Lo que no concuerda pasa a **tarjeta de texto**
-   (nunca un dibujo que no corresponde); si son demasiadas, el video se descarta.
-3. **MP4** (`render.verificar_mp4`): 1080×1920, 30 fps, H.264 yuv420p, AAC 48 kHz, 10-150 s, final en
-   silencio y peso que quepa en el correo.
-
-## Estilos
-`plano` (diagramas sobre cuadrícula) e `ilustracion` (diagramas sobre fondo cálido con grano: Biología y Cuerpo).
-
-## Sin clichés
-El guion no puede usar muletillas como "sabías que", "increíble", "secreto", "descubre" ni pedir que te sigan
-(se comprueba en código). La única petición de seguir es la escena final fija del sistema ("Síguenos", con
-`cierre:` por nicho); los hashtags genéricos (#viral, #fyp, #curiosidades…) se eliminan.
-
-## Verificación de datos
-Después de escribir el guion, otra consulta a la IA busca mitos y exageraciones; si los hay, se reescribe
-(hasta 3 intentos y se queda con el mejor). Lo que no se pudo corregir llega como ⚠️ en la app y en el correo.
-
-## Portada y ganchos virales
-Cada guion trae una **portada**: 2-5 palabras gigantes que chocan con lo que la gente cree, con la palabra del
-giro en color y una línea pequeña que lo explica (fórmulas "NO X: Y", "SIN X Y SIGUE", "TU X HACE Y"...).
-Se ve en el primer segundo y sale como `portada.jpg` (adjunta en el correo) para usarla de miniatura.
-
-## Voces
-| Voz | Motor | Nota |
-|---|---|---|
-| Puck, Fenrir, Achird | Gemini TTS (clave gratis) | Las más naturales. 1 petición por video; subtítulos sincronizados con Whisper |
-| Brian | Microsoft Edge-TTS | Conversacional, sin límite. Es el respaldo automático si Gemini falla |
-
-Cada nicho trae su voz por defecto (`voz:` en `config/nichos.yaml`); en 🎬 Crear se cambia por video.
-Las muestras de todas las voces probadas están en `muestras_voz/`.
 
 ## Cómo está hecho
 ```
-config/nichos.yaml     nichos (paleta, voz, ideas)
-plantilla/base.css     estilos del título, la portada y los subtítulos
-plantilla/primitivas.js primitivas en canvas: cámara, sprites (objetos vectoriales o ilustraciones) con rutas y giro, paisajes planos
-                       (colinas, carretera, siluetas), células, vasos, partículas, figuras, red, ramas...
-plantilla/motor.js     reloj de escenas y subtítulos (la vista previa y el MP4 son idénticos)
-src/guionista.py       temas sin repetir + guion con contrato (12-18 escenas, 240-380 palabras ≈ 80-135 s, gancho corto, "enlace"
-                       sin terminar para que el video encadene en bucle) + verificación de datos
-src/director.py        la IA dirige la historia, consigue los objetos y replantea lo que no concuerda
-src/historia.py        guion de movimientos → escena del motor (rutas, cámara que sigue, escenarios: carretera, campo, bosque, interior)
-src/objetos.py         biblioteca propia de objetos vectoriales (carro, llanta, cono, disco, pedal, módulo ABS)
-src/objetos_ia.py      objetos que la IA diseña como piezas planas + verificación
-src/emojis.py          ilustraciones abiertas (Fluent Emoji Flat / Noto) por la API de Iconify, con caché en assets/emojis
-src/vision.py          IA con visión: verificación ciega de objetos
-src/control.py         control final sobre cada escena armada
-src/prim.py            esquema único de las primitivas: validar(), describir() para el prompt y respaldo()
-src/animador.py        (método anterior de escenas por IA, ya no se usa en la fábrica)
-src/voces.py           Gemini TTS / Edge-TTS + alineación de palabras con Whisper
-src/render.py          Chromium (Playwright) cuadro a cuadro + ffmpeg (-14 LUFS lineal) + verificación del MP4
-src/revisor.py         (método anterior: mide escenas del método viejo)
-src/fabrica.py         proyectos en proyectos/<id>/ (proyecto.json, video.html, video.mp4, miniatura.jpg)
-src/llm.py, src/env.py copiados de "videos automatizados" (cascada OpenRouter → Gemini → Groq)
+config/nichos.yaml          nichos: tono, voz, paleta, ideas, comando, libs/personajes
+.claude/commands/           reglas de cada página (video.md, video-sobrevive.md, video-estafa.md): guion → dibujo → revisión
+ejemplos/<nicho>/           guion.json + escenas.js de un video completo: el dibujante los imita (pulpo = ejemplo genérico)
+plantilla/kit.js            utilidades de dibujo (tiempo, cámara, curvas, rótulos, grano)
+plantilla/ilustra.js        motor de ilustración (se construye desde ilustra/src con ilustra/herramientas/construir.py)
+plantilla/sombra*.js        Sombra, Tito y la gente (S30.hombre / S30.mujer) con el motor de ilustración
+plantilla/decorados.js      fondos y props (D): calle, banco, oficina, tienda..., y D.celular (mensajes y llamadas) para las estafas
+plantilla/sobrevive2d.js    personas, animales, fondos y efectos de ¿Sobrevivirías? (V); fauna2d.js trae los animales
+plantilla/motor.js          reloj de escenas y subtítulos (la vista previa y el MP4 son idénticos)
+plantilla/base.css          estilos de subtítulos, portada y cierre
+src/autor.py                el dibujante: Claude Code (`claude -p "/comando nicho tema"`) o, sin él, Gemini con las mismas reglas
+src/fabrica.py              proyectos en proyectos/<id>/ (proyecto.json, escenas.js, video.html, video.mp4), nichos, historial y render
+src/guionista.py            temas sin repetir (lista de ideas del nicho o LIBRE) y comprobación de muletillas
+src/voces.py                Gemini TTS / Edge-TTS + alineación de palabras con Whisper
+src/render.py               Chromium (Playwright) cuadro a cuadro + ffmpeg + verificación del MP4 y hojas de contacto
+src/correo.py               envío por Gmail   ·   src/personajes.py posts de dos viñetas (hoy apagados: `post: false`)
+src/llm.py, src/env.py      cascada de IAs (Gemini → Groq → servicio propio) y lectura de .env
+state/historial.json        temas ya hechos (lo actualiza el propio workflow)
+ilustra/                    código fuente, herramientas y especificaciones del motor de ilustración (solo para desarrollarlo)
 ```
 
+## Zona segura (TikTok, Reels y Shorts)
+Lienzo 1080×1920: libres ~250 px arriba, ~420 px abajo, ~140 px a la derecha (botones) y 70 px a la izquierda. En las tres páginas
+los subtítulos van ARRIBA (y≈170-400) y lo importante entre y=420 y 1250; la escena 1 no lleva título (arranca en el gancho) y la
+última escena deja la pregunta del sistema en y≈420-1000.
+
+## Voces
+Cada nicho trae su voz (`voz:` en `config/nichos.yaml`): Gemini Charon (evidencia, sobrevive) y Achird (estafa); respaldo
+automático con Edge-TTS (Brian) si Gemini falla. Subtítulos sincronizados con Whisper. Si Edge-TTS da 403: `pip install -U edge-tts`.
+
+## Sin clichés
+El guion no puede usar muletillas ("sabías que", "increíble", "secreto", "descubre"…) ni pedir que te sigan; se comprueba en código
+(`guionista.muletillas_en`) y lo que falle llega como ⚠️ en el correo. La última escena es siempre una pregunta para comentar.
+
+## 🤖 Automático en GitHub Actions (por correo, sin el PC encendido)
+`.github/workflows/fabrica.yml` lanza dos tandas al día (9:17 y 20:17 UTC = 4:17 y 15:17 en Colombia) con un respaldo 1,5 h después
+(GitHub puede retrasar o saltarse ejecuciones). Cada tanda fabrica un video por cada página con `auto: true`, lo envía a Gmail con el
+texto para publicar y, si algo falla, manda un correo con el error. El video queda 7 días en Actions.
+
+- Dibujante: `claude` se instala solo y se autentica con el secret `CLAUDE_CODE_OAUTH_TOKEN` (token de la suscripción, `claude setup-token`;
+  cada video gasta del límite de uso del plan). Sin él, `src/autor.py` usa Gemini (`GEMINI_API_KEY`) con las mismas reglas.
+- **Las reglas que lee el dibujante son las de `.claude/commands/` del repositorio: si cambias algo ahí, hay que hacer push para que
+  GitHub lo use.**
+- Secrets: `CLAUDE_CODE_OAUTH_TOKEN`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY`, `GMAIL_USUARIO`,
+  `GMAIL_CLAVE_APP` (contraseña de aplicación), `CORREO_DESTINO` (opcional).
+- A mano: **Actions → Fábrica de videos → Run workflow** (elige nicho o un ejemplo para renderizar). Limitar nichos: variable `NICHOS_AUTO`.
+- Los temas salen de `ideas:` del nicho (al azar entre los no hechos); al acabarse, Claude elige otros nuevos y virales.
+
 ## Problemas comunes
-- Voz con error 403 → `pip install -U edge-tts`
-- Falta Chromium → `python -m playwright install chromium`
-- Música: por defecto una pista aleatoria de `assets/musica/` (hay un ambiente incluido); para usar otra, pon .mp3 sin copyright ahí y elígela en la app, o `--musica ninguna`
-
-## 🤖 Automático en GitHub Actions (2 videos por ejecución, unos 4 al día, por correo)
-`.github/workflows/fabrica.yml` corre a las 9:17, 14:17 y 19:17 (hora de Colombia) y fabrica 1 video por ejecución con el dibujante
-(GitHub puede retrasar o saltarse alguna ejecución programada). Rota el nicho
-(el que lleva más tiempo sin video), fabrica un video con tema nuevo y te lo envía a Gmail con el texto
-para publicar. Si falla, te llega un correo con el error. El video también queda 7 días en Actions.
-
-Secrets necesarios (Settings → Secrets and variables → Actions):
-`CLAUDE_CODE_OAUTH_TOKEN` (dibujante, ver arriba), `GEMINI_API_KEY` (voz), `GROQ_API_KEY`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY`,
-`GMAIL_USUARIO`, `GMAIL_CLAVE_APP` (contraseña de aplicación: myaccount.google.com/apppasswords), `CORREO_DESTINO` (opcional).
-
-- Lanzarlo a mano: pestaña **Actions → Fábrica de videos → Run workflow** (puedes elegir el nicho).
-- Limitar los nichos: variable `NICHOS_AUTO` (ej. `cotidiano,ciencia`).
-- Los temas salen primero de la lista `ideas:` de cada nicho (`config/nichos.yaml`): son reales, concretos y verificables. Cuando se acaban, la IA propone. Agrega ideas propias en la pestaña 🧭 Nichos.
-- Los nichos con `auto: false` en `config/nichos.yaml` (hoy `dinero` y `mente`, demasiado abstractos para ilustrarlos con objetos) no entran en la rotación automática; siguen disponibles a mano.
-- Cambiar la frecuencia: línea `cron` del workflow (hora UTC). Cambiar cuántos videos por ejecución: `python run.py --auto --cantidad N` (o el campo
-  *cantidad* al lanzarlo a mano); cada ejecución aguanta unos 3 videos antes del límite de 90 minutos.
-- Los temas usados se guardan en `state/historial.json` (lo actualiza el propio workflow).
+- Falta Chromium → `python -m playwright install chromium`.
+- Música: pista aleatoria de `assets/musica/`; `--musica ninguna` para quitarla.
+- Los videos no salen con el estilo nuevo → revisa que `.claude/commands/` tenga los comandos actuales y que estén subidos a GitHub.

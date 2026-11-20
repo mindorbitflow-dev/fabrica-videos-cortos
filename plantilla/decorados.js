@@ -7,7 +7,7 @@
 //   PROPS   D.<prop>(ctx, x, y, s, o)  — (x, y) = punto de apoyo inferior central (joya, reloj y engranaje: centro); s = escala; o.T = tiempo.
 //     joya(r){oro,gira,tipo:'diamante'|'anillo'}  vitrina{ancho,alto,joya}  cajon{cierra}→{x,y}  candado  papel/periodico/anuncio(w,h){giro,titular,lineas}
 //     monedas{n}  billetes{n}  caja_registradora  camaraCine  foco{ang}  engranaje(r){vel}  maquina  camion  fachada{letrero,color}  puertaLetrero{texto}
-//     reloj(r){hora}  telefono  grafica{valores,progreso,tipo:'barras'|'linea'}  pizarra{dibuja(ctx,w,h)}  mesaJuntas{ancho}  mesa  estante{ancho,alto}  caja  mina{niveles}
+//     reloj(r){hora}  telefono  celular{tipo:'mensaje'|'llamada'|'banco',quien,texto,alerta,k}  grafica{valores,progreso,tipo:'barras'|'linea'}  pizarra{dibuja(ctx,w,h)}  mesaJuntas{ancho}  mesa  estante{ancho,alto}  caja  mina{niveles}
 //   Todas usan los colores apagados de S30.C y la luz de S30.LUZ. Componer: varios props por escena + S30.hombre (gente) + S30.pelicula al final.
 (() => {
   if (!window.S30 || !window.Ilustra || !Ilustra.REPARTO || !Ilustra.Pincel || window.S30_NOIR) return;
@@ -434,5 +434,44 @@
     if (Math.sin(T * 10) > 0) ctx.fillRect(x - 250 * s + ctx.measureText(texto.slice(0, n)).width + 4, y - 612 * s, 4, 40 * s);
     ctx.restore();
   });
+  // celular de pie (x, y = base central; ≈ 460·s de alto, 250·s de ancho) con la pantalla viva. o: tipo 'mensaje' (burbuja) | 'llamada' | 'banco' (aviso con candado),
+  //   quien (nombre arriba: "Banco", "Número desconocido"), texto (string o [líneas]), alerta 0-1 (borde rojo que late), k 0-1 (aparición del texto), T.
+  D.celular = (ctx, x, y, s = 1, o = {}) => {
+    const w = 250 * s, h = 460 * s, T = o.T || 0, k = o.k == null ? 1 : clamp(o.k), tipo = o.tipo || 'mensaje';
+    prop('celular', [-140, -480, 140, 10], (cx, sq) => {
+      F(cx, R(-125 * sq, -460 * sq, 250 * sq, 460 * sq, 30 * sq), '#2a303c', { semilla: 3, volumen: .8, borde: .9, textura: .25, irregular: .2 });
+      F(cx, R(-112 * sq, -444 * sq, 224 * sq, 428 * sq, 20 * sq), '#161b26', { semilla: 4, volumen: .15, borde: .3, irregular: .1 });
+    })(ctx, x, y, s, {});
+    const sx = x - 112 * s, sy = y - 444 * s, sw = 224 * s, sh = 428 * s;
+    ctx.save(); ctx.beginPath(); ctx.rect(sx, sy, sw, sh); ctx.clip();
+    const fondo = ctx.createLinearGradient(0, sy, 0, sy + sh); fondo.addColorStop(0, tipo === 'llamada' ? '#26334a' : '#e9e2d0'); fondo.addColorStop(1, tipo === 'llamada' ? '#141b2a' : '#d3cab2');
+    ctx.fillStyle = fondo; ctx.fillRect(sx, sy, sw, sh);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const lineas = Array.isArray(o.texto) ? o.texto : o.texto ? [o.texto] : [];
+    if (o.quien) { ctx.fillStyle = tipo === 'llamada' ? '#EFE6D2' : '#2b3345'; ctx.font = `800 ${Math.round(21 * s)}px ${K.TEXTO}`; ctx.fillText(o.quien, x, sy + 36 * s, sw * .9); }
+    if (tipo === 'llamada') {
+      ctx.fillStyle = '#4a5a78'; ctx.beginPath(); ctx.arc(x, sy + 150 * s, 46 * s, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#EFE6D2'; ctx.beginPath(); ctx.arc(x, sy + 138 * s, 15 * s, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.ellipse(x, sy + 178 * s, 26 * s, 17 * s, 0, Math.PI, 0); ctx.fill();
+      const pulso = (Math.sin(T * 7) + 1) / 2; ctx.strokeStyle = css('#6FA66E', .25 + .5 * pulso); ctx.lineWidth = 6 * s; ctx.beginPath(); ctx.arc(x, sy + 150 * s, (56 + 10 * pulso) * s, 0, TAU); ctx.stroke();
+      ctx.fillStyle = '#6FA66E'; ctx.beginPath(); ctx.arc(x - 55 * s, sy + sh - 70 * s, 28 * s, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#C9584C'; ctx.beginPath(); ctx.arc(x + 55 * s, sy + sh - 70 * s, 28 * s, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#EFE6D2'; ctx.font = `700 ${Math.round(19 * s)}px ${K.TEXTO}`;
+      lineas.forEach((l, i) => ctx.fillText(l, x, sy + 250 * s + i * 26 * s, sw * .9));
+    } else {
+      const bw = sw * .84, n = lineas.length || 1, bh = (50 + n * 31) * s, by = sy + 80 * s;
+      ctx.globalAlpha = k; ctx.fillStyle = tipo === 'banco' ? '#fbf7ec' : '#ffffff'; ctx.beginPath(); ctx.roundRect(x - bw / 2, by, bw, bh, 18 * s); ctx.fill();
+      ctx.strokeStyle = css('#2b3345', .18); ctx.lineWidth = 2 * s; ctx.stroke();
+      ctx.fillStyle = '#1d2230'; ctx.font = `700 ${Math.round(22 * s)}px ${K.TEXTO}`;
+      lineas.forEach((l, i) => ctx.fillText(l, x, by + (34 + i * 31) * s, bw * .9));
+      ctx.globalAlpha = 1;
+      if (tipo === 'mensaje') {   // renglones de chat de relleno (otros mensajes ya enviados), para que la pantalla no quede vacía
+        ctx.fillStyle = css('#2b3345', .16);
+        [[.55, 0], [.7, 1], [.4, 0]].forEach(([f, der], i) => { const ww = sw * f, yy = by + bh + (28 + i * 50) * s; ctx.beginPath(); ctx.roundRect(der ? x + sw / 2 - 14 * s - ww : x - sw / 2 + 14 * s, yy, ww, 34 * s, 14 * s); ctx.fill(); });
+      }
+      if (tipo === 'banco') { ctx.fillStyle = '#C9584C'; ctx.beginPath(); ctx.arc(x, by + bh + 60 * s, 30 * s, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(40 * s)}px ${K.TEXTO}`; ctx.fillText('!', x, by + bh + 62 * s); }
+    }
+    ctx.restore();
+    if (o.alerta) { const a = clamp(o.alerta) * (.55 + .45 * Math.sin(T * 8)); ctx.save(); ctx.strokeStyle = css('#C9584C', a); ctx.lineWidth = 9 * s; ctx.beginPath(); ctx.roundRect(sx - 4 * s, sy - 4 * s, sw + 8 * s, sh + 8 * s, 22 * s); ctx.stroke(); ctx.restore(); }
+  };
   D.listo = true;
 })();

@@ -1,0 +1,29 @@
+{
+  "tema": "El código de WhatsApp que te pide tu amiga",
+  "titulo": "Tu amiga te pide un código por WhatsApp: no se lo des",
+  "portada": {
+    "texto": "NO MANDES ESE CÓDIGO",
+    "destacado": "CÓDIGO",
+    "sub": "aunque te lo pida tu mejor amiga"
+  },
+  "escenas": [
+    {"rol": "gancho", "voz": "Si Marta devuelve este código, pierde su WhatsApp en un minuto.", "visual": "Marta mira su celular: un mensaje de su amiga Lucía pide un código que llegó por error"},
+    {"rol": "pregunta", "voz": "Es su mejor amiga. ¿Qué tiene de malo pasarle un numerito?", "visual": "Marta sonríe y duda, con su celular en la mano"},
+    {"rol": "mecanismo", "voz": "Ese código no lo mandó su amiga. Lo mandó WhatsApp.", "visual": "primer plano de un mensaje de WhatsApp con el código de seis dígitos"},
+    {"rol": "mecanismo", "voz": "Alguien está intentando abrir la cuenta de Marta en otro celular.", "visual": "dos celulares: la cuenta pasa del de Marta al de un desconocido"},
+    {"rol": "mecanismo", "voz": "El código es la llave. Sin él no entra. Con él, entra.", "visual": "un candado enorme y el código encima"},
+    {"rol": "reenganche", "voz": "¿Y el mensaje de Lucía? A ella ya le habían robado la cuenta.", "visual": "Lucía asustada y, al lado, el estafador escribiendo desde el celular de ella"},
+    {"rol": "mecanismo", "voz": "Por eso funciona: confías en la persona, no en el mensaje.", "visual": "Marta y Lucía juntas; arriba la palabra CONFIANZA"},
+    {"rol": "mecanismo", "voz": "Marta manda el código. En segundos, su WhatsApp ya está en otro celular.", "visual": "Marta con susto; su celular avisa que la cuenta se abrió en otro dispositivo"},
+    {"rol": "reenganche", "voz": "Y ahí empieza lo peor.", "visual": "el estafador sonríe en la oscuridad con el celular de Marta"},
+    {"rol": "mecanismo", "voz": "Escribe a todos sus contactos: «Préstame plata, es urgente».", "visual": "un mensaje pidiendo plata sale hacia una fila de personas"},
+    {"rol": "mecanismo", "voz": "Su mamá, su jefe, sus primos. Todos creen que es Marta.", "visual": "cuatro personas con rótulos MAMÁ, JEFE, PRIMO y AMIGA miran su celular"},
+    {"rol": "revelacion", "voz": "La señal es una sola: nadie, ni tu mejor amiga, necesita tu código.", "visual": "el mensaje del código tachado en rojo y la palabra NUNCA"},
+    {"rol": "revelacion", "voz": "Si te lo piden, no lo mandes. Llámala y pregúntale por voz.", "visual": "Marta llama a Lucía y sonríe aliviada"},
+    {"rol": "mecanismo", "voz": "Y activa la verificación en dos pasos: un PIN extra que el estafador no tiene.", "visual": "el celular de Marta pide un PIN de seis puntos y un candado se cierra"},
+    {"rol": "remate", "voz": "El código es solo tuyo. Si alguien te lo pide, es una estafa.", "visual": "frase en grande sobre fondo azul noche"},
+    {"rol": "cierre", "voz": "¿A quién le mandarías este video para que no le pase? Escríbelo en los comentarios.", "visual": "fondo azul noche; la pregunta la pone el sistema"}
+  ],
+  "caption": "Si alguien te pide el código de seis dígitos que te llega por mensaje, es una estafa, aunque sea tu mejor amiga. ¿A quién le mandarías este video para que no le pase?",
+  "hashtags": ["#estafas", "#whatsapp", "#seguridad", "#tips"]
+}
