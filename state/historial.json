@@ -203,13 +203,6 @@
   "titulo": "Los tiburones son más antiguos que los árboles"
  },
  {
-  "id": "20261111_001400_las-unas-no-siguen-creciendo-despues-de-",
-  "fecha": "2026-11-11T00:28:36",
-  "nicho": "biologia",
-  "tema": "Las uñas no siguen creciendo después de morir",
-  "titulo": "Las uñas de un muerto no crecen: la piel se encoge"
- },
- {
   "id": "20261110_210003_el-faro-abandonado-que-se-enciende-solo-",
   "fecha": "2026-11-10T21:31:16",
   "nicho": "misterios",
@@ -222,6 +215,13 @@
   "nicho": "evidencia",
   "tema": "Tu anillo de diamante es publicidad - De Beers y \"un diamante es para siempre\"",
   "titulo": "Tu anillo de diamante lo diseñó una agencia de publicidad"
+ },
+ {
+  "id": "20261111_001400_las-unas-no-siguen-creciendo-despues-de-",
+  "fecha": "2026-11-11T00:28:36",
+  "nicho": "biologia",
+  "tema": "Las uñas no siguen creciendo después de morir",
+  "titulo": "Las uñas de un muerto no crecen: la piel se encoge"
  },
  {
   "id": "20261111_063815_el-plato-caro-del-menu-que-nadie-pide-el",
@@ -538,5 +538,12 @@
   "nicho": "sobrevive",
   "tema": "El enjambre de abejas que te persigue",
   "titulo": "Te persigue un enjambre: ¿te lanzas al agua o corres?"
+ },
+ {
+  "id": "20261120_175414_ticketmaster-y-los-boletos-de-oasis-el-p",
+  "fecha": "2026-11-20T17:59:59",
+  "nicho": "evidencia",
+  "tema": "Ticketmaster y los boletos de Oasis - el precio que subía en la fila (2024)",
+  "titulo": "Ticketmaster subió el precio de Oasis mientras hacías la fila"
  }
 ]
