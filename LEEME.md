@@ -86,5 +86,5 @@ texto para publicar y, si algo falla, manda un correo con el error. El video que
 
 ## Problemas comunes
 - Falta Chromium → `python -m playwright install chromium`.
-- Música: pista aleatoria de `assets/musica/`; `--musica ninguna` para quitarla.
+- Música: sin música de fondo por defecto (solo la voz, desde 2026-11-23); `--musica aleatoria` pone una pista de `assets/musica/`.
 - Los videos no salen con el estilo nuevo → revisa que `.claude/commands/` tenga los comandos actuales y que estén subidos a GitHub.

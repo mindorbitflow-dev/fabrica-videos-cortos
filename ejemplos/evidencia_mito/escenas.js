@@ -56,7 +56,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       const c = S30.camina(t, d, 80, 560, { hasta: .3, alto: 430 * 1.6 * .8 }), llega = c.paso === null;
-      enOficina(ctx, t, d, T, { x: 540, y: 900, z: 1.0 }, { x: 560, y: 800, z: 1.3 }, () => {
+      enOficina(ctx, t, d, T, { x: 540, y: 760, z: 1 }, { x: 540, y: 760 }, () => {
         S30.tito(ctx, c.x, 1290, 1.6, Object.assign({ T, dir: -1, boca: 'habla', expresion: 'alegre' }, llega ? S30.actua(t - d * .3, d * .7, [[0, 'asombrado'], [.7, 'asombrado']]) : { pose: 'camina', paso: c.paso }));
         const b = rebote(prog(t, d * .35, d * .55));   // globo de pensamiento
         if (b > 0) {
@@ -69,13 +69,13 @@
       });
       S30.pelicula(ctx, T);
     },
-    // 2. Sombra con la lupa: "esa imagen tiene un autor". Empuje lento desde el escritorio hasta su rostro.
+    // 2. Sombra saca la lupa y examina la imagen del casco: "esa imagen tiene un autor"; Tito traga saliva. Cámara fija (la oficina no lleva zoom).
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      enOficina(ctx, t, d, T, { x: 620, y: 960, z: 1.0 }, { x: 380, y: 870, z: 1.65 }, () => {
-        S30.detective(ctx, 330, 1180, 1.25, { T, mira: .5, habla: 1, pose: 'lupa', lupa: 1 });
+      enOficina(ctx, t, d, T, { x: 540, y: 760, z: 1 }, { x: 540, y: 760 }, () => {
+        S30.detective(ctx, 330, 1180, 1.55, Object.assign({ T, mira: Math.sin(t * 2.2) * .6, habla: 1 }, S30.actua(t, d, [[0, 'dePie'], [.3, 'lupa'], [1, 'lupa']])));
         S30.escritorio(ctx, T, { y: 960 });
-        S30.tito(ctx, 840, 1240, .9, { T, dir: -1, mira: -.6, boca: 'o' });
+        S30.tito(ctx, 820, 1240 - Math.abs(Math.sin(T * 4)) * 16, 1.2, { T, dir: -1, mira: -.6, boca: 'o' });
       });
       pastilla(ctx, 'EVIDENCIA', 540, 300, prog(t, d * .35, d * .35 + .3), true);
       S30.pelicula(ctx, T);
@@ -83,7 +83,7 @@
     // 3. Noruega, 1943: un arqueólogo señala el único casco vikingo casi completo. La cámara baja y se acerca al casco.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      K.plano(ctx, t, d, { de: { x: 540, y: 700, z: 1.0 }, a: { x: 640, y: 1000, z: 1.6 }, T, mano: .6, paralaje: .5, fondo: () => D.fondo.exterior(ctx, T, { tipo: 'campo', hora: 'dia' }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 700, z: 1.3 }, a: { x: 640, y: 1000 }, T, mano: .6, paralaje: .5, fondo: () => D.fondo.exterior(ctx, T, { tipo: 'campo', hora: 'dia' }) }, () => {
         K.halo(ctx, 700, 1130, 320, C.oro, .22 * (.7 + .3 * Math.sin(T * 3)));
         casco(ctx, 700, 1170, 1.3, { cuernos: 0 });
         S30.hombre(ctx, 300, 1230, 1.0, { T, semilla: 31, variante: 'hombre', dir: 1, pose: 'senalar', cara: 'serio', habla: 1 });
@@ -94,7 +94,7 @@
     // 4. Es redondo y no tiene cuernos: los cuernos fantasma aparecen punteados y se tachan. Paneo suave de un lado a otro.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      K.plano(ctx, t, d, { de: { x: 420, y: 760, z: 1.3 }, a: { x: 660, y: 780, z: 1.2 }, T, mano: .5, paralaje: .4, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'salvia', y: 700 }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 420, y: 760, z: 1.25 }, a: { x: 660, y: 780 }, T, mano: .5, paralaje: .4, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'salvia', y: 700 }) }, () => {
         K.halo(ctx, 540, 720, 420, C.oro, .18);
         casco(ctx, 540, 840, 1.9, { cuernos: 0 });
         const f = prog(t, d * .25, d * .45) * (1 - prog(t, d * .7, d * .9) * .75);
@@ -103,14 +103,14 @@
       });
       S30.pelicula(ctx, T);
     },
-    // 5. Tito interrumpe, indignado: da un salto al frente y señala. La cámara se desplaza de Sombra a Tito.
+    // 5. Tito interrumpe, indignado: da un salto al frente y señala; Sombra se sorprende. Cámara fija (la oficina no lleva zoom).
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       const salto = Math.max(0, Math.sin(clamp((t - .15) / .5) * Math.PI)) * 50;
-      enOficina(ctx, t, d, T, { x: 420, y: 960, z: 1.15 }, { x: 760, y: 950, z: 1.65 }, () => {
-        S30.detective(ctx, 270, 1180, 1.1, { T, mira: .7, pose: 'cruzado' });
+      enOficina(ctx, t, d, T, { x: 540, y: 760, z: 1 }, { x: 540, y: 760 }, () => {
+        S30.detective(ctx, 270, 1180, 1.4, Object.assign({ T, mira: .7 }, S30.actua(t, d, [[0, 'cruzado'], [.3, 'sorprendido'], [.8, 'cruzado']])));
         S30.escritorio(ctx, T, { y: 960 });
-        S30.tito(ctx, 790, 1240 - salto, 1.25, Object.assign({ T, dir: -1, boca: 'habla', mira: -.7, expresion: 'enfado' }, S30.actua(t, d, [[0, 'dePie'], [.25, 'asombrado'], [.6, 'senalar']])));
+        S30.tito(ctx, 800, 1240 - salto, 1.4, Object.assign({ T, dir: -1, boca: 'habla', mira: -.7, expresion: 'enfado' }, S30.actua(t, d, [[0, 'dePie'], [.25, 'asombrado'], [.6, 'senalar']])));
       }, 1);
       S30.pelicula(ctx, T);
     },
@@ -118,7 +118,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       const dib = prog(t, d * .15, d * .75);
-      K.plano(ctx, t, d, { de: { x: 360, y: 820, z: 1.25 }, a: { x: 640, y: 780, z: 1.35 }, T, mano: .5, paralaje: .55, fondo: () => D.fondo.juntas(ctx, T, { hora: 'atardecer' }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 360, y: 820, z: 1.3 }, a: { x: 640, y: 780 }, T, mano: .5, paralaje: .55, fondo: () => D.fondo.juntas(ctx, T, { hora: 'atardecer' }) }, () => {
         D.pizarra(ctx, 700, 900, 1.3, { ancho: 380, alto: 300, dibuja: (c, w, h) => {
           c.save(); c.beginPath(); c.rect(-w / 2, -h / 2, w * dib, h); c.clip();
           c.strokeStyle = C.tinta; c.lineWidth = 8; c.lineCap = 'round';
@@ -133,7 +133,7 @@
     // 7. Bayreuth, 1876: escenario con cortinas abiertas, un foco y el casco con cuernos. Empuje hacia el casco.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      K.plano(ctx, t, d, { de: { x: 540, y: 860, z: 1.0 }, a: { x: 540, y: 800, z: 1.45 }, T, mano: .4, paralaje: .5, fondo: () => D.fondo.estudio(ctx, T, {}) }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 860, z: 1.23 }, a: { x: 540, y: 800 }, T, mano: .4, paralaje: .5, fondo: () => D.fondo.estudio(ctx, T, {}) }, () => {
         cortinas(ctx, 0);
         D.foco(ctx, 540, 120, 1.2, { T, ang: Math.PI / 2, largo: 1000 });
         K.halo(ctx, 540, 900, 380, C.oro, .25);
@@ -146,7 +146,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       const cu = sale(prog(t, d * .1, d * .8));
-      K.plano(ctx, t, d, { de: { x: 540, y: 800, z: 1.6 }, a: { x: 540, y: 740, z: 1.05 }, T, mano: .3, paralaje: .5, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'ciruela', y: 640 }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 800, z: 1.33 }, a: { x: 540, y: 740 }, T, mano: .3, paralaje: .5, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'ciruela', y: 640 }) }, () => {
         K.halo(ctx, 540, 760, 460, C.oro, .22);
         casco(ctx, 540, 900, 2.0, { cuernos: cu });
         pastilla(ctx, 'MÁS IMPONENTE', 540, 330, prog(t, d * .5, d * .5 + .3), true);
@@ -156,7 +156,7 @@
     // 9. Todos lo copian: carteles con el casco de cuernos llegan volando uno tras otro; la cámara sube.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      K.plano(ctx, t, d, { de: { x: 540, y: 1000, z: 1.0 }, a: { x: 540, y: 740, z: 1.2 }, T, mano: .5, paralaje: .5, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'tierra', y: 760 }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 1000, z: 1.1 }, a: { x: 540, y: 740 }, T, mano: .5, paralaje: .5, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'tierra', y: 760 }) }, () => {
         const pos = [[300, 640, -.12], [760, 600, .1], [270, 1000, .08], [790, 980, -.09], [540, 820, 0], [540, 1180, .05]];
         pos.forEach(([px, py, giro], i) => {
           const e = sale(prog(t, i * d * .11, i * d * .11 + .5));
@@ -174,7 +174,7 @@
       D.fondo.abstracto(ctx, T, { tema: 'noche', y: 700, luz: .9 });
       const g = clamp((t - .25) / .7);
       ctx.save(); ctx.translate(K.golpe(t, .25 + .7 * .3, 16) * .6, K.golpe(t, .25 + .7 * .3, 22));
-      K.plano(ctx, t, d, { de: { x: 540, y: 800, z: 1.0 }, a: { x: 540, y: 780, z: 1.2 }, T }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 800, z: 1.1 }, a: { x: 540, y: 780 }, T }, () => {
         K.halo(ctx, 540, 740, 420, C.oro, .18);
         casco(ctx, 540, 860, 1.8, { cuernos: 1 });
         D.sello(ctx, 540, 760, 1.15, { texto: 'MITO', golpe: g, T });
@@ -185,7 +185,7 @@
     // 11. Sí hubo cascos con cuernos, hace 3.000 años y para ceremonias: línea de tiempo con un salto enorme hasta los vikingos. Paneo a la derecha.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      K.plano(ctx, t, d, { de: { x: 420, y: 760, z: 1.3 }, a: { x: 760, y: 780, z: 1.1 }, T, mano: .4, paralaje: .4, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'azul', y: 760 }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 420, y: 760, z: 1.2 }, a: { x: 760, y: 780 }, T, mano: .4, paralaje: .4, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'azul', y: 760 }) }, () => {
         const lin = prog(t, 0, d * .8);
         K.trazo(ctx, [[120, 1000], [lerp(120, 1010, lin), 1000]], alfa(C.papel, .8), 8);
         casco(ctx, 260, 900, 1.2, { cuernos: 1, metal: 'bronce' });
@@ -202,7 +202,7 @@
       S30.vaiven(ctx, T);
       const cierra = sale(prog(t, d * .35, d * .85));
       ctx.save(); ctx.translate(0, K.golpe(t, d * .85, 12));
-      K.plano(ctx, t, d, { de: { x: 540, y: 800, z: 1.5 }, a: { x: 540, y: 820, z: 1.0 }, T, mano: .3, paralaje: .5, fondo: () => D.fondo.estudio(ctx, T, {}) }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 800, z: 1.25 }, a: { x: 540, y: 820 }, T, mano: .3, paralaje: .5, fondo: () => D.fondo.estudio(ctx, T, {}) }, () => {
         K.halo(ctx, 540, 900, 380, C.oro, .22 * (1 - cierra));
         casco(ctx, 540, 1130, 1.5, { cuernos: 1 });
         cortinas(ctx, cierra);
@@ -213,7 +213,7 @@
     // 13. La lección: Sombra explica y luego piensa; Tito baja la cabeza y el casco de juguete queda sobre el escritorio. Empuje hacia Tito.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      enOficina(ctx, t, d, T, { x: 520, y: 900, z: 1.1 }, { x: 720, y: 940, z: 1.6 }, () => {
+      enOficina(ctx, t, d, T, { x: 540, y: 760, z: 1 }, { x: 540, y: 760 }, () => {
         S30.detective(ctx, 330, 1180, 1.2, Object.assign({ T, mira: .8, habla: 1 }, S30.actua(t, d, [[0, 'dePie'], [.35, 'explicar'], [.75, 'pensativo']])));
         S30.escritorio(ctx, T, { y: 960 });
         casco(ctx, 560, 972, .42, { cuernos: 1 });

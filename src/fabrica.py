@@ -308,7 +308,7 @@ def elegir_musica(opcion: str) -> Optional[Path]:
     return elegida if elegida in pistas else None
 
 
-def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, musica: str = "aleatoria",
+def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, musica: str = "ninguna",
                progreso=None) -> dict:
     if not p["escenas"] or not all(escena_lista(p, i) for i in range(len(p["escenas"]))):
         raise RuntimeError("Primero anima todas las escenas.")
@@ -338,7 +338,7 @@ def texto_publicacion(p: dict) -> str:
     return f"{p['titulo']}\n\n{p.get('caption', '')}\n\n{' '.join(p.get('hashtags', []))}".strip()
 
 
-def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "aleatoria", progreso=None) -> dict:
+def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "ninguna", progreso=None) -> dict:
     """Todo el proceso de un video: tema (o aleatorio) → el dibujante escribe el guion y dibuja cada escena a medida → MP4."""
     avisar = progreso or (lambda f, m: print(f"[{f:4.0%}] {m}"))
     if not autor.disponible(router):

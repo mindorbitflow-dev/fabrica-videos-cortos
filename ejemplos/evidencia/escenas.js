@@ -43,25 +43,27 @@
       const c = S30.camina(t, d, 60, 600, { hasta: .38, alto: ALTO_TITO(1.7) });
       const espanto = c.paso === null ? Math.sin(clamp((t - d * .38) / .45) * Math.PI) : 0;   // salto de susto al plantarse
       const actuando = c.paso !== null ? { pose: 'camina', paso: c.paso } : { pose: 'traeObjeto' };
-      enOficina(ctx, t, d, T, { x: 540, y: 900, z: 1.0 }, { x: 560, y: 820, z: 1.3 }, () =>
+      enOficina(ctx, t, d, T, { x: 540, y: 760, z: 1 }, { x: 540, y: 760 }, () =>
         S30.tito(ctx, c.x, 1290 - espanto * 46, 1.7, Object.assign({ T, dir: -1, objeto: 'caja', boca: 'habla', mira: -.4, expresion: c.paso === null ? 'susto' : 'alegre' }, actuando)));
       pastilla(ctx, '2 SUELDOS', 540, 440, prog(t, d * .55, d * .55 + .3), true);
       S30.pelicula(ctx, T);
     },
-    // 2. Sombra, detrás del escritorio, gira hacia Tito y dice "la inventó De Beers". Empuje lento hacia Sombra.
+    // 2. Sombra, detrás del escritorio, gira hacia Tito y dice "la inventó De Beers"; Tito, nervioso, da saltitos con la caja. Cámara fija (la oficina no lleva zoom).
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      enOficina(ctx, t, d, T, { x: 600, y: 940, z: 1.0 }, { x: 400, y: 880, z: 1.55 }, () => {
-        S30.detective(ctx, 330, 1180, 1.2, Object.assign({ T, mira: .6, habla: 1 }, S30.actua(t, d, [[0, 'dePie'], [.3, 'explicar'], [.75, 'senalar']])));
+      enOficina(ctx, t, d, T, { x: 540, y: 760, z: 1 }, { x: 540, y: 760 }, () => {
+        S30.detective(ctx, 330, 1180, 1.55, Object.assign({ T, mira: .6, habla: 1 }, S30.actua(t, d, [[0, 'dePie'], [.25, 'explicar'], [.55, 'senalar'], [.85, 'explicar']])));
         S30.escritorio(ctx, T, { y: 960 });
-        S30.tito(ctx, 820, 1240, .9, { T, dir: -1, objeto: 'caja', mira: -.6, boca: 'o' });
+        const cae = K.sale(prog(t, d * .3, d * .55));   // el expediente aterriza sobre el escritorio
+        if (cae > 0) D.papel(ctx, 560, lerp(240, 880, cae), 240, 300, { giro: lerp(.7, -.06, cae), titular: 'DE BEERS', lineas: 3 });
+        S30.tito(ctx, 800, 1240 - Math.abs(Math.sin(T * 5)) * 22, 1.2, { T, dir: -1, objeto: 'caja', mira: -.6, boca: 'o' });
       });
       S30.pelicula(ctx, T);
     },
     // 3. 1870, Sudáfrica: la mina gigante. La cámara baja desde el borde hasta el fondo del hoyo; obreros pequeños trabajan y dos grandes pasan en primer plano.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      K.plano(ctx, t, d, { de: { x: 540, y: 650, z: 1.0 }, a: { x: 560, y: 900, z: 1.6 }, T, mano: .8, paralaje: .5, fondo: () => D.fondo.exterior(ctx, T, { tipo: 'mina', hora: 'dia' }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 650, z: 1.3 }, a: { x: 560, y: 900 }, T, mano: .8, paralaje: .5, fondo: () => D.fondo.exterior(ctx, T, { tipo: 'mina', hora: 'dia' }) }, () => {
         D.mina(ctx, 540, 760, 1, { T, niveles: 7 });
         for (let i = 0; i < 14; i++) {
           const a = hash(i) * TAU, nivel = Math.floor(hash(i + 3) * 6), rx = 470 - nivel * 58, ry = 230 - nivel * 30;
@@ -79,7 +81,7 @@
     // 4. Nueve de cada diez: la cámara recorre la bandeja de izquierda a derecha y los diamantes se vuelven ámbar uno a uno.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      K.plano(ctx, t, d, { de: { x: 380, y: 730, z: 1.35 }, a: { x: 700, y: 740, z: 1.2 }, T, mano: .5, paralaje: .4, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'salvia', y: 700 }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 380, y: 730, z: 1.27 }, a: { x: 700, y: 740 }, T, mano: .5, paralaje: .4, fondo: () => D.fondo.abstracto(ctx, T, { tema: 'salvia', y: 700 }) }, () => {
         D.bandeja(ctx, 540, 730, 1, { ancho: 920, alto: 380 });
         grilla(ctx, 10, 9, t, T, { cols: 5, x0: 180, y0: 640, paso: 180, r: 58, ritmo: d * .06 });
         pastilla(ctx, '9 DE CADA 10', 540, 420, prog(t, d * .65, d * .65 + .3), true);
@@ -89,7 +91,7 @@
     // 5. Escasos en la vitrina, abundantes en la bodega: la cámara baja de una a otra mientras la bodega se llena.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      K.plano(ctx, t, d, { de: { x: 540, y: 640, z: 1.35 }, a: { x: 540, y: 1000, z: 1.1 }, T, mano: .4, paralaje: .5, fondo: () => D.fondo.tienda(ctx, T, {}) }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 640, z: 1.23 }, a: { x: 540, y: 1000 }, T, mano: .4, paralaje: .5, fondo: () => D.fondo.tienda(ctx, T, {}) }, () => {
         D.vitrina(ctx, 540, 830, 1, { T });
         K.halo(ctx, 540, 590, 260, C.oro, .22);
         pastilla(ctx, 'VITRINA', 540, 300, prog(t, .1, .4), true);
@@ -104,7 +106,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       const salto = Math.max(0, Math.sin(clamp((t - .15) / .5) * Math.PI)) * 50;
-      enOficina(ctx, t, d, T, { x: 600, y: 940, z: 1.2 }, { x: 760, y: 960, z: 1.7 }, () => {
+      enOficina(ctx, t, d, T, { x: 540, y: 760, z: 1 }, { x: 540, y: 760 }, () => {
         S30.detective(ctx, 270, 1180, 1.1, { T, mira: .7, pose: 'cruzado' });
         S30.escritorio(ctx, T, { y: 960 });
         S30.tito(ctx, 790, 1240 - salto, 1.25, Object.assign({ T, dir: -1, boca: 'habla', mira: -.7, expresion: 'enfado' }, S30.actua(t, d, [[0, 'dePie'], [.25, 'asombrado'], [.6, 'senalar']])));
@@ -115,7 +117,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       const dibuja = prog(t, d * .2, d * .8);
-      K.plano(ctx, t, d, { de: { x: 330, y: 820, z: 1.2 }, a: { x: 700, y: 780, z: 1.35 }, T, mano: .5, paralaje: .55, fondo: () => D.fondo.juntas(ctx, T, { hora: 'atardecer' }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 330, y: 820, z: 1.27 }, a: { x: 700, y: 780 }, T, mano: .5, paralaje: .55, fondo: () => D.fondo.juntas(ctx, T, { hora: 'atardecer' }) }, () => {
         D.pizarra(ctx, 540, 720, 1, { ancho: 380, alto: 270, dibuja: (c, w, h) => {
           c.save(); c.beginPath(); c.rect(-w / 2, -h / 2, w * dibuja, h); c.clip();
           c.beginPath(); c.moveTo(0, 90); c.bezierCurveTo(-130, 10, -120, -90, 0, -40); c.bezierCurveTo(120, -90, 130, 10, 0, 90);
@@ -131,7 +133,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       const c = S30.camina(t, d, 1150, 700, { hasta: .45, alto: 430 * 1.5 * .95 });
-      K.plano(ctx, t, d, { de: { x: 640, y: 900, z: 1.0 }, a: { x: 620, y: 860, z: 1.45 }, T, mano: .5, paralaje: .55, fondo: () => D.fondo.estudio(ctx, T, {}) }, () => {
+      K.plano(ctx, t, d, { de: { x: 640, y: 900, z: 1.23 }, a: { x: 620, y: 860 }, T, mano: .5, paralaje: .55, fondo: () => D.fondo.estudio(ctx, T, {}) }, () => {
         ctx.strokeStyle = C.tinta; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(170, 60); ctx.lineTo(170, 380); ctx.stroke();
         D.foco(ctx, 170, 420, 1.1, { T, ang: .97, largo: 1000 });
         D.camaraCine(ctx, 250, 1240, 1.2, { T });
@@ -148,7 +150,7 @@
       S30.vaiven(ctx, T);
       D.fondo.juntas(ctx, T, { hora: 'noche', semilla: 9 });
       ctx.save(); ctx.translate(K.golpe(t, d * .95, 10), 0);
-      K.plano(ctx, t, d, { de: { x: 540, y: 1000, z: 1.0 }, a: { x: 540, y: 640, z: 1.7 }, T, mano: .3 }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 1000, z: 1.35 }, a: { x: 540, y: 640 }, T, mano: .3 }, () => {
         D.mesaJuntas(ctx, 540, 1292, 1, { ancho: 960 });
         D.maquinaEscribir(ctx, 540, 1120, 1, { T, texto: 'A DIAMOND IS FOREVER', n: prog(t, d * .15, d * .95) });
       });
@@ -160,11 +162,12 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T, .5);
       D.fondo.abstracto(ctx, T, { tema: 'noche', y: 640, luz: prog(t, 0, .6) + .4 });
-      K.motas(ctx, T, { n: 50, color: C.oro, a: .5, vy: -26, tam: 4, semilla: 5 });
-      K.plano(ctx, t, d, { de: { x: 540, y: 880, z: 1.0 }, a: { x: 540, y: 700, z: 1.32 }, T }, () => {
-        diamante(ctx, 540, lerp(660, 520, sale(prog(t, 0, d * .5))), 110, T, { gira: T * 2.2, oro: prog(t, d * .3, d * .9) });
+      K.motas(ctx, T, { n: 90, color: C.oro, a: .7, vy: -40, tam: 5, semilla: 5 });
+      K.plano(ctx, t, d, { de: { x: 540, y: 880, z: 1.16 }, a: { x: 540, y: 700 }, T }, () => {
+        K.halo(ctx, lerp(200, 880, prog(t, 0, d)), 600, 380, C.oro, .22);   // la luz barre el fondo
+        diamante(ctx, 540, lerp(900, 520, sale(prog(t, 0, d * .5))), 110, T, { gira: T * 2.2, oro: prog(t, d * .3, d * .9) });
         const a = prog(t, .15, .7), s = lerp(1.3, 1, sale(a));
-        ctx.save(); ctx.globalAlpha = a; ctx.translate(540, lerp(960, 860, sale(a))); ctx.scale(s, s);
+        ctx.save(); ctx.globalAlpha = a; ctx.translate(540, lerp(1120, 860, sale(a))); ctx.scale(s, s);
         ctx.font = '700 104px "Cormorant Garamond", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.oro;
         ctx.fillText('Un diamante', 0, -70); ctx.fillText('es para siempre', 0, 40);
         ctx.restore();
@@ -177,7 +180,7 @@
       D.fondo.banco(ctx, T, {});
       const cierra = K.sale(prog(t, d * .2, d * .6)), cand = prog(t, d * .65, d * .8);
       ctx.save(); ctx.translate(0, K.golpe(t, d * .78, 18));
-      K.plano(ctx, t, d, { de: { x: 540, y: 880, z: 1.05 }, a: { x: 540, y: 980, z: 1.5 }, T, mano: .4 }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 880, z: 1.27 }, a: { x: 540, y: 980 }, T, mano: .4 }, () => {
         D.cajon(ctx, 540, 1080, 1, { cierra, T });
         if (cand > 0) { ctx.save(); ctx.translate(540, lerp(640, 900, K.sale(cand))); ctx.scale(rebote(cand), rebote(cand)); D.candado(ctx, 0, 0, 1, {}); ctx.restore(); }
         pastilla(ctx, 'NUNCA LO VENDAS', 540, 420, prog(t, d * .3, d * .3 + .3), true);
@@ -188,7 +191,7 @@
     // 12. Si todos revendieran, el precio se derrumbaría: la gente llega en fila a la tienda "COMPRAMOS"; la cámara los sigue y la gráfica cae.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      K.plano(ctx, t, d, { de: { x: 420, y: 840, z: 1.15 }, a: { x: 700, y: 860, z: 1.4 }, T, mano: .6, paralaje: .55, fondo: () => D.fondo.calle(ctx, T, { hora: 'atardecer' }) }, () => {
+      K.plano(ctx, t, d, { de: { x: 420, y: 840, z: 1.27 }, a: { x: 700, y: 860 }, T, mano: .6, paralaje: .55, fondo: () => D.fondo.calle(ctx, T, { hora: 'atardecer' }) }, () => {
         D.fachada(ctx, 800, 1190, 1.25, { letrero: 'COMPRAMOS', ancho: 340, alto: 520 });
         D.grafica(ctx, 260, 560, .85, { tipo: 'linea', valores: [.9, .75, .5, .25, .08], progreso: prog(t, d * .45, d * .95), color: C.terracota });
         for (let i = 0; i < 6; i++) {
@@ -203,7 +206,7 @@
       S30.vaiven(ctx, T);
       D.fondo.abstracto(ctx, T, { tema: 'tierra', y: 760 });
       const ent = K.sale(prog(t, 0, d * .35));
-      K.plano(ctx, t, d, { de: { x: 540, y: 760, z: .95 }, a: { x: 540, y: 840, z: 1.2 }, T, mano: .3 }, () => {
+      K.plano(ctx, t, d, { de: { x: 540, y: 760, z: 1.07 }, a: { x: 540, y: 840 }, T, mano: .3 }, () => {
         ctx.save(); ctx.translate(lerp(1300, 540, ent), 760); ctx.rotate(lerp(.5, -.05, ent) + Math.sin(T) * .01);
         D.anuncio(ctx, 0, 0, 760, 860, { titular: '¿Dos meses de sueldo?', sub: ['Un precio pequeño', 'para algo que dura para siempre'], lineas: 5 });
         anillo(ctx, 0, 70, 2.6, T);
@@ -215,7 +218,7 @@
     // 14. La lección de Sombra: se inclina sobre el escritorio mientras Tito, abatido, baja la cabeza. La cámara se acerca a Tito.
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
-      enOficina(ctx, t, d, T, { x: 520, y: 900, z: 1.1 }, { x: 720, y: 930, z: 1.65 }, () => {
+      enOficina(ctx, t, d, T, { x: 540, y: 760, z: 1 }, { x: 540, y: 760 }, () => {
         S30.detective(ctx, 330, 1180, 1.2, Object.assign({ T, mira: .8, habla: 1 }, S30.actua(t, d, [[0, 'dePie'], [.35, 'explicar'], [.75, 'pensativo']])));
         S30.escritorio(ctx, T, { y: 960 });
         S30.tito(ctx, 790, 1240, 1.3, Object.assign({ T, dir: -1, objeto: 'caja', mira: -.6, expresion: 'triste' }, S30.actua(t, d, [[0, 'traeObjeto'], [.5, 'triste']])));

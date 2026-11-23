@@ -139,7 +139,7 @@ escena 1 sin título, movimiento obligatorio) vale para las dos.
 - Encadena las escenas: que la siguiente empiece con la cámara donde terminó la anterior (el motor funde 0,35 s entre escenas).
 - Variedad de planos para sostener la atención: alterna plano general, primer plano, corte interior (el "rayos X" del ejemplo),
   comparación lado a lado y dato visual (barras, contador, línea de tiempo). Cada 3-4 escenas cambia algo grande (escenario,
-  escala o color). En `reenganche` y `revelacion` el visual debe ser el más llamativo del video (zoom fuerte, cambio de color,
+  escala o color). En `reenganche` y `revelacion` el visual debe ser el más llamativo del video (cambio de color,
   algo que aparece o se detiene).
 - Composición: lo importante entre y=300 y y=1200 y entre x=80 y x=940. En Sombra de Evidencia la escena 1 NO lleva título encima (arranca directo en el gancho); en los demás nichos la portada tapa y=860-1240 durante la escena 1 (pon al
   protagonista arriba) y los subtítulos ocupan y=1260-1440 en las demás. Debajo de y=1440 solo fondo.
@@ -187,11 +187,12 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (serie origen) o `ejemplos/e
     `D.mesaJuntas(ctx,x,y,s,{ancho})` / `D.mesa` · `D.estante(ctx,x,y,s,{baldas})` · `D.caja(ctx,x,y,s)` · `D.bandeja(ctx,x,y,s)` bandeja de terciopelo para joyas (centro) ·
     `D.maquinaEscribir(ctx,x,y,s,{texto,n:0-1})` · `D.mina(ctx,x,y,s,{niveles})` mina a cielo abierto en terrazas (x, y = borde superior; los obreros van con `S30.hombre` a escala .16).
   - Rendimiento: lo estático se cachea solo; no crees objetos nuevos por cuadro. Para animar tamaño usa `ctx.scale` o la escala (se cuantiza), no valores distintos en cada cuadro.
-- **MOVIMIENTO OBLIGATORIO (lo que más pesa en la calidad):** una escena que solo respira y hace zoom lento se ve como una foto, y
+- **MOVIMIENTO OBLIGATORIO (lo que más pesa en la calidad):** una escena que solo respira se ve como una foto, y
   `python run.py --hoja` la marca como "casi estática" (medido). Cada escena (menos la última) lleva como mínimo DOS de estos golpes:
-  1. **Cámara que viaja:** `K.plano(ctx, t, d, {de:{x,y,z}, a:{x,y,z}, T, mano, fondo: () => <decorado>, paralaje: .6}, () => {...})`: paneo + zoom con
-     el decorado moviéndose menos que los personajes (profundidad). En la oficina usa el ayudante `enOficina` del ejemplo. Alterna: empuje
-     hacia el rostro, paneo lateral, bajada, retroceso; nunca el mismo movimiento en dos escenas seguidas.
+  1. **Cámara que viaja (SIN zoom animado):** `K.plano(ctx, t, d, {de:{x,y,z}, a:{x,y}, T, mano, fondo: () => <decorado>, paralaje: .6}, () => {...})`: paneo
+     con el decorado moviéndose menos que los personajes (profundidad). `z` es el encuadre FIJO de la escena y no cambia: **no animes acercamientos ni alejamientos**
+     (ni `K.camara` con zoom que varía, ni `ctx.scale` de toda la escena): el zoom lo decide el editor al montar el video, y el guion decide el plano. **La oficina de Sombra va SIEMPRE sin zoom y sin paneo** (`enOficina(..., {x:540,y:760,z:1}, {x:540,y:760}, ...)`: cámara fija en cuadro completo; el movimiento es de
+     los personajes): usa el ayudante `enOficina` del ejemplo. Alterna paneo lateral, subida y bajada; nunca el mismo movimiento en dos escenas seguidas.
   2. **Personaje que actúa:** `S30.actua(t, d, [[0,'dePie'], [.35,'senalar'], [.8,'explicar']])` devuelve `{pose, pose2, k}` y se reparte
      en el personaje (`Object.assign({T, ...}, S30.actua(...))`); `habla: 1` mientras dice la frase; `expresion` ('enfado', 'susto', 'triste'...);
      saltos y sustos con la posición `y`. Para entrar o cruzar: `S30.camina(t, d, x0, x1, {hasta, alto})` → `{x, dir, paso}` (`paso` null al
@@ -199,7 +200,7 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (serie origen) o `ejemplos/e
      cara; quita el objeto en esas poses.
   3. **Objeto que entra, golpea o cambia:** el papel que llega girando, el candado que cae con golpe de cámara, el diamante que pasa a ámbar, el
      flash de una cámara de cine, una gráfica que se dibuja.
-  Las figuras GRANDES: Tito y Sombra en diálogo a escala 1.2-1.7 (cabeza y torso llenando el cuadro; o plano de cámara de zoom 1.4+ sobre ellos),
+  Las figuras GRANDES: Tito y Sombra en diálogo a escala 1.2-1.7 (cabeza y torso llenando el cuadro; o un encuadre fijo `z` 1.3-1.7 sobre ellos),
   la gente del flashback ≥ 0.6 y solo las multitudes lejanas más pequeñas. Un rótulo (`pastilla`) que deba verse entero va FUERA de `K.plano`
   (coordenadas de pantalla); si va dentro, se mueve con la cámara. Nunca dos escenas seguidas con el mismo decorado y el mismo encuadre: cambia
   de lugar, de plano o de lado.
@@ -210,7 +211,7 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (serie origen) o `ejemplos/e
   el objeto apretado o a punto de caerse. Asustado es solo una opción más. Ningún rótulo informativo ("CASO REAL", años) en la escena 1: el gancho es la imagen y la voz.
 - El flashback es donde está la riqueza visual: edificios, fábricas, salas de juntas, anuncios de época, máquinas, contadores,
   gráficas, mapas. Cada escena con fondo completo (nada de fondos vacíos), un elemento principal grande y movimiento.
-- Ritmo rápido: cada escena dura 2-4 s; que algo pase desde el primer cuadro (zoom de cámara con `K.camara`, objeto que entra,
+- Ritmo rápido: cada escena dura 2-4 s; que algo pase desde el primer cuadro (paneo de cámara con `K.plano`, objeto que entra,
   número que cuenta, sello que golpea). No repitas el mismo plano dos escenas seguidas.
 - Cada escena empieza con `S30.vaiven(ctx, T)` (leve vaivén de cámara) y termina con `S30.pelicula(ctx, T)` (acabado cinematográfico: viñeta suave, leve calidez y grano fino; sin rayones). En el `remate` puedes cerrar con `S30.iris`.
 - La marca solo pone el logo y la pregunta final en la última escena: esa escena lleva solo un fondo azul noche (`#232c3a` → `#12171f`) con un halo ámbar
