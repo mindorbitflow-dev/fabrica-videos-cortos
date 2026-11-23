@@ -130,7 +130,7 @@ def autor(args) -> None:
         import shutil
         carpeta = os.path.join("ejemplos", args.ejemplo)
         with open(os.path.join(carpeta, "guion.json"), encoding="utf-8") as f:
-            p = fabrica.nuevo_de_autor(args.ejemplo, json.load(f))
+            p = fabrica.nuevo_de_autor(args.ejemplo if args.ejemplo in fabrica.cargar_nichos() else args.ejemplo.split("_")[0], json.load(f))   # evidencia_mito → nicho evidencia
         shutil.copy(os.path.join(carpeta, "escenas.js"), fabrica.escenas_js(p))
         args.render = p["id"]
     elif args.guion:

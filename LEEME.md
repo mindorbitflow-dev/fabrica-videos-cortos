@@ -5,7 +5,13 @@ ilustración: pincel con volumen, luz cálida de borde, colores apagados y grano
 por palabra. Claude Code escribe el guion y el dibujo de cada escena, mira sus propias hojas de contacto y corrige; la fábrica
 renderiza el MP4 y lo envía por correo.
 
-## Las tres páginas (nichos activos)
+## Series de Sombra de Evidencia
+`evidencia` alterna dos series (`series:` en `config/nichos.yaml`; cada video es de la que lleva más tiempo sin usarse, `fabrica.serie_siguiente`):
+**origen** (el origen oculto de una marca o costumbre; ejemplo `ejemplos/evidencia/`) y **mito** (Mito vs. evidencia: Tito cree algo popular, Sombra pide pruebas
+y el sello `D.sello` da el veredicto; ejemplo `ejemplos/evidencia_mito/`). A mano: `claude "/video evidencia SERIE:mito Los vikingos no usaban cascos con cuernos"`.
+El guion trae `"serie"` y el historial la guarda. Para añadir una serie: un bloque en `series:`, sus reglas en `.claude/commands/video.md` y, si quieres, `ejemplos/evidencia_<serie>/`.
+
+## Las tres páginas (desde 2026-11-22 solo `evidencia` está activa: `sobrevive` y `estafa` tienen `auto: false` y se usan a mano)
 | Nicho | Página | Qué cuenta | Reglas | Ejemplo |
 |---|---|---|---|---|
 | `evidencia` | 🔍 Sombra de Evidencia | Tito (cerdito) llega con algo cotidiano y el detective Sombra revela su origen oculto: historias reales de negocios, publicidad y dinero | `.claude/commands/video.md` | `ejemplos/evidencia/` |
@@ -33,7 +39,7 @@ python run.py --check                         # diagnóstico: ffmpeg, Chromium, 
 config/nichos.yaml          nichos: tono, voz, paleta, ideas, comando, libs/personajes
 .claude/commands/           reglas de cada página (video.md, video-sobrevive.md, video-estafa.md): guion → dibujo → revisión
 ejemplos/<nicho>/           guion.json + escenas.js de un video completo: el dibujante los imita (pulpo = ejemplo genérico)
-plantilla/kit.js            utilidades de dibujo (tiempo, cámara, curvas, rótulos, grano)
+plantilla/kit.js            utilidades de dibujo (tiempo, cámara, `K.plano` = cámara que viaja con paralaje, curvas, rótulos, grano)
 plantilla/ilustra.js        motor de ilustración (se construye desde ilustra/src con ilustra/herramientas/construir.py)
 plantilla/sombra*.js        Sombra, Tito y la gente (S30.hombre / S30.mujer) con el motor de ilustración
 plantilla/decorados.js      fondos y props (D): calle, banco, oficina, tienda..., y D.celular (mensajes y llamadas) para las estafas

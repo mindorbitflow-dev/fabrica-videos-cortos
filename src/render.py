@@ -157,13 +157,31 @@ def miniatura(mp4: Path, destino: Path, segundo: float = 2.0, ancho: int = 360) 
                     "-q:v", "2", "-vf", f"scale={ancho}:-1", str(destino)], check=True)
 
 
-async def _hoja_contacto(html: Path, destino: Path, por_escena: int) -> tuple[list[Path], list[str]]:
+MUESTRAS = 5                 # instantes por escena: de ahí salen los cuadros de la hoja y la medida de movimiento
+UMBRAL_MOVIMIENTO = 5.0      # por debajo, la escena se considera casi estática (diferencia media de gris 0-255, ver _movimiento).
+                             # Calibrado con un video de Evidencia: sus escenas de solo zoom lento medían 2,5-4,5; las que sí tienen acción, 10 o más
+
+
+def _movimiento(imgs) -> float:
+    """Cuánto cambia una escena: diferencia media de gris (0-255) entre cuadros reducidos. Es el mayor entre primer-último y el promedio
+    de cuadros consecutivos, para que ni una escena que vuelve a su posición ni una con un solo golpe de movimiento pasen por estáticas."""
+    from PIL import ImageChops, ImageStat
+    peq = [i.convert("L").reduce(8) for i in imgs]   # 135x240: el grano de película se promedia y no cuenta como movimiento
+    dif = lambda a, b: ImageStat.Stat(ImageChops.difference(a, b)).mean[0]
+    seguidos = [dif(a, b) for a, b in zip(peq, peq[1:])]
+    return max(dif(peq[0], peq[-1]), sum(seguidos) / max(1, len(seguidos)))
+
+
+async def _hoja_contacto(html: Path, destino: Path, por_escena: int) -> tuple[list[Path], list[str], list[float]]:
     from io import BytesIO
     from PIL import Image
     destino.mkdir(parents=True, exist_ok=True)
     for viejo in destino.glob("hoja_*.jpg"):
         viejo.unlink()
     errores: list[str] = []
+    movimientos: list[float] = []
+    # de las MUESTRAS instantes de cada escena, la hoja muestra `por_escena` repartidos (inicio, mitad, final...)
+    en_hoja = sorted({round(n * (MUESTRAS - 1) / max(1, por_escena - 1)) for n in range(por_escena)})
     async with async_playwright() as pw:
         nav = await pw.chromium.launch()
         try:
@@ -176,10 +194,13 @@ async def _hoja_contacto(html: Path, destino: Path, por_escena: int) -> tuple[li
             await pag.evaluate("p => __preparar(p)", plan)
             cuadros = []
             for i, esc in enumerate(plan):
-                for n in range(por_escena):
-                    local = max(0.4, esc["dur"] * (0.12 + 0.8 * n / max(1, por_escena - 1)))
+                fotos = []
+                for n in range(MUESTRAS):
+                    local = max(0.4, esc["dur"] * (0.12 + 0.8 * n / (MUESTRAS - 1)))
                     await pag.evaluate("t => __seek(t)", esc["inicio"] + min(local, esc["dur"] - 0.02))
-                    cuadros.append((i, Image.open(BytesIO(await pag.screenshot(type="jpeg", quality=80)))))
+                    fotos.append(Image.open(BytesIO(await pag.screenshot(type="jpeg", quality=80))))
+                movimientos.append(_movimiento(fotos))
+                cuadros += [(i, fotos[n]) for n in en_hoja]
             errores += await pag.evaluate("window.__errores || []")
         finally:
             await nav.close()
@@ -193,9 +214,13 @@ async def _hoja_contacto(html: Path, destino: Path, por_escena: int) -> tuple[li
         ruta = destino / f"hoja_{len(hojas) + 1:02d}_escenas_{lote[0][0] + 1}-{lote[-1][0] + 1}.jpg"
         hoja.save(ruta, quality=85)
         hojas.append(ruta)
-    return hojas, errores
+    return hojas, errores, movimientos
 
 
-def hoja_contacto(html: Path, destino: Path, por_escena: int = 3) -> tuple[list[Path], list[str]]:
-    """Varios cuadros por escena (tiempos estimados, sin voz) en hojas de 6 columnas: para revisar el dibujo antes de renderizar."""
-    return asyncio.run(_hoja_contacto(Path(html), Path(destino), por_escena))
+def hoja_contacto(html: Path, destino: Path, por_escena: int = 3) -> tuple[list[Path], list[str], list[str]]:
+    """Varios cuadros por escena (tiempos estimados, sin voz) en hojas de 6 columnas: para revisar el dibujo antes de renderizar.
+    Devuelve (hojas, errores de JavaScript, avisos). Los avisos señalan las escenas casi estáticas: no impiden renderizar."""
+    hojas, errores, mov = asyncio.run(_hoja_contacto(Path(html), Path(destino), por_escena))
+    avisos = [f"escena {i + 1} casi estática (movimiento {m:.1f}, mínimo {UMBRAL_MOVIMIENTO}): añade acción al personaje, mueve la cámara con K.plano o haz entrar un objeto"
+              for i, m in enumerate(mov[:-1]) if m < UMBRAL_MOVIMIENTO]   # la última (la pregunta) es solo fondo: la marca pone el texto
+    return hojas, errores, avisos

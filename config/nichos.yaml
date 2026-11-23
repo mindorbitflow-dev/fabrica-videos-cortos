@@ -11,8 +11,15 @@
 
 evidencia:
   nombre: 🔍 Sombra de Evidencia
-  descripcion: El cerdito Tito llega con algo cotidiano y el detective Sombra le revela el origen oculto que casi nadie conoce. Historias reales y documentadas de negocios, publicidad, dinero y psicología, contadas como una conspiración.
-  tono: Intriga de "esto te lo ocultaron", ritmo rápido, datos concretos (años, nombres, cifras) y una lección final del detective. Todo verificable.
+  descripcion: >-
+    El cerdito Tito llega con algo cotidiano o con una creencia popular y el detective Sombra investiga. Dos series que alternan:
+    Origen oculto (la historia real de negocios, publicidad y dinero que casi nadie conoce) y Mito vs. evidencia (Sombra pide
+    pruebas y dicta si una creencia de historia o ciencia es mito, verdad o media verdad).
+  tono: >-
+    Intriga de detective, ritmo rápido, datos concretos (años, nombres, cifras) y una lección final de Sombra. En Origen oculto suena
+    a «esto te lo ocultaron»; en Mito vs. evidencia, a curiosidad amable («vamos a ver la evidencia»). Todo verificable.
+  auto: true          # única página activa desde 2026-11-22
+  cuadros_hoja: 3     # inicio, mitad y final de cada escena en las hojas de revisión: así se ve el recorrido y no solo los extremos
   formato: historia   # Tito pregunta, Sombra revela el origen con un flashback (reglas en .claude/commands/video.md)
   marca: sombra       # portada serif y cierre con el logo (assets/marca/sombra.jpg)
   voz: "gemini:Charon"
@@ -26,46 +33,70 @@ evidencia:
   portada_en_video: false   # sin título al empezar: el video arranca directo en el gancho
   lema: "Cada sombra tiene su evidencia"
   paleta: {fondo: ["#3d4a5c", "#232c3a", "#12171f"], acento: "#E0B060", principal: "#E7DCC2", secundario: "#9AA7B8", peligro: "#B5654A", ok: "#7D9A7A"}
-  ideas:
-    # en orden: de más a menos viral (la fábrica toma la primera que no se haya usado)
-    - McDonald's gana más con terrenos que con hamburguesas
-    - La bóveda de Disney - escondían sus películas para que las compraras con prisa
-    - Apple y los iPhone que se volvían lentos (2017)
-    - Coca-Cola y Santa Claus - lo que sí y lo que no inventaron sus anuncios de 1931
-    - Las máquinas de peluches están programadas para que casi nunca ganes
-    - El botón de cerrar puertas del ascensor muchas veces no hace nada
-    - Los botones del semáforo peatonal que no hacen nada - el caso de Nueva York
-    - Amazon Prime y el laberinto para cancelarlo - la demanda del gobierno de Estados Unidos
-    - Las palomitas del cine - donde el cine gana de verdad
-    - Por qué las aerolíneas venden más boletos que asientos
-    - El desayuno con huevos y tocino lo inventó un publicista - Edward Bernays
-    - Los gimnasios ganan más con los que nunca van
-    - La creadora del Día de la Madre pasó su vida intentando eliminarlo - Anna Jarvis
-    - El inventor del scroll infinito se arrepintió de crearlo
-    - Las "antorchas de la libertad" - cómo convencieron a las mujeres de fumar en 1929
-    - Por qué los focos se funden - el cártel Phoebus y las 1000 horas
-    - La impresora barata y la tinta carísima - el modelo de la cuchilla de Gillette
-    - Black Friday - muchas ofertas cuestan lo mismo o menos otros días del año
-    - Las fechas de "consumir preferentemente" que te hacen botar comida buena
-    - Los casinos no tienen relojes ni ventanas
-    - Por qué la leche siempre está al fondo del supermercado
-    - Por qué los precios terminan en 99
-    - Las apps gratis no son gratis - tú eres el producto
-    - Por qué es tan difícil cancelar una suscripción - los patrones oscuros
-    - Menos producto por el mismo precio - la reduflación
-    - Monopoly nació como una crítica a los monopolios
-    - Los dulces junto a la caja del supermercado
-    - El olor a pan recién hecho en el supermercado
-    - La fiebre de los tulipanes - la primera burbuja financiera (1637)
-    - El primer "Black Friday" y por qué se llama así
-    - Por qué la música de las tiendas es lenta
-    - Tu anillo de diamante es publicidad - De Beers y "un diamante es para siempre"
-    - La industria del azúcar pagó a científicos para culpar a la grasa (1967)
-    - Por qué el agua embotellada cuesta más que la gasolina
-    - El plato caro del menú que nadie pide - el efecto ancla
-    - Por qué los cereales infantiles tienen la mascota mirando hacia abajo
-    - Las tarjetas de puntos y millas - por qué te las regalan
-    - Por qué los supermercados cambian los productos de lugar
+  series:
+    # La fábrica alterna: cada video es de la serie que lleva más tiempo sin usarse (fabrica.serie_siguiente). Las ideas son banco de ejemplos
+    # (Claude elige el tema con WebSearch y no repite). Las reglas de cada serie están en .claude/commands/video.md.
+    origen:
+      nombre: Origen oculto
+      ideas:
+        # en orden: de más a menos viral
+        - McDonald's gana más con terrenos que con hamburguesas
+        - La bóveda de Disney - escondían sus películas para que las compraras con prisa
+        - Apple y los iPhone que se volvían lentos (2017)
+        - Coca-Cola y Santa Claus - lo que sí y lo que no inventaron sus anuncios de 1931
+        - Las máquinas de peluches están programadas para que casi nunca ganes
+        - El botón de cerrar puertas del ascensor muchas veces no hace nada
+        - Los botones del semáforo peatonal que no hacen nada - el caso de Nueva York
+        - Amazon Prime y el laberinto para cancelarlo - la demanda del gobierno de Estados Unidos
+        - Las palomitas del cine - donde el cine gana de verdad
+        - Por qué las aerolíneas venden más boletos que asientos
+        - El desayuno con huevos y tocino lo inventó un publicista - Edward Bernays
+        - Los gimnasios ganan más con los que nunca van
+        - La creadora del Día de la Madre pasó su vida intentando eliminarlo - Anna Jarvis
+        - El inventor del scroll infinito se arrepintió de crearlo
+        - Las "antorchas de la libertad" - cómo convencieron a las mujeres de fumar en 1929
+        - Por qué los focos se funden - el cártel Phoebus y las 1000 horas
+        - La impresora barata y la tinta carísima - el modelo de la cuchilla de Gillette
+        - Black Friday - muchas ofertas cuestan lo mismo o menos otros días del año
+        - Las fechas de "consumir preferentemente" que te hacen botar comida buena
+        - Los casinos no tienen relojes ni ventanas
+        - Por qué la leche siempre está al fondo del supermercado
+        - Por qué los precios terminan en 99
+        - Las apps gratis no son gratis - tú eres el producto
+        - Por qué es tan difícil cancelar una suscripción - los patrones oscuros
+        - Menos producto por el mismo precio - la reduflación
+        - Monopoly nació como una crítica a los monopolios
+        - Los dulces junto a la caja del supermercado
+        - El olor a pan recién hecho en el supermercado
+        - La fiebre de los tulipanes - la primera burbuja financiera (1637)
+        - El primer "Black Friday" y por qué se llama así
+        - Por qué la música de las tiendas es lenta
+        - Tu anillo de diamante es publicidad - De Beers y "un diamante es para siempre"
+        - La industria del azúcar pagó a científicos para culpar a la grasa (1967)
+        - Por qué el agua embotellada cuesta más que la gasolina
+        - El plato caro del menú que nadie pide - el efecto ancla
+        - Por qué los cereales infantiles tienen la mascota mirando hacia abajo
+        - Las tarjetas de puntos y millas - por qué te las regalan
+        - Por qué los supermercados cambian los productos de lugar
+    mito:
+      nombre: Mito vs. evidencia
+      ideas:
+        - Los vikingos no usaban cascos con cuernos - el vestuario de una ópera de 1876
+        - La Gran Muralla China no se ve a simple vista desde el espacio
+        - Napoleón no era bajito
+        - Einstein no reprobó matemáticas
+        - Colón no descubrió que la Tierra era redonda - ya se sabía desde la antigua Grecia
+        - Los rayos sí caen dos veces en el mismo lugar - el Empire State recibe decenas al año
+        - Los toros no se enfurecen por el color rojo
+        - Las avestruces no esconden la cabeza en la arena
+        - Los diamantes no se forman del carbón
+        - Los astronautas no flotan porque allá arriba no haya gravedad
+        - En Salem no quemaron a ninguna bruja
+        - Los camaleones no cambian de color solo para esconderse
+        - El agua del lavabo no gira distinto en cada hemisferio
+        - María Antonieta nunca dijo "que coman pasteles"
+        - Los romanos no vomitaban para seguir comiendo - qué era el vomitorium
+        - Los piratas casi nunca hacían caminar a nadie por la tabla
 
 sobrevive:
   nombre: 🆘 ¿Sobrevivirías?
@@ -81,7 +112,7 @@ sobrevive:
   subtitulos: arriba      # subtítulos arriba, planos, sin borde ni relieve (letras blancas: escenas más oscuras)
   portada_en_video: false # arranca directo en el gancho
   voz: "gemini:Charon"
-  auto: true              # activo desde 2026-11-15
+  auto: false             # desactivado el 2026-11-22: solo se fabrica Sombra de Evidencia (a mano con --nicho sobrevive)
   estilo: ilustracion
   cierre: "¿Tú qué habrías hecho? Escríbelo en los comentarios."
   lema: "¿Sobrevivirías?"
@@ -132,7 +163,7 @@ estafa:
   subtitulos: arriba      # subtítulos arriba, planos, sin borde ni relieve
   portada_en_video: false # arranca directo en el gancho
   voz: "gemini:Achird"
-  auto: true              # activo desde 2026-11-20 (reemplaza a Así se fabrica)
+  auto: false             # desactivado el 2026-11-22: solo se fabrica Sombra de Evidencia (a mano con --nicho estafa)
   estilo: ilustracion
   cierre: "¿A quién le mandarías este video para que no le pase? Escríbelo en los comentarios."
   lema: "Así te estafan"

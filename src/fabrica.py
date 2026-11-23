@@ -80,7 +80,8 @@ def leer_historial() -> list[dict]:
 def registrar_historial(p: dict) -> None:
     historial = [h for h in leer_historial() if h.get("id") != p["id"]]
     historial.append({"id": p["id"], "fecha": p.get("actualizado", p["creado"]), "nicho": p["nicho"],
-                      "tema": p["tema"], "titulo": p["titulo"], **({"idea": p["idea"]} if p.get("idea") else {})})
+                      "tema": p["tema"], "titulo": p["titulo"], **({"idea": p["idea"]} if p.get("idea") else {}),
+                      **({"serie": p["serie"]} if p.get("serie") else {})})
     HISTORIAL.parent.mkdir(parents=True, exist_ok=True)
     HISTORIAL.write_text(json.dumps(historial, ensure_ascii=False, indent=1), encoding="utf-8")
 
@@ -107,6 +108,18 @@ def nichos_pendientes(permitidos: Optional[list[str]] = None, horas: float = 6) 
         except ValueError:
             pass
     return [n for n in claves if n not in recientes]
+
+
+def serie_siguiente(nicho: str) -> Optional[str]:
+    """Serie del nicho (`series` en nichos.yaml) que lleva más tiempo sin video; las nunca usadas, primero. Lo anterior a las series
+    cuenta como la primera serie. None si el nicho no tiene series."""
+    series = list(cargar_nichos().get(nicho, {}).get("series") or {})
+    if not series:
+        return None
+    ultimo: dict[str, str] = {}
+    for h in sorted((h for h in leer_historial() if h.get("nicho") == nicho), key=lambda h: h["fecha"]):
+        ultimo[h.get("serie") if h.get("serie") in series else series[0]] = h["fecha"]
+    return min(series, key=lambda s: ultimo.get(s, ""))
 
 
 def elegir_nicho(permitidos: Optional[list[str]] = None) -> str:
@@ -162,7 +175,7 @@ def nuevo_de_autor(nicho: str, guion: dict) -> dict:
     """Proyecto a partir de un guion ya escrito ({tema, titulo, portada, escenas: [{voz}], caption, hashtags}) cuyas escenas se dibujan
     a medida en escenas.js. El guion pasa la misma comprobación de muletillas que los de la IA; lo que falle queda como aviso."""
     p = nuevo_proyecto(nicho, guion["tema"])
-    p.update({k: guion[k] for k in ("titulo", "portada", "caption", "hashtags", "post") if guion.get(k)})
+    p.update({k: guion[k] for k in ("titulo", "portada", "caption", "hashtags", "post", "serie") if guion.get(k)})
     p["escenas"] = [{"voz": e["voz"].strip(), "visual": e.get("visual", ""), "html": "", "origen": "autor"} for e in guion["escenas"]]
     p["avisos"] = guionista.muletillas_en({**guion, "escenas": guion["escenas"][:-1]})  # la última escena pide seguir la página
     if cargar_nichos()[nicho].get("formato") == "historia":
@@ -188,21 +201,29 @@ def _avisos_historia(guion: dict) -> list[str]:
     portada = str((guion.get("portada") or {}).get("texto", ""))
     if re.search(r"\b1[89]\d\d\b|\b20\d\d\b|caso real", portada, re.I):
         avisos.append("la portada es informativa (año o 'caso real'): debe acusar o doler")
+    if guion.get("serie") == "mito" and not any(e.get("rol") == "veredicto" for e in escenas):
+        avisos.append("la serie mito no trae una escena con rol veredicto (el sello MITO / VERDAD / MEDIA VERDAD)")
     final = str(escenas[-1].get("voz", "")) if escenas else ""
     if "?" not in final or re.search(r"\bs[ií]guenos\b", final, re.I):
         avisos.append("la última escena no es una pregunta para comentar")
     return avisos
 
 
-def hoja(p: dict, por_escena: Optional[int] = None) -> tuple[list[Path], list[str]]:
+def hoja(p: dict, por_escena: Optional[int] = None, avisos: Optional[list[str]] = None) -> tuple[list[Path], list[str]]:
     """Hojas de contacto del video (varios cuadros por escena, sin voz) para revisar el dibujo antes de renderizar.
-    Devuelve (imágenes, errores de JavaScript de las escenas)."""
+    Devuelve (imágenes, errores de JavaScript de las escenas). Los avisos (escenas casi estáticas) no son errores: se imprimen y,
+    si se pasa una lista, se añaden a ella."""
     if por_escena is None:   # `cuadros_hoja` del nicho, o inicio y final si usa el motor 2D (menos imágenes que revisar = menos uso del plan)
         conf = cargar_nichos()[p["nicho"]]
         por_escena = int(conf.get("cuadros_hoja") or (2 if conf.get("motor") == "2d" else 3))
     html = carpeta(p) / "video.html"
     html.write_text(componer_html(p), encoding="utf-8")
-    return render.hoja_contacto(html, carpeta(p) / "hojas", por_escena)
+    hojas, errores, nuevos = render.hoja_contacto(html, carpeta(p) / "hojas", por_escena)
+    for a in nuevos:
+        print(f"AVISO: {a}")
+    if avisos is not None:
+        avisos.extend(nuevos)
+    return hojas, errores
 
 
 def html_portada(portada: Optional[dict]) -> str:

@@ -41,18 +41,40 @@ def con_claude() -> bool:
     return bool(shutil.which("claude"))
 
 
+def _serie(nicho: str, tema: str) -> tuple[str | None, str]:
+    """(serie, tema sin prefijo). La serie sale de `SERIE:clave` al principio del tema (a mano) o, si el nicho tiene `series`
+    en nichos.yaml, de la que lleva más tiempo sin video (fabrica.serie_siguiente)."""
+    from src import fabrica
+    series = fabrica.cargar_nichos().get(nicho, {}).get("series") or {}
+    m = re.match(r"\s*SERIE:\s*(\w+)\s*(.*)", tema, re.S)
+    if m and m.group(1) in series:
+        return m.group(1), m.group(2).strip() or "LIBRE"
+    return (fabrica.serie_siguiente(nicho) if series else None), tema
+
+
+def _ejemplo(nicho: str, serie: str | None) -> Path:
+    """Carpeta del ejemplo a imitar: el de la serie (`ejemplos/<nicho>_<serie>`), si no el del nicho, si no el genérico (pulpo)."""
+    for nombre in (f"{nicho}_{serie}" if serie else "", nicho):
+        if nombre and (RAIZ / "ejemplos" / nombre).is_dir():
+            return RAIZ / "ejemplos" / nombre
+    return RAIZ / "ejemplos" / "pulpo"
+
+
 def dibujar(nicho: str, tema: str, router: LLMRouter, avisar=print) -> str:
     """Devuelve el id del proyecto dibujado y revisado. Con tema LIBRE, Claude elige uno nuevo y viral."""
+    serie, tema = _serie(nicho, tema)
+    if serie:
+        avisar(f"Serie de este video: {serie}")
     if con_claude():
-        return _con_claude(nicho, tema, avisar)
+        return _con_claude(nicho, tema, avisar, serie)
     if tema == "LIBRE":
         from src import fabrica, guionista
-        tema = guionista.proponer_tema(router, {**fabrica.cargar_nichos()[nicho], "ideas": []}, fabrica.temas_usados(nicho))
-    return _con_gemini(nicho, tema, router, avisar)
+        tema = guionista.proponer_tema(router, {**fabrica.cargar_nichos()[nicho], "ideas": [], "series": None}, fabrica.temas_usados(nicho))
+    return _con_gemini(nicho, tema, router, avisar, serie)
 
 
 # ---------- Claude Code ----------
-def _con_claude(nicho: str, tema: str, avisar) -> str:
+def _con_claude(nicho: str, tema: str, avisar, serie: str | None = None) -> str:
     from src import fabrica
     antes = {p["id"] for p in fabrica.listar()}
     conf = fabrica.cargar_nichos().get(nicho, {})
@@ -67,13 +89,13 @@ def _con_claude(nicho: str, tema: str, avisar) -> str:
                 pass
         hechos = "; ".join(usados[-120:]) or "ninguno"
         from src import guionista
-        ejemplos = "; ".join(str(i) for i in conf.get("ideas", []) if not guionista.ya_usado(str(i), usados))[:900] or "ninguno"
+        ejemplos = "; ".join(i for i in guionista.ideas_de(conf, serie) if not guionista.ya_usado(i, usados))[:900] or "ninguno"
         tema = (f"LIBRE (elige tú un tema nuevo con mucho potencial viral, de lo que hoy da miedo, curiosidad o conversación; "
                 f"puedes inspirarte en estos ejemplos o inventar uno mejor: {ejemplos}. Ya hechos, no los repitas: {hechos})")
     avisar(f"El dibujante (Claude Code{' · ' + modelo if modelo else ''}) trabaja en: {tema[:120]} (hasta {LIMITE_MIN} min)")
     try:
         herramientas = HERRAMIENTAS + ("," + conf["herramientas"] if conf.get("herramientas") else "")
-        r = subprocess.run([shutil.which("claude"), "-p", f"/{comando} {nicho} {tema}", "--allowedTools", herramientas,
+        r = subprocess.run([shutil.which("claude"), "-p", f"/{comando} {nicho} {'SERIE:' + serie + ' ' if serie else ''}{tema}", "--allowedTools", herramientas,
                             "--permission-mode", "acceptEdits", "--max-turns", str(MAX_PASOS), "--output-format", "json",
                             *(["--model", modelo] if modelo else [])],
                            cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=LIMITE_MIN * 60)
@@ -87,9 +109,13 @@ def _con_claude(nicho: str, tema: str, avisar) -> str:
     nuevos = [p for p in fabrica.listar() if p["id"] not in antes and p.get("autor") and fabrica.escenas_js(p).exists()]
     if r.returncode != 0 or not nuevos:
         raise RuntimeError(f"el dibujante no entregó un proyecto (código {r.returncode}): {(r.stderr or salida)[-400:]}")
+    p = nuevos[0]
     if consumo:   # queda en proyecto.json y en el correo: así se mide qué ahorra cada cambio
-        p = nuevos[0]; p["consumo"] = consumo; fabrica.guardar(p)
-    return nuevos[0]["id"]  # listar() ordena del más nuevo al más viejo
+        p["consumo"] = consumo
+    if serie and not p.get("serie"):   # el guion debería traerla; si no, queda la pedida (el historial rota con ella)
+        p["serie"] = serie
+    fabrica.guardar(p)
+    return p["id"]  # listar() ordena del más nuevo al más viejo
 
 
 def _consumo(salida: str) -> dict:
@@ -212,17 +238,18 @@ Código actual:
 ```"""
 
 
-def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
+def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar, serie: str | None = None) -> str:
     from src import fabrica
     from src.guionista import leer_json
     conf = fabrica.cargar_nichos()[nicho]
     md = _reglas(nicho).read_text(encoding="utf-8")
     ilustra = conf.get("personajes") == "ilustra"   # Sombra, la gente y los decorados del kit de ilustración (S30 y D)
     dos_d = conf.get("motor") == "2d"
-    ejemplo = RAIZ / "ejemplos" / (nicho if (RAIZ / "ejemplos" / nicho).is_dir() else "pulpo")   # el ejemplo propio del nicho, si lo tiene
+    ejemplo = _ejemplo(nicho, serie)   # el ejemplo de la serie, el del nicho o el genérico
     kit = KIT.read_text(encoding="utf-8")
     if ilustra:
         kit += "\n" + (RAIZ / "plantilla" / "sombra.js").read_text(encoding="utf-8")
+        kit += "\n" + (RAIZ / "plantilla" / "sombra_ilustra.js").read_text(encoding="utf-8")   # S30.actua, S30.camina y los personajes con pose
         kit += "\n" + (RAIZ / "plantilla" / "decorados.js").read_text(encoding="utf-8")
     if dos_d:  # librería 2D del nicho: solo su cabecera (la API documentada), no todo el código
         for lib in conf.get("libs2d") or []:
@@ -230,11 +257,13 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
             kit += "\n" + texto[:texto.find("(() => {") if "(() => {" in texto else 9000][:9000]
     avisar(f"El dibujante (Gemini) escribe el guion: {tema}")
     guion = leer_json(_gemini(router, [PROMPT_GUION.format(
-        nombre=conf["nombre"], descripcion=conf["descripcion"], tono=conf["tono"], tema=tema,
+        nombre=conf["nombre"], descripcion=conf["descripcion"], tono=conf["tono"], tema=tema + (f' (serie "{serie}": campo "serie" del guion = "{serie}")' if serie else ""),
         final=("La última escena es la pregunta para comentar descrita en las reglas (nunca \"síguenos\")." if conf.get("final") == "pregunta"
                else f'La última escena debe decir exactamente: "{conf.get("cierre", "")}"'),
         reglas=_seccion(md, "## 1.", "## 2."), ejemplo=(ejemplo / "guion.json").read_text(encoding="utf-8"))], json_mode=True))
     guion["tema"] = tema
+    if serie:
+        guion["serie"] = serie
     p = fabrica.nuevo_de_autor(nicho, guion)
     n = len(p["escenas"])
     guion_txt = json.dumps({k: guion.get(k) for k in ("portada", "escenas")}, ensure_ascii=False, indent=1)
@@ -247,9 +276,12 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar) -> str:
     lista = _seccion(md, "## 4.", "## 5.").split("\n", 2)[2]
     for ronda in range(1, RONDAS_GEMINI + 1):
         fabrica.escenas_js(p).write_text(codigo, encoding="utf-8")
-        hojas, errores = fabrica.hoja(p)
-        avisar(f"Revisión {ronda}: {len(errores)} errores de código; Gemini mira las hojas")
+        estaticas: list[str] = []
+        hojas, errores = fabrica.hoja(p, avisos=estaticas)
+        avisar(f"Revisión {ronda}: {len(errores)} errores de código, {len(estaticas)} escenas estáticas; Gemini mira las hojas")
         aviso = ("ERRORES DE JAVASCRIPT (esas escenas salen en negro; corrígelos primero):\n" + "\n".join(errores)[:3000] + "\n") if errores else ""
+        if estaticas:
+            aviso += "ESCENAS ESTÁTICAS (medido, deben moverse):\n" + "\n".join(estaticas)[:1500] + "\n"
         try:
             texto = _gemini(router, [PROMPT_REVISION.format(
                 errores=aviso, escenas="\n".join(f"{i + 1}. voz: {e['voz']} | se ve: {e.get('visual', '')}" for i, e in enumerate(p["escenas"])),

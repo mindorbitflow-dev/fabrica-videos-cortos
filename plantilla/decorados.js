@@ -5,7 +5,7 @@
 //     calle {clima:'seco'|'lluvia'|'niebla', anio}  juntas  fabrica  tienda  banco  laboratorio  estudio  oficina (=S30.oficina)
 //     exterior {tipo:'campo'|'mina'|'cantera'}  cielo {nubes}  abstracto {tema:'azul'|'tierra'|'salvia'|'ciruela'|'noche', x, y}  (para infografías y frases)
 //   PROPS   D.<prop>(ctx, x, y, s, o)  — (x, y) = punto de apoyo inferior central (joya, reloj y engranaje: centro); s = escala; o.T = tiempo.
-//     joya(r){oro,gira,tipo:'diamante'|'anillo'}  vitrina{ancho,alto,joya}  cajon{cierra}→{x,y}  candado  papel/periodico/anuncio(w,h){giro,titular,lineas}
+//     joya(r){oro,gira,tipo:'diamante'|'anillo'}  vitrina{ancho,alto,joya}  cajon{cierra}→{x,y}  candado  papel/periodico/anuncio(w,h){giro,titular,lineas}  sello{texto:'MITO'|'VERDAD'|'MEDIA VERDAD',golpe:0-1}
 //     monedas{n}  billetes{n}  caja_registradora  camaraCine  foco{ang}  engranaje(r){vel}  maquina  camion  fachada{letrero,color}  puertaLetrero{texto}
 //     reloj(r){hora}  telefono  celular{tipo:'mensaje'|'llamada'|'banco',quien,texto,alerta,k}  grafica{valores,progreso,tipo:'barras'|'linea'}  pizarra{dibuja(ctx,w,h)}  mesaJuntas{ancho}  mesa  estante{ancho,alto}  caja  mina{niveles}
 //   Todas usan los colores apagados de S30.C y la luz de S30.LUZ. Componer: varios props por escena + S30.hombre (gente) + S30.pelicula al final.
@@ -270,6 +270,31 @@
   };
   D.periodico = (ctx, x, y, w, h, o = {}) => D.papel(ctx, x, y, w, h, Object.assign({ titular: 'EL DIARIO', lineas: 9, color: '#dcd2bc' }, o));
   D.anuncio = (ctx, x, y, w, h, o = {}) => D.papel(ctx, x, y, w, h, o);
+
+  // Sello de goma inclinado del VEREDICTO (serie Mito vs. evidencia). (x, y) = centro. o: texto 'MITO' | 'VERDAD' | 'MEDIA VERDAD', color (si no, el del texto: terracota,
+  // salvia, ámbar), golpe 0-1 = avance de la animación (cae desde grande, se asienta con un rebote), T. Con golpe < 1 todavía está cayendo; combínalo con K.golpe para la sacudida.
+  const COLOR_SELLO = { MITO: '#b5654a', VERDAD: '#7d9a7a', 'MEDIA VERDAD': '#E0B060' };
+  D.sello = (ctx, x, y, s = 1, o = {}) => {
+    const texto = o.texto || 'MITO', color = o.color || COLOR_SELLO[texto] || '#b5654a', g = clamp(o.golpe == null ? 1 : o.golpe);
+    if (g <= 0) return;
+    const sq = Math.max(.25, Math.round(s * 4) / 4);
+    const c = bmp(clave('sello', texto, color, sq), 1000 * sq, 420 * sq, 500 * sq, 210 * sq, cx => {
+      cx.scale(sq, sq); cx.font = '400 190px Anton, Montserrat, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      const w = Math.min(900, cx.measureText(texto).width + 130), h = 270;
+      cx.strokeStyle = css(color); cx.fillStyle = css(color); cx.lineJoin = 'round';
+      cx.lineWidth = 16; cx.beginPath(); cx.roundRect(-w / 2, -h / 2, w, h, 26); cx.stroke();
+      cx.lineWidth = 5; cx.beginPath(); cx.roundRect(-w / 2 + 28, -h / 2 + 28, w - 56, h - 56, 14); cx.stroke();
+      cx.fillText(texto, 0, 8, w - 100);
+      // tinta desgastada: motas que borran un poco el sello, como un sello de goma de verdad
+      cx.globalCompositeOperation = 'destination-out'; const r = azar(11);
+      for (let i = 0; i < 160; i++) { cx.globalAlpha = .35 + r() * .55; cx.beginPath(); cx.ellipse((r() - .5) * w, (r() - .5) * h, 2 + r() * 9, 2 + r() * 6, r() * 3, 0, TAU); cx.fill(); }
+    });
+    const caida = Math.min(1, g / .3), asienta = clamp((g - .3) / .25);
+    const esc = g < .3 ? lerp(2.6, 1, caida * caida) : 1 + .07 * Math.sin(asienta * Math.PI) * (1 - asienta), f = s / sq;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(lerp(.1, -.12, caida)); ctx.scale(esc, esc); ctx.globalAlpha = Math.min(1, g / .15);
+    ctx.drawImage(c.cv, -c.ax * f, -c.ay * f, c.cv.width * f, c.cv.height * f);
+    ctx.restore();
+  };
 
   D.monedas = prop('monedas', [-120, -210, 120, 20], (cx, s, o) => {
     const n = o.n || 12, r = azar(3);

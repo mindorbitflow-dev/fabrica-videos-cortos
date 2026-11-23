@@ -62,10 +62,17 @@ def ya_usado(idea: str, usados: list[str]) -> bool:
 LIBRE = "LIBRE"   # "elige tú el tema": lo decide el dibujante (Claude Code) cuando se acaba la lista del nicho
 
 
+def ideas_de(nicho: dict, serie: str | None = None) -> list[str]:
+    """Ideas del banco del nicho. Si el nicho tiene `series` (cada una con sus `ideas`), las de la serie pedida o, sin serie, las de todas."""
+    if nicho.get("series"):
+        return [str(i) for clave, s in nicho["series"].items() if serie in (None, clave) for i in s.get("ideas", [])]
+    return [str(i) for i in nicho.get("ideas", [])]
+
+
 def proponer_tema(router: LLMRouter, nicho: dict, usados: list[str], libre: bool = False) -> str:
     """Tema nuevo para el nicho: primero una idea del banco del nicho (config/nichos.yaml) que no se haya usado, porque son temas reales,
     concretos y verificables, y en orden (el banco va de más a menos viral); la IA solo propone cuando el banco se acabó (sus temas libres salían abstractos o con premisas inventadas)."""
-    libres = [str(i) for i in nicho.get("ideas", []) if not ya_usado(str(i), usados)]
+    libres = [i for i in ideas_de(nicho) if not ya_usado(i, usados)]
     if libres:  # al azar entre las que faltan: la lista se usa como banco, no como fila
         return random.choice(libres)
     if libre:   # lista agotada y hay Claude Code: él elige un tema real y viral que no se haya hecho
@@ -75,7 +82,7 @@ def proponer_tema(router: LLMRouter, nicho: dict, usados: list[str], libre: bool
             texto, _ = router.complete_any(PROMPT_TEMA.format(
                 nombre=nicho["nombre"], descripcion=nicho["descripcion"],
                 visual=VISUAL_TEMA.get(nicho.get("estilo", "plano"), VISUAL_TEMA["plano"]),
-                ejemplos="; ".join(nicho.get("ideas", [])[:4]),
+                ejemplos="; ".join(ideas_de(nicho)[:4]),
                 usados="; ".join(usados[-60:]) or "ninguno"), max_tokens=300, temperature=0.95)
             tema = str(leer_json(texto).get("tema", "")).strip()
             if tema and not ya_usado(tema, usados):

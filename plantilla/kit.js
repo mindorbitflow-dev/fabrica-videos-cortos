@@ -89,6 +89,27 @@ window.K = (() => {
     ctx.save(); ctx.translate(W / 2, centroY); ctx.scale(z, z); ctx.translate(-cx, -cy); fn(); ctx.restore();
   }
 
+  // Sacudida que se apaga sola (un sello que cae, un candado que cierra): t0 = segundo del impacto, f = fuerza en px. Suma el resultado
+  // a una traslación de toda la escena: ctx.translate(0, K.golpe(t, d * .7)).
+  const golpe = (t, t0, f = 14) => { const k = t - t0; return k < 0 || k > .45 ? 0 : Math.sin(k * 60) * f * (1 - k / .45); };
+  // Plano de cámara que VIAJA: de {x, y, z} a {x, y, z} durante la escena (paneo + zoom con curva suave) y mano temblorosa opcional.
+  //   K.plano(ctx, t, d, { de: {x:540, y:900, z:1.1}, a: {x:700, y:820, z:1.5}, mano: 1, T, fondo: () => D.fondo.calle(ctx, T, {}), paralaje: .6 }, () => { ...personajes y props... })
+  // Con `fondo`, el decorado se dibuja aparte y se mueve solo `paralaje` (0-1) de lo que se mueve la cámara: profundidad real.
+  // El fondo nunca deja ver el borde del lienzo (su zoom sube lo necesario). `curva`: suave (por defecto) | sale | rebote | f(k).
+  // Devuelve la cámara de ese instante {x, y, z}, por si hay que colocar algo en pantalla.
+  function plano(ctx, t, d, { de, a = de, mano = 0, T = 0, curva = suave, fondo = null, paralaje = .6, centroY = 760 } = {}, fn) {
+    const k = (typeof curva === 'function' ? curva : suave)(clamp(t / Math.max(d, .01)));
+    const x = lerp(de.x, a.x, k) + Math.sin(T * 1.9) * 5 * mano, y = lerp(de.y, a.y, k) + Math.cos(T * 2.3) * 4 * mano, z = lerp(de.z, a.z, k);
+    if (fondo) {
+      const xf = W / 2 + (x - W / 2) * paralaje, yf = centroY + (y - centroY) * paralaje;
+      let zf = 1 + (z - 1) * paralaje;
+      zf = Math.max(zf, W / 2 / Math.min(xf, W - xf), centroY / yf, (H - centroY) / (H - yf));   // sin bordes a la vista
+      camara(ctx, xf, yf, zf, fondo, centroY);
+    }
+    camara(ctx, x, y, z, fn, centroY);
+    return { x, y, z };
+  }
+
   // ---- formas ----
   // Curva suave que pasa por los puntos [[x,y],...] (cerrada o abierta). Deja el trazo listo para fill/stroke.
   function curva(ctx, pts, cerrada = true) {
@@ -183,6 +204,6 @@ window.K = (() => {
   const listo = Promise.all(['40px "Space Mono"', '40px Anton', '800 40px Montserrat', '900 40px Montserrat']
     .map(f => document.fonts.load(f).catch(() => null)));
 
-  return { W, H, TAU, clamp, lerp, suave, sale, rebote, prog, hash, azar, latido, alfa, mezcla, fondo, halo, rayos, motas, acabado, camara,
+  return { W, H, TAU, clamp, lerp, suave, sale, rebote, prog, hash, azar, latido, alfa, mezcla, fondo, halo, rayos, motas, acabado, camara, plano, golpe,
            curva, extremidad, enRuta, ruta, trazo, redondo, rotulo, pastilla, barra, MONO, TITULAR, TEXTO, listo };
 })();

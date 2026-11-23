@@ -1,0 +1,24 @@
+{
+  "tema": "Los vikingos no usaban cascos con cuernos - el vestuario de una ópera de 1876",
+  "serie": "mito",
+  "titulo": "Los vikingos nunca usaron cascos con cuernos",
+  "portada": {"texto": "NUNCA USARON CUERNOS", "destacado": "CUERNOS", "sub": "la imagen la inventó un teatro"},
+  "escenas": [
+    {"rol": "gancho", "voz": "Tito está seguro: los vikingos peleaban con cascos con cuernos.", "visual": "Tito orgulloso, con un globo de pensamiento donde flota un casco con cuernos"},
+    {"rol": "pregunta", "voz": "—Voy a pedir la evidencia, Tito. Esa imagen tiene un autor.", "visual": "Sombra con la lupa, en primer plano"},
+    {"rol": "mecanismo", "voz": "Los arqueólogos solo han encontrado un casco vikingo casi completo.", "visual": "campo de Noruega, un arqueólogo señala el casco en el suelo; 1943"},
+    {"rol": "mecanismo", "voz": "Es redondo, de metal, y no tiene ni un cuerno.", "visual": "el casco redondo; los cuernos fantasma se tachan; 0 CUERNOS"},
+    {"rol": "reenganche", "voz": "—¿Ni un cuerno? ¡Pero si los vi en mil películas! —dijo Tito.", "visual": "Tito indignado en la oficina"},
+    {"rol": "mecanismo", "voz": "Esas películas copiaron a un diseñador de vestuario alemán.", "visual": "el diseñador señala su boceto en un caballete"},
+    {"rol": "mecanismo", "voz": "En 1876 estrenaron una ópera de Wagner sobre dioses nórdicos.", "visual": "escenario con cortinas, foco y el casco; BAYREUTH 1876"},
+    {"rol": "mecanismo", "voz": "Le puso cuernos a los cascos para que se vieran imponentes.", "visual": "los cuernos crecen sobre el casco"},
+    {"rol": "reenganche", "voz": "El público lo adoró, y dibujantes y estudios de cine lo copiaron.", "visual": "carteles con el casco de cuernos que llegan volando"},
+    {"rol": "veredicto", "voz": "Veredicto: mito.", "visual": "el sello MITO golpea sobre el casco"},
+    {"rol": "revelacion", "voz": "Sí hubo cascos con cuernos, pero eran de hace 3.000 años y para ceremonias.", "visual": "línea de tiempo: cascos de bronce hace 3.000 años, vikingos mucho después"},
+    {"rol": "remate", "voz": "Los vikingos nunca los usaron. La leyenda la inventó un teatro.", "visual": "las cortinas se cierran sobre el casco"},
+    {"rol": "remate", "voz": "—A veces lo que todos saben es solo un buen vestuario, Tito.", "visual": "Sombra explica, Tito baja la cabeza con el casco de juguete en el escritorio"},
+    {"rol": "cierre", "voz": "¿Qué otro mito creías de niño? Escríbelo aquí abajo.", "visual": "fondo azul noche con halo; la marca pone el logo y la pregunta"}
+  ],
+  "caption": "Tu idea de los vikingos viene de un vestuario de 1876. ¿Qué otro mito creías de niño? Escríbelo aquí abajo.",
+  "hashtags": ["#vikingos", "#mitos", "#historia", "#sombradeevidencia"]
+}

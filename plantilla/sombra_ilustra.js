@@ -30,8 +30,11 @@
     let pose = 'dePie', expresion = EXPR[boca] || 'alegre';
     if (paso !== null) pose = 'camina'; else if (lupa) pose = 'lupa'; else if (rasca) { pose = 'pensativo'; expresion = 'duda'; } else if (susto > .3) { pose = 'sorprendido'; expresion = 'susto'; }
     if (o.senala) pose = 'senalar';
+    if (o.pose) pose = o.pose;                 // pose por nombre (dePie, camina, senalar, lupa, pensativo, sorprendido, explicar, cruzado)
+    if (o.expresion) expresion = o.expresion;  // alegre, duda, sorpresa, triste, enfado, susto, asombro, grito, risa, concentrado
     ctx.save();
-    p.dibujar(ctx, T, { x, y, dir, pose, expresion, mirada: [mira, 0], luz: LUZ, dist: paso !== null ? paso * 0.5 * H : 0, habla: o.habla || (boca === 'habla' ? 1 : 0), alto: susto * 60 * s });
+    p.dibujar(ctx, T, Object.assign({ x, y, dir, pose, expresion, mirada: [mira, 0], luz: LUZ, dist: paso !== null ? paso * 0.5 * H : 0, habla: o.habla || (boca === 'habla' ? 1 : 0), alto: susto * 60 * s },
+      o.pose2 ? { pose2: o.pose2, k: o.k || 0 } : {}, o.giroCabeza != null ? { giroCabeza: o.giroCabeza } : {}, o.sombreroAlto != null ? { sombreroAlto: o.sombreroAlto } : {}));
     ctx.restore();
   }
   function tito(ctx, x, y, s, o = {}) {
@@ -41,12 +44,37 @@
     if (paso !== null) pose = 'camina';
     if (brazos === 'arriba' || susto > .3) { pose = 'asombrado'; expresion = susto > .3 ? 'susto' : 'sorpresa'; }
     if (caja !== null || objeto) { pose = 'traeObjeto'; est.objeto = typeof objeto === 'string' ? objeto : 'carpeta'; est.llevaObjeto = true; }
+    if (o.pose) pose = o.pose;                 // pose por nombre (dePie, camina, traeObjeto, triste, asombrado, senalar, saluda)
+    if (o.expresion) expresion = o.expresion;
+    if (o.pose2) { est.pose2 = o.pose2; est.k = o.k || 0; }
+    if (o.giroCabeza != null) est.giroCabeza = o.giroCabeza;
     ctx.save();
     p.dibujar(ctx, T, Object.assign({ x, y, dir, pose, expresion, mirada: [mira, 0], luz: LUZ, dist: paso !== null ? paso * 0.5 * H : 0, habla: o.habla || (boca === 'habla' ? 1 : 0), colita: Math.sin(T * 5) * .12, alto: susto * 40 * s }, est));
     ctx.restore();
   }
   S30.detectiveViejo = S30.detective; S30.titoViejo = S30.tito; S30.LUZ = LUZ;
   S30.detective = detective; S30.tito = tito;
+
+  // ---- ACTUACIÓN: lo que hace que un personaje se mueva DENTRO de la escena (no solo respire) ----
+  // S30.actua(t, d, pistas, {ancho}) -> { pose, pose2, k }: guion de poses por fracción de la escena. Cada clave [fracción 0-1, 'pose'] se mantiene
+  // y, un poco antes de la siguiente, se mezcla con ella (`ancho` = fracción de escena que dura el cruce). Se pasa tal cual al personaje:
+  //   S30.tito(ctx, x, y, 1.6, { T, ...S30.actua(t, d, [[0, 'dePie'], [.35, 'asombrado'], [.75, 'senalar']]), habla: 1 })
+  // Poses: Sombra dePie, senalar, lupa, pensativo, sorprendido, explicar, cruzado · Tito dePie, traeObjeto, triste, asombrado, senalar, saluda ·
+  // gente dePie, senalar, saludar, susto, cabizbajo, manosBolsillos. (Mezclar poses de brazos distintos funciona; con relMano/relPie puede dar un salto: usa cruces cortos.)
+  S30.actua = function (t, d, pistas, { ancho = .14 } = {}) {
+    const f = K.clamp(t / Math.max(d, .01)), n = pistas.length;
+    let i = 0; while (i < n - 1 && f >= pistas[i + 1][0]) i++;
+    if (i >= n - 1) return { pose: pistas[n - 1][1] };
+    const cruce = K.clamp((f - (pistas[i + 1][0] - ancho)) / ancho);
+    return cruce > 0 ? { pose: pistas[i][1], pose2: pistas[i + 1][1], k: K.suave(cruce) } : { pose: pistas[i][1] };
+  };
+  // S30.camina(t, d, x0, x1, {desde, hasta, alto}) -> { x, paso, dir }: el personaje camina de x0 a x1 entre las fracciones `desde` y `hasta`
+  // de la escena. `paso` es null mientras está parado (el personaje cae a 'dePie') y, si camina, la fase del paso sale de la distancia
+  // recorrida (los pies no patinan). `alto` = altura del personaje en px (430·escala; Tito 430·escala·.8). `dir` mira hacia donde va.
+  S30.camina = function (t, d, x0, x1, { desde = 0, hasta = .6, alto = 430 } = {}) {
+    const k = K.suave((t / Math.max(d, .01) - desde) / Math.max(hasta - desde, .01)), x = K.lerp(x0, x1, k), dir = x1 >= x0 ? 1 : -1;
+    return { x, dir, paso: k > 0 && k < 1 ? Math.abs(x - x0) / (.5 * alto) : null };
+  };
 
   if (!COLOR) return;
   // ================================================================ MODO COLOR: paleta, acabado, oficina del kit, gente del reparto
@@ -172,7 +200,8 @@
     if (o.pose) pose = o.pose;
     if (o.expresion) expresion = o.expresion;
     ctx.save();
-    const J = g.dibujar(ctx, T, { x, y, dir, pose, expresion, mirada: [.4, 0], luz: LUZ, dist: o.paso != null ? o.paso * .5 * H : 0, habla: o.habla || (o.boca === 'habla' ? 1 : 0), alto: (o.susto || 0) * 40 * s });
+    const J = g.dibujar(ctx, T, Object.assign({ x, y, dir, pose, expresion, mirada: [.4, 0], luz: LUZ, dist: o.paso != null ? o.paso * .5 * H : 0, habla: o.habla || (o.boca === 'habla' ? 1 : 0), alto: (o.susto || 0) * 40 * s },
+      o.pose2 ? { pose2: o.pose2, k: o.k || 0 } : {}));
     ctx.restore();
     return J;
   };

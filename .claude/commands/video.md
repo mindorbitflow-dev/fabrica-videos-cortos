@@ -55,6 +55,24 @@ rótulos pequeños. Nunca emojis, íconos genéricos ni tarjetas de solo texto. 
 Siempre los mismos dos personajes: **Tito**, un cerdito curioso, llega a la oficina del **detective Sombra** con algo cotidiano
 (un foco fundido, un anillo, una factura, la leche al fondo del súper...) y Sombra le revela su ORIGEN OCULTO: quién lo decidió, cuándo
 y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evidencia/`.
+
+**SERIES.** Sombra de Evidencia alterna dos series y el guion lleva el campo `"serie": "origen"` o `"serie": "mito"`. El tema llega con el
+prefijo `SERIE:origen` o `SERIE:mito` (quítalo del `tema` del guion). Si el tema dice LIBRE, elígelo dentro de la serie indicada (los ejemplos
+de `config/nichos.yaml` → `series.<serie>.ideas` son solo orientación). Todo lo demás de esta sección (duración, hechos reales, sin salud, final con pregunta,
+escena 1 sin título, movimiento obligatorio) vale para las dos.
+- **`origen`** (la que describe el resto de esta sección): una marca, un negocio o una costumbre tiene un origen oculto; tono de "esto te lo ocultaron". Ejemplo: `ejemplos/evidencia/`.
+- **`mito`** (Mito vs. evidencia): Tito cree algo que casi todos creen (historia, ciencia, animales, cosas de todos los días; nunca salud ni medicina, política ni
+  religión) y Sombra pide la evidencia. El "villano" es la creencia, no una marca ni una persona; el tono es de curiosidad amable ("vamos a ver la evidencia"), no de
+  acusación. Tito nunca queda en ridículo: el error es del mito. Ejemplo completo: `ejemplos/evidencia_mito/` (léelo entero antes de dibujar).
+  Elige un mito que de verdad sea falso o a medias (confírmalo en 2 fuentes serias con WebSearch; si los expertos lo discuten, elige otro). Evita los que ya son
+  un cliché de internet (el 10 % del cerebro). Estructura (`rol`): `gancho` (Tito jura el mito con total seguridad; la primera frase es el mito dicho como un hecho,
+  de 14 palabras o menos) → `pregunta` (Sombra: "Voy a pedir la evidencia, Tito. Esa imagen tiene un autor.") → `mecanismo` (6-9 escenas: qué dice la evidencia real
+  con un nombre, un lugar o una fecha, y de dónde salió el mito: quién, cuándo y por qué se volvió popular) con un `reenganche` de Tito que se resiste ("—¿Ni un cuerno?
+  ¡Pero si los vi en mil películas!") → `veredicto` (UNA escena, frase corta: "Veredicto: mito." / "Veredicto: verdad." / "Veredicto: media verdad."; el sello
+  `D.sello(ctx, x, y, s, {texto:'MITO'|'VERDAD'|'MEDIA VERDAD', golpe})` cae sobre el objeto del tema con `K.golpe`) → `revelacion` (opcional: el matiz, qué parte sí era cierta)
+  → `remate` (2 escenas: lo que sí hay que recordar y la lección de Sombra: "A veces lo que todos saben es solo un buen vestuario.") → `cierre` (pregunta: "¿Qué otro mito
+  creías de niño? Escríbelo aquí abajo." o "¿Tú lo creías? Escribe YO."). Portada y `titulo` AFIRMAN la verdad, sin acusar ("LOS VIKINGOS NUNCA USARON CUERNOS"); `caption`: primer renglón
+  = el dato que rompe la creencia, termina con la misma pregunta del cierre.
 - **Se cuenta como una historia, no como un dato**: tono informal, como si se lo contaras a un amigo ("Resulta que...",
   "Y aquí viene lo bueno", "Imagínate"). Palabras de todos los días; nada de términos técnicos (si hace falta uno, explícalo con
   algo cotidiano). Pocas cifras: solo las 2-3 que de verdad sorprenden, redondeadas ("casi todos", "unos 15 años"). Los años y
@@ -129,7 +147,7 @@ y para qué, con tono de "esto te lo ocultaron". Ejemplo completo: `ejemplos/evi
 - Termina cada escena con `K.acabado(ctx, T)` (grano y viñeta).
 
 ### Si el nicho tiene `formato: historia`: ilustración sobria y cinematográfica
-Ejemplo completo para imitar: `ejemplos/evidencia/` (léelo entero antes de dibujar). Usa
+Ejemplo completo para imitar: `ejemplos/evidencia/` (serie origen) o `ejemplos/evidencia_mito/` (serie mito); léelo entero antes de dibujar. Usa
 `S30` (`plantilla/sombra.js`; el color y los personajes los pone `plantilla/sombra_ilustra.js`):
 - NO es noir ni blanco y negro, y tampoco "dibujito eléctrico": nada de sepia, grises sucios, película vieja ni violeta/magenta/turquesa
   o amarillo neón. Es color apagado y cálido, como una película de animación: azul grisáceo, tierra cálida, luz ámbar de lámpara o
@@ -169,6 +187,22 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (léelo entero antes de dibu
     `D.mesaJuntas(ctx,x,y,s,{ancho})` / `D.mesa` · `D.estante(ctx,x,y,s,{baldas})` · `D.caja(ctx,x,y,s)` · `D.bandeja(ctx,x,y,s)` bandeja de terciopelo para joyas (centro) ·
     `D.maquinaEscribir(ctx,x,y,s,{texto,n:0-1})` · `D.mina(ctx,x,y,s,{niveles})` mina a cielo abierto en terrazas (x, y = borde superior; los obreros van con `S30.hombre` a escala .16).
   - Rendimiento: lo estático se cachea solo; no crees objetos nuevos por cuadro. Para animar tamaño usa `ctx.scale` o la escala (se cuantiza), no valores distintos en cada cuadro.
+- **MOVIMIENTO OBLIGATORIO (lo que más pesa en la calidad):** una escena que solo respira y hace zoom lento se ve como una foto, y
+  `python run.py --hoja` la marca como "casi estática" (medido). Cada escena (menos la última) lleva como mínimo DOS de estos golpes:
+  1. **Cámara que viaja:** `K.plano(ctx, t, d, {de:{x,y,z}, a:{x,y,z}, T, mano, fondo: () => <decorado>, paralaje: .6}, () => {...})`: paneo + zoom con
+     el decorado moviéndose menos que los personajes (profundidad). En la oficina usa el ayudante `enOficina` del ejemplo. Alterna: empuje
+     hacia el rostro, paneo lateral, bajada, retroceso; nunca el mismo movimiento en dos escenas seguidas.
+  2. **Personaje que actúa:** `S30.actua(t, d, [[0,'dePie'], [.35,'senalar'], [.8,'explicar']])` devuelve `{pose, pose2, k}` y se reparte
+     en el personaje (`Object.assign({T, ...}, S30.actua(...))`); `habla: 1` mientras dice la frase; `expresion` ('enfado', 'susto', 'triste'...);
+     saltos y sustos con la posición `y`. Para entrar o cruzar: `S30.camina(t, d, x0, x1, {hasta, alto})` → `{x, dir, paso}` (`paso` null al
+     llegar: el personaje cae a 'dePie'). Con `objeto:'caja'` la caja solo queda bien en `traeObjeto`/`triste`: en `asombrado` o `senalar` sube a la
+     cara; quita el objeto en esas poses.
+  3. **Objeto que entra, golpea o cambia:** el papel que llega girando, el candado que cae con golpe de cámara, el diamante que pasa a ámbar, el
+     flash de una cámara de cine, una gráfica que se dibuja.
+  Las figuras GRANDES: Tito y Sombra en diálogo a escala 1.2-1.7 (cabeza y torso llenando el cuadro; o plano de cámara de zoom 1.4+ sobre ellos),
+  la gente del flashback ≥ 0.6 y solo las multitudes lejanas más pequeñas. Un rótulo (`pastilla`) que deba verse entero va FUERA de `K.plano`
+  (coordenadas de pantalla); si va dentro, se mueve con la cámara. Nunca dos escenas seguidas con el mismo decorado y el mismo encuadre: cambia
+  de lugar, de plano o de lado.
 - **Escena 1: Tito grande y con una emoción EXAGERADA que cambia según el tema**, desde el primer cuadro (el video no lleva título encima: arranca directo en el gancho).
   No repitas siempre la misma: elige la que pide la historia (indignado porque le cobraron de más, horrorizado al ver la
   etiqueta, orgulloso y feliz justo antes de enterarse, desesperado con el teléfono lento, confundido, furioso, muerto de
@@ -190,6 +224,8 @@ Abre TODAS las hojas con Read y corrige hasta que cada escena cumpla:
 2. El protagonista se ve igual de una escena a otra y ocupa buena parte del cuadro.
 3. Nada cortado, encimado ni ilegible; ningún rótulo bajo los subtítulos o la portada; ninguna escena vacía o casi vacía.
 4. Entre el primer y el último cuadro de cada escena algo cambió.
+5. (Sombra de Evidencia) Si `--hoja` imprime `AVISO: escena N casi estática`, esa escena no cumple el movimiento obligatorio: añade
+   cámara que viaja, actuación u objeto en movimiento y vuelve a generar la hoja hasta que no salga ningún aviso. Tito y Sombra se ven grandes.
 Repite hoja → corrección al menos una vez aunque no haya errores evidentes.
 
 ## 5. Entrega
