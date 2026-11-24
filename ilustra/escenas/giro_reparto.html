@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><title>Ilustra — giro de Tito y Sombra (2.5D)</title>
+<style>html,body{margin:0;background:#111}canvas{display:block;width:1800px;height:1100px}</style>
+</head><body><canvas id="lienzo" width="1800" height="1100"></canvas>
+<script src="../dist/ilustra.js"></script>
+<script>
+// Hoja de giro: 8 ángulos (0°, 45°... 315°) de Tito y Sombra con una pose y una expresión. ?pose=dePie&exp=alegre&fila=tito|sombra|ambos
+const I = Ilustra, R = I.REPARTO, q = new URLSearchParams(location.search);
+const luz = new I.Luz({ dir: [-0.6, -0.8], dirBorde: [0.9, -0.35], clave: '#ffd9a0', ambiente: '#6a5248', borde: '#ffc078', niebla: '#7a6458' });
+const COL_TITO = { piel: '#e8b8a8', hocico: '#d49a8c', fosa: '#5a3a3a', mejilla: '#c9807c', boina: '#5a6f8a', boinaBanda: '#2a2d3a', tirante: '#a8553f', boton: '#c9a35a', mono: '#8a3a33', pantalon: '#5a5148', zapato: '#2a2420', oreja: '#d9a396', camisa: '#e7dcc2' };
+const COL_SOMBRA = { tinta: '#3d5a78', cabeza: '#2a2d3a', oreja: '#353a4c', sombrero: '#2b3040', cinta: '#c9953f', hocico: '#e6d5b8', nariz: '#16181f', saco: '#4a6a8a', cinturon: '#1d1a20', hebilla: '#c9a35a', guante: '#e7dcc2', boton: '#d8c8a8', pantalon: '#2f3645', zapato: '#3a2c26' };
+const tito = R.tito25({ altura: 330, colores: COL_TITO }), sombra = R.sombra25({ altura: 400, colores: COL_SOMBRA });
+window.ESCENA = { draw(ctx, t) {
+  ctx.fillStyle = '#3d4a5c'; ctx.fillRect(0, 0, 1800, 1100);
+  const poseT = q.get('poseT') || q.get('pose') || 'dePie', poseS = q.get('poseS') || q.get('pose') || 'dePie', exp = q.get('exp') || 'alegre';
+  for (let i = 0; i < 8; i++) {
+    const yaw = i * Math.PI / 4, x = 130 + i * 220;
+    ctx.fillStyle = '#e7dcc2'; ctx.font = '22px monospace'; ctx.textAlign = 'center'; ctx.fillText((i * 45) + '°', x, 40);
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x - 100, 520, 200, 3); ctx.fillRect(x - 100, 1000, 200, 3);
+    tito.dibujar(ctx, t, { x, y: 520, yaw, pose: poseT, expresion: exp, luz, habla: q.get('habla') ? 1 : 0 });
+    sombra.dibujar(ctx, t, { x, y: 1000, yaw, pose: poseS, expresion: exp, luz, habla: q.get('habla') ? 1 : 0 });
+  }
+} };
+window.__listo = true;
+</script></body></html>

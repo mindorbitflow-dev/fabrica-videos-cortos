@@ -13,7 +13,7 @@ ORDEN = [("nucleo", False), ("geom3", True), ("pincel", False), ("pintura", True
          ("camara", False), ("esqueleto", False), ("rig25", True), ("dinamica", True), ("personaje", False), ("mano", True),
          ("cuerpo", True), ("ropa", True), ("cabeza25", True), ("pelo", True), ("personaje2", True), ("props", False),
          ("escenarios", False), ("elipsis", False), ("interaccion", True), ("escena", False),
-         ("reparto", True), ("reparto_gente", True), ("reparto_fauna", True)]   # reparto de la fábrica de videos (opcional)
+         ("reparto", True), ("reparto_gente", True), ("reparto_fauna", True), ("reparto25", True)]   # reparto de la fábrica de videos (opcional)
 
 (RAIZ / "dist").mkdir(exist_ok=True)
 partes, incluidos, omitidos = [], [], []

@@ -80,7 +80,7 @@
       S30.vaiven(ctx, T);
       const c = S30.camina(t, d, 40, 560, { hasta: .35, alto: 344 * 1.7 }), llega = c.paso === null;
       oficina(ctx, t, d, T, () => {
-        S30.tito(ctx, c.x, TITO_Y + 20, 1.7, Object.assign({ T, dir: -1, boca: 'habla', expresion: 'alegre' }, llega ? S30.actua(t - d * .35, d * .65, [[0, 'dePie'], [.15, 'asombrado'], [1, 'asombrado']]) : { pose: 'camina', paso: c.paso }));
+        S30.tito(ctx, c.x, TITO_Y + 20, 1.7, Object.assign({ T, yaw: lerp(1.2, -.2, sale(prog(t, d * .3, d * .5))), boca: 'habla', expresion: 'alegre' }, llega ? S30.actua(t - d * .35, d * .65, [[0, 'dePie'], [.15, 'asombrado'], [1, 'asombrado']]) : { pose: 'camina', paso: c.paso }));
         const b = rebote(prog(t, d * .4, d * .6));
         if (b > 0) {
           ctx.save(); ctx.translate(790, 470 + Math.sin(T * 2) * 6); ctx.scale(b, b);
@@ -96,9 +96,9 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       oficina(ctx, t, d, T, () => {
-        S30.detective(ctx, 420, SOMBRA_Y, 1.55, Object.assign({ T, mira: .5, habla: 1, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'dePie'], [.35, 'explicar'], [.75, 'senalar']])));
+        S30.detective(ctx, 420, SOMBRA_Y, 1.55, Object.assign({ T, yaw: .75, mira: .5, habla: 1, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'dePie'], [.35, 'explicar'], [.75, 'senalar']])));
         S30.escritorio(ctx, T, { y: 960 });
-        S30.tito(ctx, 880, TITO_Y, 1.15, { T, dir: -1, mira: -.6, boca: 'o' });
+        S30.tito(ctx, 880, TITO_Y, 1.15, { T, yaw: -.75, mira: -.6, boca: 'o' });
       }, marco(-1));
       S30.pelicula(ctx, T);
     },
@@ -107,11 +107,11 @@
       S30.vaiven(ctx, T);
       const c = K.corte(t, d, [0, .55]);
       if (c.i === 0) oficina(ctx, c.t, c.d, T, () => {
-        S30.detective(ctx, 540, SOMBRA_Y, 2.1, Object.assign({ T, mira: .1, habla: 1 }, S30.actua(c.t, c.d, [[0, 'cruzado'], [.5, 'dePie']])));
+        S30.detective(ctx, 540, SOMBRA_Y, 2.1, Object.assign({ T, yaw: .2, mira: .1, habla: 1 }, S30.actua(c.t, c.d, [[0, 'cruzado'], [.5, 'dePie']])));
         S30.escritorio(ctx, T, { y: 960 });
       });
       else oficina(ctx, c.t, c.d, T, () => {
-        S30.tito(ctx, 540, TITO_Y + 30, 2.1, { T, dir: -1, mira: .2, expresion: 'duda', susto: Math.max(0, Math.sin(c.t * 4)) * .3 });
+        S30.tito(ctx, 540, TITO_Y + 30, 2.1, { T, yaw: -.25, mira: .2, expresion: 'duda', susto: Math.max(0, Math.sin(c.t * 4)) * .3 });
       }, marco(1));
       pastilla(ctx, 'EVIDENCIA', 540, 300, prog(t, d * .1, d * .1 + .3), true);
       S30.pelicula(ctx, T);
@@ -143,9 +143,9 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       oficina(ctx, t, d, T, () => {
-        S30.detective(ctx, 300, SOMBRA_Y, 1.5, Object.assign({ T, mira: .7, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'cruzado'], [.6, 'dePie']])));
+        S30.detective(ctx, 300, SOMBRA_Y, 1.5, Object.assign({ T, yaw: .75, mira: .7, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'cruzado'], [.6, 'dePie']])));
         S30.escritorio(ctx, T, { y: 960 });
-        S30.tito(ctx, 800, TITO_Y - Math.abs(Math.sin(T * 6)) * 30, 1.7, Object.assign({ T, dir: -1, boca: 'habla', mira: -.8, expresion: 'enfado' }, S30.actua(t, d, [[0, 'dePie'], [.3, 'senalar'], [.8, 'dePie']])));
+        S30.tito(ctx, 800, TITO_Y - Math.abs(Math.sin(T * 6)) * 30, 1.7, Object.assign({ T, yaw: -.75, boca: 'habla', mira: -.8, expresion: 'enfado' }, S30.actua(t, d, [[0, 'dePie'], [.3, 'senalar'], [.8, 'dePie']])));
         K.halo(ctx, 800, 700, 520 * sale(prog(t, d * .3, d * .5)), C.terracota, .22);
       }, marco(1));
       pastilla(ctx, 'UN SOLO CASCO', 540, 300, prog(t, d * .25, d * .25 + .3), true);
@@ -207,11 +207,11 @@
       const c = K.corte(t, d, [0, .7]), salto = Math.max(0, Math.sin(clamp((t - .15) / .5) * Math.PI)) * 60;
       oficina(ctx, c.t, c.d, T, () => {
         if (c.i === 0) {
-          S30.detective(ctx, 300, SOMBRA_Y, 1.5, { T, mira: .7, pose: 'cruzado' });
+          S30.detective(ctx, 300, SOMBRA_Y, 1.5, { T, yaw: .75, mira: .7, pose: 'cruzado' });
           S30.escritorio(ctx, T, { y: 960 });
-          S30.tito(ctx, 800, TITO_Y - salto, 1.7, Object.assign({ T, dir: -1, boca: 'habla', mira: -.7, expresion: 'enfado' }, S30.actua(t, d * .7, [[0, 'dePie'], [.25, 'asombrado'], [.6, 'senalar']])));
+          S30.tito(ctx, 800, TITO_Y - salto, 1.7, Object.assign({ T, yaw: -.75, boca: 'habla', mira: -.7, expresion: 'enfado' }, S30.actua(t, d * .7, [[0, 'dePie'], [.25, 'asombrado'], [.6, 'senalar']])));
         } else {
-          S30.detective(ctx, 540, SOMBRA_Y, 2.0, { T, mira: .2, pose: 'cruzado', boca: 'sonrisa' });
+          S30.detective(ctx, 540, SOMBRA_Y, 2.0, { T, yaw: .2, mira: .2, pose: 'cruzado', boca: 'sonrisa' });
           S30.escritorio(ctx, T, { y: 960 });
         }
       });
@@ -231,7 +231,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       oficina(ctx, t, d, T, () => {
-        S30.tito(ctx, 540, TITO_Y + 40, 2.2, Object.assign({ T, dir: -1, mira: .3, habla: 1, expresion: 'susto' }, S30.actua(t, d, [[0, 'dePie'], [.4, 'asombrado'], [.8, 'triste']])));
+        S30.tito(ctx, 540, TITO_Y + 40, 2.2, Object.assign({ T, yaw: -.25, mira: .3, habla: 1, expresion: 'susto' }, S30.actua(t, d, [[0, 'dePie'], [.4, 'asombrado'], [.8, 'triste']])));
         for (let i = 0; i < 3; i++) { const k = (T * .8 + i * .33) % 1; ctx.fillStyle = alfa('#bcd4ec', .8 * (1 - k)); ctx.beginPath(); ctx.ellipse(400 + i * 130, 600 + k * 190, 9, 15, 0, 0, TAU); ctx.fill(); }
       }, marco(-1));
       S30.pelicula(ctx, T);
@@ -240,7 +240,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       oficina(ctx, t, d, T, () => {
-        S30.detective(ctx, 640, SOMBRA_Y, 1.9, Object.assign({ T, mira: -.3, habla: 1, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'cruzado'], [.4, 'explicar'], [.8, 'senalar']])));
+        S30.detective(ctx, 640, SOMBRA_Y, 1.9, Object.assign({ T, yaw: .2, mira: -.3, habla: 1, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'cruzado'], [.4, 'explicar'], [.8, 'senalar']])));
         S30.escritorio(ctx, T, { y: 960 });
       }, marco(1));
       S30.pelicula(ctx, T);
@@ -306,8 +306,8 @@
       S30.vaiven(ctx, T);
       const c = K.corte(t, d, [0, .62]);
       oficina(ctx, c.t, c.d, T, () => {
-        if (c.i === 0) S30.tito(ctx, 540, TITO_Y + 40, 2.2, Object.assign({ T, dir: -1, mira: .3, habla: 1, expresion: 'asombro' }, S30.actua(c.t, c.d, [[0, 'dePie'], [.4, 'asombrado']])));
-        else { S30.detective(ctx, 540, SOMBRA_Y, 2.0, { T, mira: -.2, boca: 'sonrisa', pose: 'dePie' }); S30.escritorio(ctx, T, { y: 960 }); }
+        if (c.i === 0) S30.tito(ctx, 540, TITO_Y + 40, 2.2, Object.assign({ T, yaw: -.25, mira: .3, habla: 1, expresion: 'asombro' }, S30.actua(c.t, c.d, [[0, 'dePie'], [.4, 'asombrado']])));
+        else { S30.detective(ctx, 540, SOMBRA_Y, 2.0, { T, yaw: .2, mira: -.2, boca: 'sonrisa', pose: 'dePie' }); S30.escritorio(ctx, T, { y: 960 }); }
       }, c.i === 0 ? marco(1) : null);
       S30.pelicula(ctx, T);
     },
@@ -346,7 +346,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       oficina(ctx, t, d, T, () => {
-        S30.detective(ctx, 560, SOMBRA_Y, 1.9, Object.assign({ T, mira: -.3, habla: 1, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'dePie'], [.35, 'explicar'], [.75, 'cruzado']])));
+        S30.detective(ctx, 560, SOMBRA_Y, 1.9, Object.assign({ T, yaw: .2, mira: -.3, habla: 1, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'dePie'], [.35, 'explicar'], [.75, 'cruzado']])));
         S30.escritorio(ctx, T, { y: 960 });
         const k = sale(prog(t, d * .1, d * .5));
         pastilla(ctx, 'NADIE LO CORRIGIÓ', 540, lerp(180, 330, k), prog(t, d * .1, d * .1 + .3), true);
@@ -400,10 +400,10 @@
       S30.vaiven(ctx, T);
       const sube = sale(prog(t, d * .35, d * .75));
       oficina(ctx, t, d, T, () => {
-        S30.detective(ctx, 330, SOMBRA_Y, 1.6, { T, mira: .6, boca: 'sonrisa', pose: 'dePie' });
+        S30.detective(ctx, 330, SOMBRA_Y, 1.6, { T, yaw: .75, mira: .6, boca: 'sonrisa', pose: 'dePie' });
         S30.escritorio(ctx, T, { y: 960 });
         boina(ctx, lerp(760, 540, sube), lerp(900, 960, sube) - Math.sin(sube * Math.PI) * 120, 1.2);
-        S30.tito(ctx, 820, TITO_Y, 1.55, Object.assign({ T, dir: -1, mira: -.5, expresion: 'triste' }, S30.actua(t, d, [[0, 'triste'], [.4, 'senalar'], [.8, 'triste']])));
+        S30.tito(ctx, 820, TITO_Y, 1.55, Object.assign({ T, yaw: -.75, mira: -.5, expresion: 'triste' }, S30.actua(t, d, [[0, 'triste'], [.4, 'senalar'], [.8, 'triste']])));
       }, marco(-1));
       S30.pelicula(ctx, T);
     },
@@ -412,8 +412,8 @@
       S30.vaiven(ctx, T);
       const c = K.corte(t, d, [0, .65]);
       oficina(ctx, c.t, c.d, T, () => {
-        if (c.i === 0) { S30.detective(ctx, 420, SOMBRA_Y, 1.9, Object.assign({ T, mira: .8, habla: 1 }, S30.actua(c.t, c.d, [[0, 'dePie'], [.35, 'explicar'], [.8, 'pensativo']]))); S30.escritorio(ctx, T, { y: 960 }); }
-        else S30.tito(ctx, 540, TITO_Y + 40, 2.2, { T, dir: -1, mira: -.4, expresion: 'triste' });
+        if (c.i === 0) { S30.detective(ctx, 420, SOMBRA_Y, 1.9, Object.assign({ T, yaw: .2, mira: .8, habla: 1 }, S30.actua(c.t, c.d, [[0, 'dePie'], [.35, 'explicar'], [.8, 'pensativo']]))); S30.escritorio(ctx, T, { y: 960 }); }
+        else S30.tito(ctx, 540, TITO_Y + 40, 2.2, { T, yaw: -.25, mira: -.4, expresion: 'triste' });
       }, c.i === 0 ? null : marco(1));
       S30.pelicula(ctx, T);
     },
@@ -421,7 +421,7 @@
     (ctx, t, d, K, T) => {
       S30.vaiven(ctx, T);
       oficina(ctx, t, d, T, () => {
-        S30.detective(ctx, 560, SOMBRA_Y, 2.0, Object.assign({ T, mira: .6, habla: 1, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'dePie'], [.3, 'senalar'], [1, 'senalar']])));
+        S30.detective(ctx, 560, SOMBRA_Y, 2.0, Object.assign({ T, yaw: .2, mira: .6, habla: 1, boca: 'sonrisa' }, S30.actua(t, d, [[0, 'dePie'], [.3, 'senalar'], [1, 'senalar']])));
         S30.escritorio(ctx, T, { y: 960 });
       }, marco(1));
       K.motas(ctx, T, { n: 80, color: C.oro, a: .7, vy: -45, tam: 5, semilla: 9 });

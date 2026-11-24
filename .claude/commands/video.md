@@ -213,6 +213,12 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (serie origen) o `ejemplos/e
   la gente del flashback ≥ 0.6 y solo las multitudes lejanas más pequeñas. Un rótulo (`pastilla`) que deba verse entero va FUERA de `K.plano`
   (coordenadas de pantalla); si va dentro, se mueve con la cámara. Nunca dos escenas seguidas con el mismo decorado y el mismo encuadre: cambia
   de lugar, de plano o de lado.
+- **PERSONAJES QUE GIRAN (`yaw`):** Tito y Sombra se dibujan de cualquier ángulo con `S30.tito(ctx, x, y, s, {yaw, ...})` y `S30.detective(ctx, x, y, s, {yaw, ...})`
+  (radianes: `0` de frente a cámara, `±.75` tres cuartos mirando a la derecha (+) o a la izquierda (−), `±1.25` perfil, `π` de espaldas). Sin `yaw` salen en el
+  modo antiguo de perfil, así que **usa siempre `yaw` en Sombra y Tito**. Úsalo para el montaje: plano y contraplano (Sombra `yaw: .75` mirando a Tito `yaw: -.75`), primer
+  plano de frente (`±.25`), Sombra de espaldas mirando por la ventana (`yaw: π`), Tito que camina de perfil (`1.2`) y al llegar se gira hacia la cámara
+  (`yaw: lerp(1.2, -.2, sale(prog(t, d * .3, d * .5)))`). Las poses y expresiones son las mismas. La gente del flashback (`S30.hombre`/`mujer`) sigue siendo de perfil o
+  tres cuartos.
 - **CORTES, PROFUNDIDAD Y ESCALA (videos de 90-120 s: hay que renovar la imagen sin acercar la cámara):**
   - **Cortes de montaje**, no zoom: dentro de una escena larga cambia de plano con `K.corte(t, d, [0, .5])` → `{i, t, d}` (plano activo y su tiempo local) y dibuja
     cada plano con su propio `K.plano` y su encuadre FIJO (general → medio → detalle → contraplano). Planea 8-12 cortes en todo el video; nunca dos planos

@@ -21,6 +21,12 @@
     const k = tipo + '|' + Math.round(altura);
     return cache[k] || (cache[k] = tipo === 'sombra' ? R.sombra({ altura: Math.round(altura), colores: COL_SOMBRA }) : R.tito({ altura: Math.round(altura), colores: COL_TITO }));
   };
+  // Versión 2.5D (gira en 360°): se usa cuando el estado trae `yaw` (0 = de frente, ±π/2 = perfil, π = de espaldas). Sin yaw, el reparto 2D de siempre.
+  const cache25 = {};
+  const quien25 = (tipo, altura) => {
+    const k = tipo + '|' + Math.round(altura);
+    return cache25[k] || (cache25[k] = tipo === 'sombra' ? R.sombra25({ altura: Math.round(altura), colores: COL_SOMBRA }) : R.tito25({ altura: Math.round(altura), colores: COL_TITO }));
+  };
   // 'habla' = expresión alegre con la boca abriendo y cerrando (estado.habla = 1, ritmo propio del reparto)
   const EXPR = { habla: 'alegre', sonrisa: 'alegre', duda: 'duda', o: 'sorpresa', triste: 'triste', enfado: 'enfado', neutra: 'neutra' };
 
@@ -32,6 +38,12 @@
     if (o.senala) pose = 'senalar';
     if (o.pose) pose = o.pose;                 // pose por nombre (dePie, camina, senalar, lupa, pensativo, sorprendido, explicar, cruzado)
     if (o.expresion) expresion = o.expresion;  // alegre, duda, sorpresa, triste, enfado, susto, asombro, grito, risa, concentrado
+    if (o.yaw != null && R.sombra25) {
+      ctx.save();
+      quien25('sombra', H).dibujar(ctx, T, Object.assign({ x, y, yaw: o.yaw, pose, expresion, mirada: [mira, 0], luz: LUZ, dist: paso !== null ? paso * 0.5 * H : 0, habla: o.habla || (boca === 'habla' ? 1 : 0), alto: susto * 60 * s },
+        o.pose2 ? { pose2: o.pose2, k: o.k || 0 } : {}));
+      ctx.restore(); return;
+    }
     ctx.save();
     p.dibujar(ctx, T, Object.assign({ x, y, dir, pose, expresion, mirada: [mira, 0], luz: LUZ, dist: paso !== null ? paso * 0.5 * H : 0, habla: o.habla || (boca === 'habla' ? 1 : 0), alto: susto * 60 * s },
       o.pose2 ? { pose2: o.pose2, k: o.k || 0 } : {}, o.giroCabeza != null ? { giroCabeza: o.giroCabeza } : {}, o.sombreroAlto != null ? { sombreroAlto: o.sombreroAlto } : {}));
@@ -48,6 +60,11 @@
     if (o.expresion) expresion = o.expresion;
     if (o.pose2) { est.pose2 = o.pose2; est.k = o.k || 0; }
     if (o.giroCabeza != null) est.giroCabeza = o.giroCabeza;
+    if (o.yaw != null && R.tito25) {
+      ctx.save();
+      quien25('tito', H).dibujar(ctx, T, Object.assign({ x, y, yaw: o.yaw, pose, expresion, mirada: [mira, 0], luz: LUZ, dist: paso !== null ? paso * 0.5 * H : 0, habla: o.habla || (boca === 'habla' ? 1 : 0), alto: susto * 40 * s }, est));
+      ctx.restore(); return;
+    }
     ctx.save();
     p.dibujar(ctx, T, Object.assign({ x, y, dir, pose, expresion, mirada: [mira, 0], luz: LUZ, dist: paso !== null ? paso * 0.5 * H : 0, habla: o.habla || (boca === 'habla' ? 1 : 0), colita: Math.sin(T * 5) * .12, alto: susto * 40 * s }, est));
     ctx.restore();
