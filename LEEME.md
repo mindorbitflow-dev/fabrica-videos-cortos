@@ -1,11 +1,13 @@
 # 🎬 Fábrica de Videos Cortos
 
-Videos verticales (1080×1920, de 55 a 90 s) con **escenas dibujadas a medida para cada tema** (canvas 2D con el motor de
+Videos verticales (1080×1920; Sombra de Evidencia dura 90-120 s, las otras páginas de 55 a 90 s) con **escenas dibujadas a medida para cada tema** (canvas 2D con el motor de
 ilustración: pincel con volumen, luz cálida de borde, colores apagados y grano), voz neuronal, música de fondo y subtítulos palabra
 por palabra. Claude Code escribe el guion y el dibujo de cada escena, mira sus propias hojas de contacto y corrige; la fábrica
 renderiza el MP4 y lo envía por correo.
 
 ## Series de Sombra de Evidencia
+Videos de **90-120 s (26-32 escenas, 260-330 palabras)**, con una sola cifra en la voz, mucha dramatización (Tito apuesta, discute y se rinde) y final que obliga a tomar bando. Sin zoom animado: la variedad sale de cortes entre planos fijos (`K.corte`), paneos con paralaje y primer plano (`K.plano` con `frente`), y de personajes que actúan.
+
 `evidencia` alterna dos series (`series:` en `config/nichos.yaml`; cada video es de la que lleva más tiempo sin usarse, `fabrica.serie_siguiente`):
 **origen** (el origen oculto de una marca o costumbre; ejemplo `ejemplos/evidencia/`) y **mito** (Mito vs. evidencia: Tito cree algo popular, Sombra pide pruebas
 y el sello `D.sello` da el veredicto; ejemplo `ejemplos/evidencia_mito/`). A mano: `claude "/video evidencia SERIE:mito Los vikingos no usaban cascos con cuernos"`.

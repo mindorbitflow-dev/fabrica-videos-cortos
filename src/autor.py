@@ -18,8 +18,8 @@ from src.llm import LLMRouter, is_auth_error
 RAIZ = Path(__file__).resolve().parent.parent
 REGLAS = RAIZ / ".claude" / "commands" / "video.md"
 KIT = RAIZ / "plantilla" / "kit.js"
-LIMITE_MIN = 50  # guiones de 16-24 escenas: escribir, mirar las hojas y corregir
-MAX_PASOS = 60   # tope de pasos del agente: evita que se quede dando vueltas (y gastando) si algo no le sale
+LIMITE_MIN = 75  # guiones de 24-32 escenas: escribir, mirar las hojas y corregir
+MAX_PASOS = 90   # tope de pasos del agente: evita que se quede dando vueltas (y gastando) si algo no le sale
 # Claude Code: solo lo que el procedimiento necesita (leer el kit y el ejemplo, escribir el guion y las escenas, pasos de run.py).
 HERRAMIENTAS = "Read,Write,Edit,Glob,Grep,Bash(python run.py:*)"
 RONDAS_GEMINI = 3          # revisiones con las hojas de contacto

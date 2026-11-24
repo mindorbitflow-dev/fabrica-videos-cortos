@@ -2,23 +2,168 @@
   "tema": "Los vikingos no usaban cascos con cuernos - el vestuario de una ópera de 1876",
   "serie": "mito",
   "titulo": "Los vikingos nunca usaron cascos con cuernos",
-  "portada": {"texto": "NUNCA USARON CUERNOS", "destacado": "CUERNOS", "sub": "la imagen la inventó un teatro"},
+  "portada": {
+    "texto": "NUNCA USARON CUERNOS",
+    "destacado": "CUERNOS",
+    "sub": "Tito apostó su boina y perdió"
+  },
   "escenas": [
-    {"rol": "gancho", "voz": "Tito está seguro: los vikingos peleaban con cascos con cuernos.", "visual": "Tito orgulloso, con un globo de pensamiento donde flota un casco con cuernos"},
-    {"rol": "pregunta", "voz": "—Voy a pedir la evidencia, Tito. Esa imagen tiene un autor.", "visual": "Sombra con la lupa, en primer plano"},
-    {"rol": "mecanismo", "voz": "Los arqueólogos solo han encontrado un casco vikingo casi completo.", "visual": "campo de Noruega, un arqueólogo señala el casco en el suelo; 1943"},
-    {"rol": "mecanismo", "voz": "Es redondo, de metal, y no tiene ni un cuerno.", "visual": "el casco redondo; los cuernos fantasma se tachan; 0 CUERNOS"},
-    {"rol": "reenganche", "voz": "—¿Ni un cuerno? ¡Pero si los vi en mil películas! —dijo Tito.", "visual": "Tito indignado en la oficina"},
-    {"rol": "mecanismo", "voz": "Esas películas copiaron a un diseñador de vestuario alemán.", "visual": "el diseñador señala su boceto en un caballete"},
-    {"rol": "mecanismo", "voz": "En 1876 estrenaron una ópera de Wagner sobre dioses nórdicos.", "visual": "escenario con cortinas, foco y el casco; BAYREUTH 1876"},
-    {"rol": "mecanismo", "voz": "Le puso cuernos a los cascos para que se vieran imponentes.", "visual": "los cuernos crecen sobre el casco"},
-    {"rol": "reenganche", "voz": "El público lo adoró, y dibujantes y estudios de cine lo copiaron.", "visual": "carteles con el casco de cuernos que llegan volando"},
-    {"rol": "veredicto", "voz": "Veredicto: mito.", "visual": "el sello MITO golpea sobre el casco"},
-    {"rol": "revelacion", "voz": "Sí hubo cascos con cuernos, pero eran de hace 3.000 años y para ceremonias.", "visual": "línea de tiempo: cascos de bronce hace 3.000 años, vikingos mucho después"},
-    {"rol": "remate", "voz": "Los vikingos nunca los usaron. La leyenda la inventó un teatro.", "visual": "las cortinas se cierran sobre el casco"},
-    {"rol": "remate", "voz": "—A veces lo que todos saben es solo un buen vestuario, Tito.", "visual": "Sombra explica, Tito baja la cabeza con el casco de juguete en el escritorio"},
-    {"rol": "cierre", "voz": "¿Qué otro mito creías de niño? Escríbelo aquí abajo.", "visual": "fondo azul noche con halo; la marca pone el logo y la pregunta"}
+    {
+      "rol": "gancho",
+      "voz": "Tito apostó su boina a que los vikingos peleaban con cascos con cuernos.",
+      "visual": "Tito entra orgulloso a la oficina; en su globo de pensamiento, un casco con cuernos"
+    },
+    {
+      "rol": "gancho",
+      "voz": "Y Sombra aceptó la apuesta sin parpadear.",
+      "visual": "Sombra sonríe tras el escritorio y estrecha la mano en el aire"
+    },
+    {
+      "rol": "pregunta",
+      "voz": "—Pide lo que quieras, Tito. Yo pido evidencia.",
+      "visual": "plano de Sombra y contraplano de Tito, que traga saliva"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Primero, el único casco vikingo casi completo que se ha encontrado.",
+      "visual": "campo de Noruega: un arqueólogo señala el casco en el suelo"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Estaba en una tumba de Noruega, y hoy vive en un museo.",
+      "visual": "el casco en detalle, con una luz que lo recorre"
+    },
+    {
+      "rol": "reenganche",
+      "voz": "—Un solo casco no prueba nada —dijo Tito, cruzado de brazos.",
+      "visual": "Tito se planta con los brazos cruzados y gesto terco"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Es redondo, de metal, con una rejilla para proteger los ojos.",
+      "visual": "detalle del casco con rótulo señalando la rejilla"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "¿Cuernos?",
+      "visual": "los cuernos fantasma punteados aparecen sobre el casco"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Ni uno.",
+      "visual": "los cuernos fantasma se tachan; rótulo 0 CUERNOS"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Los cascos de verdad eran sencillos: servían para proteger, no para lucir.",
+      "visual": "casco sencillo con visto bueno frente a uno con cuernos tachado"
+    },
+    {
+      "rol": "reenganche",
+      "voz": "—¡Trampa! Seguro que ese casco era de un pobre —protestó Tito.",
+      "visual": "Tito indignado salta; Sombra, de brazos cruzados"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "En décadas de excavaciones nunca apareció uno solo con cuernos.",
+      "visual": "cantera con obreros cavando y un pozo vacío"
+    },
+    {
+      "rol": "reenganche",
+      "voz": "—Pero... ¡yo lo vi en mil películas! —dijo Tito, sudando.",
+      "visual": "Tito asustado, sudando, en primer plano"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Exacto. Y ahí empieza la verdadera historia.",
+      "visual": "Sombra se vuelve hacia la cámara y sonríe"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "En una pelea, un cuerno solo sirve de asa para tu enemigo.",
+      "visual": "una mano agarra de un cuerno el casco; rótulo UN ASA PARA EL ENEMIGO"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Hace unos 150 años, un diseñador de vestuario tenía un problema.",
+      "visual": "taller: el diseñador frente a su caballete en blanco"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Debía vestir a dioses nórdicos para una gran ópera de Wagner.",
+      "visual": "teatro con cortinas, un cartel de la ópera; rótulo BAYREUTH 1876"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Y quería que el público los viera imponentes desde la última fila.",
+      "visual": "vista desde el escenario hacia la platea llena de gente"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Así que les pegó cuernos a los cascos.",
+      "visual": "los cuernos crecen sobre el casco"
+    },
+    {
+      "rol": "reenganche",
+      "voz": "—¿Todo por un disfraz? —susurró Tito.",
+      "visual": "Tito, boquiabierto, en primer plano"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "El público enloqueció, y carteles, libros y cine lo copiaron.",
+      "visual": "carteles con el casco de cuernos que llegan volando"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Y desde entonces, todos imaginan así a los vikingos.",
+      "visual": "libro y pantalla de cine con el casco de cuernos"
+    },
+    {
+      "rol": "mecanismo",
+      "voz": "Y nadie lo corrigió, porque un mito cómodo se cuenta solo.",
+      "visual": "Sombra, en plano medio, explica y se encoge de hombros"
+    },
+    {
+      "rol": "revelacion",
+      "voz": "Todo nació en un teatro.",
+      "visual": "las cortinas se cierran sobre el casco"
+    },
+    {
+      "rol": "veredicto",
+      "voz": "Veredicto: mito.",
+      "visual": "el sello MITO golpea sobre el casco"
+    },
+    {
+      "rol": "revelacion",
+      "voz": "Sí hubo cascos con cuernos, pero de siglos antes y para ceremonias.",
+      "visual": "línea de tiempo: cascos de bronce muy antiguos y vikingos mucho después"
+    },
+    {
+      "rol": "remate",
+      "voz": "—Mi boina... —murmuró Tito, entregándola.",
+      "visual": "Tito triste deja su boina sobre el escritorio"
+    },
+    {
+      "rol": "remate",
+      "voz": "A veces lo que todos saben es solo un buen vestuario.",
+      "visual": "Sombra explica y luego piensa; Tito escucha"
+    },
+    {
+      "rol": "remate",
+      "voz": "¿Qué otra cosa creías solo porque la viste en una película?",
+      "visual": "Sombra señala hacia la cámara"
+    },
+    {
+      "rol": "cierre",
+      "voz": "¿Mito o verdad? Escribe qué otro mito creías de niño.",
+      "visual": "fondo azul noche con halo; la marca pone el logo y la pregunta"
+    }
   ],
-  "caption": "Tu idea de los vikingos viene de un vestuario de 1876. ¿Qué otro mito creías de niño? Escríbelo aquí abajo.",
-  "hashtags": ["#vikingos", "#mitos", "#historia", "#sombradeevidencia"]
+  "caption": "Tito apostó su boina y Sombra le pidió evidencia. ¿Mito o verdad? Escribe qué otro mito creías de niño.",
+  "hashtags": [
+    "#vikingos",
+    "#mitos",
+    "#historia",
+    "#sombradeevidencia"
+  ]
 }

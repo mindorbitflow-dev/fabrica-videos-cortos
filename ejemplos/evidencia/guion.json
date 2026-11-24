@@ -1,105 +1,36 @@
 {
   "tema": "Tu anillo de diamante es publicidad - De Beers y \"un diamante es para siempre\"",
-  "titulo": "Tu anillo de diamante lo diseñó una agencia de publicidad",
-  "portada": {
-    "texto": "TU DIAMANTE ES PUBLICIDAD",
-    "destacado": "PUBLICIDAD",
-    "sub": "y los \"dos sueldos\" también"
-  },
+  "serie": "origen",
+  "titulo": "Tu diamante es publicidad, no amor",
+  "portada": {"texto": "TU DIAMANTE ES PUBLICIDAD", "destacado": "PUBLICIDAD", "sub": "y los \"dos sueldos\" también"},
   "escenas": [
-    {
-      "rol": "gancho",
-      "voz": "Tito pagó dos sueldos por un diamante. Si lo vende, le dan mucho menos.",
-      "visual": "Tito abre la cajita en primer plano: 2 SUELDOS"
-    },
-    {
-      "rol": "pregunta",
-      "voz": "—Esa regla no es amor, Tito. La inventó De Beers.",
-      "visual": "Sombra detrás del escritorio, Tito enfrente con la cajita"
-    },
-    {
-      "rol": "mecanismo",
-      "voz": "En 1870 aparecieron en Sudáfrica tantos diamantes que podían valer casi nada.",
-      "visual": "mina a cielo abierto con obreros; 1870"
-    },
-    {
-      "rol": "mecanismo",
-      "voz": "Así que De Beers compró las minas y se quedó con casi todos.",
-      "visual": "diez diamantes, nueve se vuelven dorados"
-    },
-    {
-      "rol": "mecanismo",
-      "voz": "Los guardaba bajo llave y soltaba poquitos, para que parecieran escasos.",
-      "visual": "arriba una vitrina con un diamante, abajo una bodega repleta"
-    },
-    {
-      "rol": "reenganche",
-      "voz": "—¿Escasos? ¡Pero si tenían bodegas llenas! —dijo Tito.",
-      "visual": "Tito interrumpe en la oficina"
-    },
-    {
-      "rol": "mecanismo",
-      "voz": "En 1938 casi nadie compraba. Así que contrataron publicistas.",
-      "visual": "sala de juntas con publicistas"
-    },
-    {
-      "rol": "mecanismo",
-      "voz": "Les prestaban joyas a las estrellas de cine para que brillaran en pantalla.",
-      "visual": "cámara de cine, reflector y una estrella con un anillo"
-    },
-    {
-      "rol": "reenganche",
-      "voz": "Y en 1947 una publicista escribió la frase que lo cambió todo.",
-      "visual": "máquina de escribir tecleando; 1947"
-    },
-    {
-      "rol": "revelacion",
-      "voz": "«Un diamante es para siempre».",
-      "visual": "la frase en grande, dorada"
-    },
-    {
-      "rol": "revelacion",
-      "voz": "Suena romántico. Pero el mensaje escondido era otro: nunca lo vendas.",
-      "visual": "el anillo en un cajón que se cierra con candado"
-    },
-    {
-      "rol": "revelacion",
-      "voz": "Porque si todos revendieran sus anillos, el precio se iría al piso.",
-      "visual": "multitud con anillos hacia una tienda; flecha que cae"
-    },
-    {
-      "rol": "revelacion",
-      "voz": "—¿Y lo de los dos sueldos? —Salió de sus anuncios, Tito.",
-      "visual": "anuncio de periódico de los 80: ¿dos meses de sueldo?"
-    },
-    {
-      "rol": "remate",
-      "voz": "—El amor no cambió, Tito. Lo que cambió fue la publicidad.",
-      "visual": "Sombra se inclina sobre el escritorio; Tito baja las orejas"
-    },
-    {
-      "rol": "cierre",
-      "voz": "¿Cuántos sueldos costó el anillo en tu casa? Escríbelo aquí abajo.",
-      "visual": "fondo negro con halo; la marca pone el logo y la pregunta"
-    }
+    {"rol": "gancho", "voz": "Tito pagó dos sueldos por un anillo que ahora no vale nada.", "visual": "Tito entra orgulloso con la cajita del anillo y la abre; rótulo 2 SUELDOS"},
+    {"rol": "gancho", "voz": "Sombra le dio la peor noticia: no es mala suerte, es un plan.", "visual": "Sombra, serio, se levanta detrás del escritorio"},
+    {"rol": "pregunta", "voz": "—¿Un plan? ¡Yo lo compré por amor! —gritó Tito.", "visual": "Tito indignado salta y señala; Sombra, de brazos cruzados"},
+    {"rol": "pregunta", "voz": "Sombra abrió un expediente con una sola palabra: De Beers.", "visual": "el expediente cae sobre el escritorio con el nombre DE BEERS"},
+    {"rol": "mecanismo", "voz": "Hace unos 150 años aparecieron diamantes por todas partes.", "visual": "mina a cielo abierto en terrazas con obreros; rótulo SUDÁFRICA"},
+    {"rol": "mecanismo", "voz": "A los dueños les dio pánico: si había tantos, valdrían nada.", "visual": "hombres de traje en una sala de juntas, alarmados"},
+    {"rol": "mecanismo", "voz": "Así que juntaron todas las minas bajo una sola empresa.", "visual": "mapa de minas que se unen; un sello de la empresa"},
+    {"rol": "mecanismo", "voz": "Y guardaron los diamantes bajo llave, en una bodega gigante.", "visual": "estante lleno de diamantes y un candado que cae con golpe"},
+    {"rol": "reenganche", "voz": "—¿Escondidos? ¡Pero eso es trampa! —dijo Tito.", "visual": "Tito indignado en primer plano"},
+    {"rol": "mecanismo", "voz": "Soltaban unos pocos a la vez, para que parecieran un tesoro.", "visual": "vitrina con un solo diamante brillando"},
+    {"rol": "mecanismo", "voz": "Pero había otro problema: casi nadie los compraba.", "visual": "tienda vacía con el dueño cabizbajo"},
+    {"rol": "mecanismo", "voz": "Así que contrataron a una agencia de publicidad.", "visual": "sala de juntas con publicistas y el caballete"},
+    {"rol": "mecanismo", "voz": "Su idea fue vender un sentimiento, no una piedra.", "visual": "el caballete dibuja un corazón con un diamante"},
+    {"rol": "mecanismo", "voz": "Les prestaron diamantes a las estrellas de cine.", "visual": "plató con foco y una estrella que levanta un diamante"},
+    {"rol": "mecanismo", "voz": "Las revistas hablaron de amor, y todos quisieron uno.", "visual": "revistas y carteles que llegan volando con diamantes"},
+    {"rol": "reenganche", "voz": "—Espera... ¿yo caí en una campaña? —susurró Tito.", "visual": "Tito, boquiabierto, primer plano"},
+    {"rol": "mecanismo", "voz": "Entonces una redactora escribió cuatro palabras que lo cambiaron todo.", "visual": "máquina de escribir tecleando una frase"},
+    {"rol": "revelacion", "voz": "Un diamante es para siempre.", "visual": "la frase en grande, dorada, con motas de luz"},
+    {"rol": "revelacion", "voz": "Suena romántico. Pero escondía una orden: nunca lo vendas.", "visual": "el anillo en un cajón que se cierra con candado"},
+    {"rol": "revelacion", "voz": "Porque si todos vendieran sus anillos, el precio se vendría abajo.", "visual": "fila de gente que llega a una tienda COMPRAMOS y una gráfica que cae"},
+    {"rol": "revelacion", "voz": "Por eso nadie te dice cuánto vale uno usado.", "visual": "primer plano de una vitrina y una etiqueta sin precio"},
+    {"rol": "reenganche", "voz": "—Entonces... ¿y los dos sueldos? —preguntó Tito.", "visual": "Tito mira a Sombra, temeroso"},
+    {"rol": "revelacion", "voz": "También salieron de sus anuncios.", "visual": "anuncio de periódico: ¿Dos meses de sueldo?"},
+    {"rol": "remate", "voz": "—El amor no cambió, Tito. Lo que cambió fue la publicidad.", "visual": "Sombra se inclina sobre el escritorio; Tito baja la cabeza"},
+    {"rol": "remate", "voz": "Tito miró su anillo en silencio.", "visual": "Tito de cerca, con el anillo en la mano, triste"},
+    {"rol": "cierre", "voz": "¿Cuántos sueldos costó el anillo en tu casa? ¿Amor o publicidad?", "visual": "fondo azul noche con halo; la marca pone el logo y la pregunta"}
   ],
-  "caption": "Dos sueldos por un anillo no es tradición: es un anuncio de De Beers. ¿Cuántos sueldos costó el anillo en tu casa? Escríbelo aquí abajo.",
-  "hashtags": [
-    "#diamantes",
-    "#publicidad",
-    "#historia",
-    "#debeers",
-    "#negocios"
-  ],
-  "post": {
-    "pregunta": "¡Gasté *dos sueldos* en este anillo! Así se hace, ¿no?",
-    "respuesta": "Esa regla no es tradición, Tito. Salió de los *anuncios de De Beers*, la empresa que controlaba casi todos los diamantes del mundo.",
-    "caption": "¿De dónde salió eso de gastar dos sueldos en un anillo? Spoiler: no fue del amor. ¿Tú también lo creías? Etiqueta a quien está por comprar uno.\nEl video completo está en la página.",
-    "hashtags": [
-      "#diamantes",
-      "#debeers",
-      "#publicidad",
-      "#historia"
-    ]
-  }
+  "caption": "Un diamante usado vale una fracción de lo que costó, y no es casualidad. ¿Cuántos sueldos costó el anillo en tu casa? ¿Amor o publicidad?",
+  "hashtags": ["#diamantes", "#debeers", "#publicidad", "#sombradeevidencia"]
 }

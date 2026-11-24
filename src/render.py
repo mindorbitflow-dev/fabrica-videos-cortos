@@ -199,7 +199,7 @@ async def _hoja_contacto(html: Path, destino: Path, por_escena: int) -> tuple[li
                     local = max(0.4, esc["dur"] * (0.12 + 0.8 * n / (MUESTRAS - 1)))
                     await pag.evaluate("t => __seek(t)", esc["inicio"] + min(local, esc["dur"] - 0.02))
                     fotos.append(Image.open(BytesIO(await pag.screenshot(type="jpeg", quality=80))))
-                movimientos.append(_movimiento(fotos))
+                movimientos.append(_movimiento(fotos) if esc["dur"] >= 1.6 else None)   # las pausas dramáticas (1-2 palabras) no pueden mostrar mucho movimiento
                 cuadros += [(i, fotos[n]) for n in en_hoja]
             errores += await pag.evaluate("window.__errores || []")
         finally:
@@ -222,5 +222,5 @@ def hoja_contacto(html: Path, destino: Path, por_escena: int = 3) -> tuple[list[
     Devuelve (hojas, errores de JavaScript, avisos). Los avisos señalan las escenas casi estáticas: no impiden renderizar."""
     hojas, errores, mov = asyncio.run(_hoja_contacto(Path(html), Path(destino), por_escena))
     avisos = [f"escena {i + 1} casi estática (movimiento {m:.1f}, mínimo {UMBRAL_MOVIMIENTO}): añade acción al personaje, mueve la cámara con K.plano o haz entrar un objeto"
-              for i, m in enumerate(mov[:-1]) if m < UMBRAL_MOVIMIENTO]   # la última (la pregunta) es solo fondo: la marca pone el texto
+              for i, m in enumerate(mov[:-1]) if m is not None and m < UMBRAL_MOVIMIENTO]   # la última (la pregunta) es solo fondo: la marca pone el texto
     return hojas, errores, avisos

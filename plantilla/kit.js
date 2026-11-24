@@ -89,6 +89,15 @@ window.K = (() => {
     ctx.save(); ctx.translate(W / 2, centroY); ctx.scale(z, z); ctx.translate(-cx, -cy); fn(); ctx.restore();
   }
 
+  // Corte de montaje entre planos FIJOS dentro de una escena (el equivalente a cambiar de cámara; sin zoom animado). `inicios` = fracciones de la escena
+  // en que arranca cada plano, p. ej. [0, .45, .8]. Devuelve { i, t, d }: plano activo y su tiempo local, para dibujar cada plano con su propio K.plano:
+  //   const c = K.corte(t, d, [0, .5]); c.i === 0 ? planoGeneral(c.t, c.d) : primerPlano(c.t, c.d);
+  function corte(t, d, inicios) {
+    const f = t / Math.max(d, .01); let i = 0;
+    while (i < inicios.length - 1 && f >= inicios[i + 1]) i++;
+    const ini = inicios[i] * d, fin = (i + 1 < inicios.length ? inicios[i + 1] : 1) * d;
+    return { i, t: t - ini, d: Math.max(fin - ini, .01) };
+  }
   // Sacudida que se apaga sola (un sello que cae, un candado que cierra): t0 = segundo del impacto, f = fuerza en px. Suma el resultado
   // a una traslación de toda la escena: ctx.translate(0, K.golpe(t, d * .7)).
   const golpe = (t, t0, f = 14) => { const k = t - t0; return k < 0 || k > .45 ? 0 : Math.sin(k * 60) * f * (1 - k / .45); };
@@ -96,9 +105,10 @@ window.K = (() => {
   //   K.plano(ctx, t, d, { de: {x:540, y:900, z:1.3}, a: {x:700, y:820}, mano: 1, T, fondo: () => D.fondo.calle(ctx, T, {}), paralaje: .6 }, () => { ...personajes y props... })
   // `z` es el encuadre fijo de la escena (el de `de`; 1 = cuadro completo, 1.3-1.7 = plano cerrado sobre los personajes) y no cambia durante la escena.
   // Con `fondo`, el decorado se dibuja aparte y se mueve solo `paralaje` (0-1) de lo que se mueve la cámara: profundidad real.
+  // Con `frente: ctx => {...}`, un primer plano (una planta, el borde de un mueble, el hombro de un personaje) se dibuja DESPUÉS de la acción y se mueve `paralajeFrente` (>1) veces más.
   // El fondo nunca deja ver el borde del lienzo (su zoom sube lo necesario). `curva`: suave (por defecto) | sale | rebote | f(k).
   // Devuelve la cámara de ese instante {x, y, z}, por si hay que colocar algo en pantalla.
-  function plano(ctx, t, d, { de, a = de, mano = 0, T = 0, curva = suave, fondo = null, paralaje = .6, centroY = 760 } = {}, fn) {
+  function plano(ctx, t, d, { de, a = de, mano = 0, T = 0, curva = suave, fondo = null, paralaje = .6, frente = null, paralajeFrente = 1.4, centroY = 760 } = {}, fn) {
     const k = (typeof curva === 'function' ? curva : suave)(clamp(t / Math.max(d, .01)));
     const x = lerp(de.x, a.x, k) + Math.sin(T * 1.9) * 5 * mano, y = lerp(de.y, a.y, k) + Math.cos(T * 2.3) * 4 * mano, z = de.z;   // encuadre fijo: el zoom animado se deja al editor
     if (fondo) {
@@ -108,6 +118,7 @@ window.K = (() => {
       camara(ctx, xf, yf, zf, fondo, centroY);
     }
     camara(ctx, x, y, z, fn, centroY);
+    if (frente) camara(ctx, W / 2 + (x - W / 2) * paralajeFrente, centroY + (y - centroY) * paralajeFrente, 1 + (z - 1) * paralajeFrente, () => frente(ctx), centroY);   // primer plano: se mueve MÁS que la acción
     return { x, y, z };
   }
 
@@ -205,6 +216,6 @@ window.K = (() => {
   const listo = Promise.all(['40px "Space Mono"', '40px Anton', '800 40px Montserrat', '900 40px Montserrat']
     .map(f => document.fonts.load(f).catch(() => null)));
 
-  return { W, H, TAU, clamp, lerp, suave, sale, rebote, prog, hash, azar, latido, alfa, mezcla, fondo, halo, rayos, motas, acabado, camara, plano, golpe,
+  return { W, H, TAU, clamp, lerp, suave, sale, rebote, prog, hash, azar, latido, alfa, mezcla, fondo, halo, rayos, motas, acabado, camara, plano, corte, golpe,
            curva, extremidad, enRuta, ruta, trazo, redondo, rotulo, pastilla, barra, MONO, TITULAR, TEXTO, listo };
 })();

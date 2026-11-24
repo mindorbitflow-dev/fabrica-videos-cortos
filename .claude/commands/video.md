@@ -66,7 +66,7 @@ escena 1 sin título, movimiento obligatorio) vale para las dos.
   acusación. Tito nunca queda en ridículo: el error es del mito. Ejemplo completo: `ejemplos/evidencia_mito/` (léelo entero antes de dibujar).
   Elige un mito que de verdad sea falso o a medias (confírmalo en 2 fuentes serias con WebSearch; si los expertos lo discuten, elige otro). Evita los que ya son
   un cliché de internet (el 10 % del cerebro). Estructura (`rol`): `gancho` (Tito jura el mito con total seguridad; la primera frase es el mito dicho como un hecho,
-  de 14 palabras o menos) → `pregunta` (Sombra: "Voy a pedir la evidencia, Tito. Esa imagen tiene un autor.") → `mecanismo` (6-9 escenas: qué dice la evidencia real
+  de 14 palabras o menos) → `pregunta` (Sombra: "Voy a pedir la evidencia, Tito. Esa imagen tiene un autor.") → `mecanismo` (10-14 escenas: qué dice la evidencia real
   con un nombre, un lugar o una fecha, y de dónde salió el mito: quién, cuándo y por qué se volvió popular) con un `reenganche` de Tito que se resiste ("—¿Ni un cuerno?
   ¡Pero si los vi en mil películas!") → `veredicto` (UNA escena, frase corta: "Veredicto: mito." / "Veredicto: verdad." / "Veredicto: media verdad."; el sello
   `D.sello(ctx, x, y, s, {texto:'MITO'|'VERDAD'|'MEDIA VERDAD', golpe})` cae sobre el objeto del tema con `K.golpe`) → `revelacion` (opcional: el matiz, qué parte sí era cierta)
@@ -75,15 +75,24 @@ escena 1 sin título, movimiento obligatorio) vale para las dos.
   = el dato que rompe la creencia, termina con la misma pregunta del cierre.
 - **Se cuenta como una historia, no como un dato**: tono informal, como si se lo contaras a un amigo ("Resulta que...",
   "Y aquí viene lo bueno", "Imagínate"). Palabras de todos los días; nada de términos técnicos (si hace falta uno, explícalo con
-  algo cotidiano). Pocas cifras: solo las 2-3 que de verdad sorprenden, redondeadas ("casi todos", "unos 15 años"). Los años y
-  nombres van mejor en los rótulos del dibujo que en la voz. Los diálogos entre Tito y Sombra suenan naturales y con emoción.
+  algo cotidiano). **Como máximo UNA cifra en la voz** (la más fuerte, redondeada: "casi todos", "unos 15 años"); los demás años,
+  montos y nombres van en los rótulos del dibujo, no en la voz. Los diálogos entre Tito y Sombra suenan naturales y con emoción.
+- **DRAMATIZACIÓN Y CONTROVERSIA (lo que hace que se comente y se comparta):** los datos son la prueba; la historia es el conflicto.
+  Cada escena empuja una emoción (sospecha, burla, traición, miedo a perder, alivio) y cada 3 escenas hay un giro, una interrupción o una
+  pregunta sin respuesta. Tito y Sombra CHOCAN: Tito se resiste ("¡Eso es mentira!"), apuesta ("Apuesto mi boina."), se enoja, duda y por fin
+  se rinde; Sombra provoca con preguntas cortas ("¿Y quién ganó con eso, Tito?"). Un giro a mitad del video y otro antes del final, y una
+  PAUSA DRAMÁTICA (una escena de 1-3 palabras: "Mentira." / "Nadie lo dijo.") justo antes de la revelación. El final obliga a tomar bando
+  ("¿Mito o verdad? Escribe tu voto."). Controversia permitida: casos de empresas, gobiernos o instituciones, SOLO si están DOCUMENTADOS
+  (sentencias, informes oficiales, archivos públicos; 2 fuentes serias con WebSearch); jamás acusar de un delito a una persona viva, y nada de
+  salud, política partidista o religión.
 - **Hechos 100 % reales y documentados**: años, empresas, cifras y frases tal como pasaron. El tono es de conspiración; el contenido
   no. Nada de teorías falsas, nada de salud o medicina, nada que acuse a una persona viva de un delito. Si un dato no es seguro,
   quítalo. Nada de esto es ficción: no pongas avisos de ficción.
-- **Estas reglas reemplazan la duración, la estructura y el cierre de la parte general.** Meta empuja los Reels de 35-70 s:
-  **14-18 escenas de 1 frase corta (5-14 palabras), 130-170 palabras en total (50-65 s; nunca más de 70 s).** Nada de pausas.
-- **Cada escena empuja la acusación.** Si quitas una escena y el video se entiende igual, quítala. Antes de entregar, cuenta las
-  palabras y recorta hasta que quepa.
+- **Estas reglas reemplazan la duración, la estructura y el cierre de la parte general.** Facebook ya no pone tope a los Reels y los de
+  1-3 minutos dan más interacción: **26-32 escenas de 1 frase corta (4-14 palabras), 260-330 palabras en total (95-120 s a ~2,85 palabras por segundo; nunca más de 130 s).**
+  Nada de pausas, salvo la pausa dramática de arriba.
+- **Cada escena empuja la historia (el conflicto o la acusación).** Si quitas una escena y el video se entiende igual, quítala. Antes de
+  entregar, cuenta las palabras y recorta o amplía hasta que quepa (el ejemplo con 250 palabras duró 88 s: apunta a 280-320).
 - **El medio se comprime, no se explica.** Cómo se descubrió (un post de Reddit, una prueba, una investigación, un velocímetro,
   un experimento) cabe en UNA escena de máx. 12 palabras ("Un usuario le cambió la batería y su iPhone volvió a volar.").
   Nunca dos escenas sobre el mismo paso.
@@ -93,9 +102,9 @@ escena 1 sin título, movimiento obligatorio) vale para las dos.
   enemigo."); nunca empieza con un año, "Antes de...", "En 1967..." ni con contexto. Los años y el "cómo pasó" van después.
 - Estructura (`rol`): `gancho` (1-2 escenas: polémica que toca al espectador, con la marca; la primera frase ya choca, nunca
   "Tito llegó a la oficina...") → `pregunta` (1 escena: Sombra responde corto e inquietante: "Esa regla la inventó De Beers.") →
-  `mecanismo` (flashback rápido en 7-10 escenas: el problema que tenían, qué hicieron, cómo lo ocultaron; empieza por el
+  `mecanismo` (flashback rápido en 12-16 escenas: el problema que tenían, qué hicieron, cómo lo ocultaron; empieza por el
   momento más fuerte, no por el más antiguo) con un `reenganche` cada 3-4 escenas, que de preferencia es **Tito interrumpiendo**
-  con una frase corta y emocional ("—¿Escasos? ¡Si tenían bodegas llenas!") → `revelacion` (2-3 escenas: lo más oscuro, que toca
+  con una frase corta y emocional ("—¿Escasos? ¡Si tenían bodegas llenas!") → `revelacion` (3-4 escenas: lo más oscuro, que toca
   el bolsillo o la vida del espectador) → `remate` (1 escena: la lección de Sombra o el consejo útil: "Cambia la batería antes
   de comprar otro.") → `cierre` (1 escena, ver abajo).
 - **Final con pelea (`cierre`)**: la última escena NO es "síguenos" ni el lema: es una pregunta que obliga a comentar algo
@@ -204,6 +213,17 @@ Ejemplo completo para imitar: `ejemplos/evidencia/` (serie origen) o `ejemplos/e
   la gente del flashback ≥ 0.6 y solo las multitudes lejanas más pequeñas. Un rótulo (`pastilla`) que deba verse entero va FUERA de `K.plano`
   (coordenadas de pantalla); si va dentro, se mueve con la cámara. Nunca dos escenas seguidas con el mismo decorado y el mismo encuadre: cambia
   de lugar, de plano o de lado.
+- **CORTES, PROFUNDIDAD Y ESCALA (videos de 90-120 s: hay que renovar la imagen sin acercar la cámara):**
+  - **Cortes de montaje**, no zoom: dentro de una escena larga cambia de plano con `K.corte(t, d, [0, .5])` → `{i, t, d}` (plano activo y su tiempo local) y dibuja
+    cada plano con su propio `K.plano` y su encuadre FIJO (general → medio → detalle → contraplano). Planea 8-12 cortes en todo el video; nunca dos planos
+    iguales seguidos y nunca un corte sin que cambie el ángulo, el lugar o el tamaño del encuadre.
+  - **Profundidad:** `K.plano(..., { fondo, paralaje: .5, frente: ctx => {...} })`; el `frente` es un primer plano (una planta, el borde del escritorio, el hombro de
+    un personaje) que se mueve más que la acción. Pon un `frente` en al menos 1 de cada 3 escenas.
+  - **Escala coherente (el personaje manda):** a escala 1, Sombra mide 430 px, Tito 344, un adulto 410-430 y un niño 280. Un objeto que comparte cuadro con un personaje
+    respeta la proporción real: mesa a la cintura (≈ 0,45 de la altura), puerta ≈ 1,2, vitrina ≈ 0,9, periódico abierto ≈ 0,35, caja de regalo ≈ 0,2, casco ≈ 0,17,
+    anillo o diamante ≈ 0,04. Un objeto PEQUEÑO que es el protagonista del tema se muestra en su propio plano de detalle (sin personajes al lado) o en la mano del
+    personaje a su tamaño real. Nunca un objeto más grande que la cabeza de quien lo sostiene (salvo en un globo de pensamiento pequeño, que no sustituye a una escena).
+  - Los personajes en plano medio van a escala 1,4-2,0; las multitudes y obreros, ≥ 0,6 cuando son protagonistas del cuadro.
 - **Escena 1: Tito grande y con una emoción EXAGERADA que cambia según el tema**, desde el primer cuadro (el video no lleva título encima: arranca directo en el gancho).
   No repitas siempre la misma: elige la que pide la historia (indignado porque le cobraron de más, horrorizado al ver la
   etiqueta, orgulloso y feliz justo antes de enterarse, desesperado con el teléfono lento, confundido, furioso, muerto de

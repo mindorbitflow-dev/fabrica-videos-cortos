@@ -189,10 +189,15 @@ def _avisos_historia(guion: dict) -> list[str]:
     escenas = guion.get("escenas") or []
     palabras = sum(len(str(e.get("voz", "")).split()) for e in escenas)
     avisos = []
-    if palabras > 175:
-        avisos.append(f"guion largo: {palabras} palabras (≈{round(palabras / 2.9)} s); lo ideal son 130-170 (50-65 s)")
-    if len(escenas) > 19:
-        avisos.append(f"{len(escenas)} escenas; lo ideal son 14-18")
+    if palabras > 345:
+        avisos.append(f"guion largo: {palabras} palabras (≈{round(palabras / 2.9)} s); lo ideal son 260-330 (95-120 s)")
+    elif palabras < 250:
+        avisos.append(f"guion corto: {palabras} palabras (≈{round(palabras / 2.9)} s); lo ideal son 260-330 (95-120 s)")
+    if len(escenas) > 33 or len(escenas) < 25:
+        avisos.append(f"{len(escenas)} escenas; lo ideal son 26-32")
+    cifras = len(re.findall(r"\d[\d.,]*", " ".join(str(e.get("voz", "")) for e in escenas[:-1])))
+    if cifras > 2:
+        avisos.append(f"{cifras} cifras o años en la voz; deja una sola (la más fuerte) y pasa el resto a rótulos")
     if escenas and len(str(escenas[0].get("voz", "")).split()) > 14:
         avisos.append("la primera frase pasa de 14 palabras")
     primera = str(escenas[0].get("voz", "")).strip() if escenas else ""
