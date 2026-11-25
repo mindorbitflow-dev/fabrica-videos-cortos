@@ -696,5 +696,19 @@
   "tema": "La fecha de consumir preferentemente",
   "titulo": "Esa fecha del envase no dice si se echó a perder",
   "serie": "origen"
+ },
+ {
+  "id": "20261125_033653_james-dyson-5-127-prototipos-antes-del-e",
+  "fecha": "2026-11-25T03:39:56",
+  "nicho": "riesgo",
+  "tema": "James Dyson: 5.127 prototipos antes del éxito",
+  "titulo": "Fracasó 5.126 veces antes de ganar"
+ },
+ {
+  "id": "20261125_033653_james-dyson-5-127-prototipos-antes-del-e_en",
+  "fecha": "2026-11-25T03:42:11",
+  "nicho": "riesgo",
+  "tema": "James Dyson: 5.127 prototipos antes del éxito",
+  "titulo": "He failed 5,126 times before winning"
  }
 ]
