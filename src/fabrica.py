@@ -225,10 +225,10 @@ def _avisos_riesgo(guion: dict) -> list[str]:
     escenas = guion.get("escenas") or []
     palabras = sum(len(str(e.get("voz", "")).split()) for e in escenas)
     avisos = []
-    if palabras > 150 or palabras < 90:
-        avisos.append(f"guion de {palabras} palabras (≈{round(palabras / 2.9)} s); lo ideal son 100-140 (35-50 s)")
-    if len(escenas) > 17 or len(escenas) < 11:
-        avisos.append(f"{len(escenas)} escenas; lo ideal son 12-16")
+    if palabras > 190 or palabras < 90:
+        avisos.append(f"guion de {palabras} palabras (≈{round(palabras / 2.9)} s); lo ideal son 100-170 (35-60 s)")
+    if len(escenas) > 20 or len(escenas) < 11:
+        avisos.append(f"{len(escenas)} escenas; lo ideal son 12-18")
     roles = {e.get("rol") for e in escenas}
     for rol in ("gancho", "giro", "moraleja"):
         if rol not in roles:
@@ -314,6 +314,7 @@ def componer_html(p: dict) -> str:
         base = ["kit.js", "ilustra.js"] + list(conf.get("libs2d") or [])
     else:
         base = ["kit.js", "sombra.js"] + (["ilustra.js", "sombra_ilustra.js", "decorados.js"] if conf.get("personajes") == "ilustra" else [])
+        base += list(conf.get("libs") or [])   # librerías extra del nicho (p. ej. escala3d.js, el pseudo-3D de ¿Lo arriesgarías?)
     scripts = [(PLANTILLA / f).read_text(encoding="utf-8") for f in base] + [escenas_js(p).read_text(encoding="utf-8"), (PLANTILLA / "motor.js").read_text(encoding="utf-8")]
     js = "".join("<script>" + s.replace("</script", "<\\/script") + "</script>\n" for s in scripts)
     n = len(p["escenas"])

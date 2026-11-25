@@ -251,6 +251,9 @@ def _con_gemini(nicho: str, tema: str, router: LLMRouter, avisar, serie: str | N
         kit += "\n" + (RAIZ / "plantilla" / "sombra.js").read_text(encoding="utf-8")
         kit += "\n" + (RAIZ / "plantilla" / "sombra_ilustra.js").read_text(encoding="utf-8")   # S30.actua, S30.camina y los personajes con pose
         kit += "\n" + (RAIZ / "plantilla" / "decorados.js").read_text(encoding="utf-8")
+    for lib in conf.get("libs") or []:   # librerías extra (pseudo-3D): solo su cabecera documentada
+        texto = (RAIZ / "plantilla" / lib).read_text(encoding="utf-8")
+        kit += "\n" + texto[:texto.find("(() => {") if "(() => {" in texto else 6000][:6000]
     if dos_d:  # librería 2D del nicho: solo su cabecera (la API documentada), no todo el código
         for lib in conf.get("libs2d") or []:
             texto = (RAIZ / "plantilla" / lib).read_text(encoding="utf-8")

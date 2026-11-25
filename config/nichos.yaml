@@ -193,14 +193,16 @@ estafa:
 riesgo:
   nombre: 🎲 ¿Lo arriesgarías?
   descripcion: >-
-    Historias REALES de personas famosas y de negocios que lo apostaron todo (despedidos, rechazados, en quiebra, sin dinero para la renta)
-    y lo que pasó después, contadas en 35-50 s con una silueta sin rostro, títulos gigantes y un giro que cambia cómo ves al personaje.
-    Cierra con un reto que divide los comentarios: «¿tú lo habrías arriesgado todo?». Cada video sale en español y en inglés.
+    Escalas de dinero y fortunas REALES convertidas en objetos gigantes en pseudo-3D (una torre de billetes que no termina, miles de
+    personas, la Tierra de noche, una pirámide) con una cámara que viaja, atadas a una historia de riesgo («empezó con 500 dólares»).
+    35-60 s, números concretos y verificados, y un reto final que divide los comentarios: «¿tú lo habrías arriesgado todo?».
+    Cada video sale en español y en inglés.
   tono: >-
-    Narrador directo y con tensión, frases cortas, números concretos (dólares, años, intentos) y un giro. Admira sin adorar: muestra el
-    costo real de arriesgarse y deja que el espectador decida. Todo verificable con fuentes; nada de rumores ni frases inventadas.
-  formato: riesgo        # gancho → el riesgo → la caída → el giro → el resultado → la moraleja → el reto (reglas en .claude/commands/video-riesgo.md)
+    Narrador directo y con tensión, frases cortas, una cifra por escena y cada una más grande que la anterior. Admira sin adorar: muestra
+    el costo real y la suerte que hubo. Todo verificable con fuentes; nada de rumores ni frases inventadas.
+  formato: riesgo        # gancho → escalas → giro → riesgo → caída → moraleja → reto (reglas en .claude/commands/video-riesgo.md)
   personajes: ilustra    # silueta sin rostro (S30.hombre con silueta: true) sobre los decorados D
+  libs: [escala3d.js]    # pseudo-3D (E3): torres de billetes, multitudes, la Tierra, cámara que viaja (cabecera de plantilla/escala3d.js)
   comando: video-riesgo
   cuadros_hoja: 2
   temas: libre           # Claude elige cada historia con WebSearch; la lista es solo de ejemplo
@@ -218,19 +220,18 @@ riesgo:
   lema: "¿Lo arriesgarías?"
   paleta: {fondo: ["#2a1b4d", "#1a1033", "#0d0820"], acento: "#FFD23F", principal: "#FFFFFF", secundario: "#8E7CC3", peligro: "#FF4B3E", ok: "#5BBF7A"}
   ideas:
-    # solo ejemplos de la clase de historia (Claude elige y verifica la suya, y no repite las ya hechas)
+    # solo ejemplos de la clase de video (Claude elige y verifica el suyo y no repite los ya hechos; las cuentas las comprueba él)
+    - Si ganaras un dólar por segundo - cuánto tardarías en tener la fortuna de Elon Musk (ya hecho como ejemplo)
+    - Un billón de dólares en billetes de 100 apilados llegaría a más de 1.000 km de altura
+    - Cuánto tardarías en contar hasta mil millones sin parar
+    - Lo que ingresa por segundo una de las mayores empresas del mundo
+    - Si el dinero de una gran fortuna fueran billetes de un dólar en fila, hasta dónde llegarían
     - Steve Jobs - lo echaron de Apple y volvió para salvarla
     - James Dyson y sus 5.127 prototipos antes del primer éxito
-    - J. K. Rowling - doce editoriales rechazaron Harry Potter
     - Walt Disney - su primera empresa quebró antes de crear a Mickey
-    - El coronel Sanders empezó a vender franquicias a los 65 años
     - Airbnb vendía cereales de colección para pagar deudas
     - Netflix ofreció venderse a Blockbuster y se rieron
     - Phil Knight vendía zapatillas desde la cajuela de su auto antes de Nike
-    - Sylvester Stallone se negó a vender el guion de Rocky si no lo protagonizaba
-    - Oprah Winfrey - la sacaron de su primer puesto en televisión
-    - Michael Jordan no entró al equipo principal de su instituto
-    - Colgate, Ford o Honda - empresas que estuvieron a punto de desaparecer
 biologia:
   nombre: 🧬 Biología que no te contaron
   descripcion: Datos reales del cuerpo y los animales que contradicen lo que la gente cree, con giro sorprendente.
