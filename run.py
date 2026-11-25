@@ -94,6 +94,9 @@ def auto(nicho: str | None, musica: str, cantidad: int = 1) -> None:
             p = fabrica.fabricar(elegido, "aleatorio", router, musica=musica)
             print(f"Listo: {fabrica.mp4(p)} ({p['duracion']} s, voz {p['voz_usada']})")
             correo.enviar_video(p, enlace)
+            for v in map(fabrica.cargar, p.get("variantes") or []):   # el mismo video en otros idiomas, cada uno en su correo
+                print(f"Versión {v.get('idioma')}: {fabrica.mp4(v)} ({v['duracion']} s)")
+                correo.enviar_video(v, enlace)
             print("Correo enviado.")
             if os.getenv("GITHUB_ACTIONS"):   # el tema queda en GitHub apenas sale el correo: el respaldo y las tandas siguientes no lo repiten
                 from src import subir_historial
@@ -156,8 +159,12 @@ def autor(args) -> None:
     print(f"Listo: {fabrica.mp4(p)} ({p['duracion']} s, voz {p['voz_usada']})")
     for problema in p["verificacion"]:
         print(f"Aviso del MP4: {problema}")
+    versiones = fabrica.renderizar_variantes(p, musica=args.musica)
+    for v in versiones:
+        print(f"Versión {v['idioma']}: {fabrica.mp4(v)} ({v['duracion']} s, voz {v['voz_usada']})")
     if args.correo:
-        correo.enviar_video(p)
+        for x in [p, *versiones]:
+            correo.enviar_video(x)
         print("Correo enviado.")
         if correo.enviar_post(p):
             print("Post enviado.")

@@ -195,6 +195,7 @@
   // Firma: (ctx, x, y, s, o); (x, y) = pies, adulto ≈ 430*s de alto (como Sombra). o: T, dir, semilla, variante (si no, sale de la semilla),
   // gesto 'quieto' | 'apreton' | 'senala', cara 'serio' | 'sonrisa', paso (fase de caminata o null), corre, brazos 'abajo' | 'arriba', susto 0-1,
   // pose (nombre de pose del reparto: dePie, camina, corre, senalar, saludar, susto, cabizbajo, manosBolsillos...), habla 0-1. Devuelve las articulaciones J.
+  // silueta: true (o un color) = figura oscura SIN cara, solo con la luz de borde cálida (estilo de las historias de personajes reales: no se dibuja el rostro de nadie).
   const ROPAS = ['#5b6b80', '#7a5c48', '#6b7a62', '#8a6a4a', '#5a4a5e', '#4a5560', '#9a7a58', '#6a4a42'];
   const PELOS = ['#2b211d', '#4a3426', '#6b4a2e', '#1d1a1a', '#8a6a44'];
   const PIELES = ['#f0c4a0', '#e0a97f', '#e0a97f', '#c98f66', '#a56d48', '#7d4b32'];
@@ -206,22 +207,47 @@
     const hz = k => hash(semilla * 7.13 + k * 3.7), pick = (a, k) => a[Math.floor(hz(k) * a.length) % a.length];
     let variante = o.variante; if (!variante) { const q = hz(1); variante = q < .62 ? 'hombre' : q < .86 ? 'mujer' : 'anciano'; }
     const alto = Math.round(430 * s * (FACT[variante] || 1) * (variante === 'nino' ? 1 : .95 + hz(2) * .1));
-    const key = variante + '|' + alto + '|' + semilla;
-    const g = gente[key] || (gente[key] = R.gente(variante, Object.assign({ altura: alto, semilla: 40 + Math.floor(semilla) % 50, ropa: pick(ROPAS, 3), piel: pick(PIELES, 4), pantalon: pick(PANTS, 5) },
+    const sil = o.silueta ? (typeof o.silueta === 'string' ? o.silueta : '#16121f') : null;
+    const key = variante + '|' + alto + '|' + semilla + (sil ? '|' + sil : '');
+    const g = gente[key] || (gente[key] = R.gente(variante, sil ? Object.assign({ altura: alto, semilla: 40 + Math.floor(semilla) % 50, ropa: sil, piel: sil, pantalon: sil, pelo: sil, zapato: sil, camisa: sil, cuello: sil }, variante === 'hombre' ? { peinado: pick(['corto', 'corto', 'calvo'], 7) } : {}) : Object.assign({ altura: alto, semilla: 40 + Math.floor(semilla) % 50, ropa: pick(ROPAS, 3), piel: pick(PIELES, 4), pantalon: pick(PANTS, 5) },
       variante === 'anciano' ? {} : { pelo: pick(PELOS, 6) }, variante === 'hombre' ? { peinado: pick(['corto', 'corto', 'calvo'], 7) } : {})));
     const gesto = o.gesto || 'quieto', H = alto;
     let pose = 'dePie', expresion = o.cara === 'sonrisa' ? 'alegre' : 'neutra';
+    if (sil) expresion = 'neutra';
     if (o.paso != null) pose = o.corre ? 'corre' : 'camina'; else if (gesto === 'senala' || gesto === 'apreton') pose = 'senalar';
     if (o.brazos === 'arriba') pose = 'saludar';
     if (o.susto > .3) { pose = 'susto'; expresion = 'susto'; }
     if (o.pose) pose = o.pose;
-    if (o.expresion) expresion = o.expresion;
+    if (o.expresion && !sil) expresion = o.expresion;
+    const est = Object.assign({ x, y, dir, pose, expresion, mirada: [.4, 0], luz: LUZ, dist: o.paso != null ? o.paso * .5 * H : 0, habla: o.habla || (o.boca === 'habla' ? 1 : 0), alto: (o.susto || 0) * 40 * s },
+      o.pose2 ? { pose2: o.pose2, k: o.k || 0 } : {});
+    if (sil) return silueta(ctx, g, T, est, sil, alto);
     ctx.save();
-    const J = g.dibujar(ctx, T, Object.assign({ x, y, dir, pose, expresion, mirada: [.4, 0], luz: LUZ, dist: o.paso != null ? o.paso * .5 * H : 0, habla: o.habla || (o.boca === 'habla' ? 1 : 0), alto: (o.susto || 0) * 40 * s },
-      o.pose2 ? { pose2: o.pose2, k: o.k || 0 } : {}));
+    const J = g.dibujar(ctx, T, est);
     ctx.restore();
     return J;
   };
+  // SILUETA: el personaje se dibuja en un lienzo aparte y se recorta a una máscara plana (sin cara, corbata ni sombrero) con un borde cálido a la derecha,
+  // como las siluetas de las historias de personajes reales. Cuesta lo mismo que dibujar al personaje y no dibuja ninguna cara.
+  const siluetas = new Map();
+  const lienzoSil = (clave, w, h) => { let c = siluetas.get(clave); if (!c) { c = document.createElement('canvas'); c.width = w; c.height = h; siluetas.set(clave, c); } return c; };
+  function silueta(ctx, g, T, est, color, alto) {
+    g.o.despues = null; g.o.antes = null;   // sin corbata, sombrero ni bastón
+    const bw = Math.ceil(alto * 1.7), bh = Math.ceil(alto * 1.25), ox = bw / 2, oy = bh - 14;
+    const a = lienzoSil('a' + bw + 'x' + bh, bw, bh), b = lienzoSil('b' + bw + 'x' + bh, bw, bh), ca = a.getContext('2d'), cb = b.getContext('2d');
+    ca.setTransform(1, 0, 0, 1, 0, 0); ca.globalCompositeOperation = 'source-over'; ca.clearRect(0, 0, bw, bh);
+    const J = g.dibujar(ca, T, Object.assign({}, est, { x: ox, y: oy, sombraSuelo: false }));
+    ca.globalCompositeOperation = 'source-in'; ca.fillStyle = color; ca.fillRect(0, 0, bw, bh); ca.globalCompositeOperation = 'source-over';
+    cb.setTransform(1, 0, 0, 1, 0, 0); cb.globalCompositeOperation = 'source-over'; cb.clearRect(0, 0, bw, bh); cb.drawImage(a, 0, 0);
+    cb.globalCompositeOperation = 'source-in'; cb.fillStyle = '#ffb45e'; cb.fillRect(0, 0, bw, bh); cb.globalCompositeOperation = 'source-over';
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(est.x, est.y + 4, alto * .2, alto * .03, 0, 0, Math.PI * 2); ctx.fill();   // sombra en el suelo
+    const dx = Math.max(3, alto * .008);
+    ctx.drawImage(b, est.x - ox + dx, est.y - oy - dx * .4);   // borde de luz cálida a la derecha
+    ctx.drawImage(a, est.x - ox, est.y - oy);
+    ctx.restore();
+    return J;
+  }
   S30.mujer = (ctx, x, y, s, o = {}) => S30.hombre(ctx, x, y, s, Object.assign({ variante: 'mujer' }, o));
   window.S30_COLOR = true;
 })();

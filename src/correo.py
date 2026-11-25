@@ -79,11 +79,12 @@ def enviar_video(p: dict, enlace_respaldo: str = "") -> None:
         "──── TEXTO PARA PUBLICAR (cópialo) ────",
         fabrica.texto_publicacion(p), "",
         "──── DETALLES ────",
-        f"Nicho: {nicho}",
+        f"Nicho: {nicho}" + (f" · Idioma: {p['idioma']}" if p.get("idioma") else ""),
         f"Duración: {p.get('duracion', '?')} s · Voz: {voces.nombre_voz(p.get('voz_usada') or p.get('voz', ''))}",
         *([f"Claude: {x.get('pasos')} pasos · {x.get('tokens_salida', 0):,} tokens escritos · "
             f"{x.get('tokens_entrada', 0) + x.get('tokens_cache', 0):,} leídos ({x.get('tokens_cache', 0):,} de caché) · {x.get('minutos')} min"]
           if (x := p.get("consumo")) else []),
+        *([ "──── FUENTES (verifica antes de publicar) ────", *p["fuentes"], ""] if p.get("fuentes") else []),
         *[f"⚠️ {a}" for a in avisos], "",
         "Antes de publicar, revisa que los datos del video sean correctos.",
     ])

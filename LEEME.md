@@ -5,6 +5,19 @@ ilustración: pincel con volumen, luz cálida de borde, colores apagados y grano
 por palabra. Claude Code escribe el guion y el dibujo de cada escena, mira sus propias hojas de contacto y corrige; la fábrica
 renderiza el MP4 y lo envía por correo.
 
+## ¿Lo arriesgarías? (`riesgo`, desde 2026-11-24, la página activa)
+Historias **reales** de personas famosas o empresas que lo apostaron todo (despedidos, rechazados, casi en quiebra) en 35-50 s (12-16 escenas, 100-140 palabras),
+con un giro y una moraleja de una frase, y un reto final que divide los comentarios («¿tú lo habrías arriesgado todo?»). Estilo de referencia: silueta oscura
+**sin rostro** (`S30.hombre(..., {silueta: true})`, máscara plana con borde cálido), títulos gigantes con una palabra en rojo, pegatinas amarillas con el dato y
+fondos nocturnos morados. Cada video sale **en español y en inglés** (mismo dibujo, otra voz y otros subtítulos).
+Reglas: `.claude/commands/video-riesgo.md` (verifica cada dato con WebSearch y trae `fuentes` en el guion: salen en el correo para revisarlas antes de publicar).
+Ejemplo: `ejemplos/riesgo/` (`guion.json` trae el campo `en`; `escenas.js` escribe sus rótulos con `L(es, en)` porque `window.IDIOMA` decide el idioma).
+`idiomas: [en]` y `voz_en` en `config/nichos.yaml` activan la versión extra: `fabrica.renderizar_variantes` crea el proyecto `<id>_en` y `run.py --auto` envía un correo por idioma.
+```bash
+claude "/video-riesgo riesgo LIBRE"              # una historia nueva (Claude la elige y la verifica)
+python run.py --nicho riesgo --guion guion.json  # crea el proyecto desde un guion; luego --hoja ID y --render ID (hace es y en)
+```
+
 ## Series de Sombra de Evidencia
 Videos de **90-120 s (26-32 escenas, 260-330 palabras)**, con una sola cifra en la voz, mucha dramatización (Tito apuesta, discute y se rinde) y final que obliga a tomar bando. Sin zoom animado: la variedad sale de cortes entre planos fijos (`K.corte`), paneos con paralaje y primer plano (`K.plano` con `frente`), y de personajes que actúan.
 

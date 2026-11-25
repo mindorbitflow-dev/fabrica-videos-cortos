@@ -18,7 +18,7 @@ evidencia:
   tono: >-
     Intriga de detective, ritmo rápido, datos concretos (años, nombres, cifras) y una lección final de Sombra. En Origen oculto suena
     a «esto te lo ocultaron»; en Mito vs. evidencia, a curiosidad amable («vamos a ver la evidencia»). Todo verificable.
-  auto: true          # única página activa desde 2026-11-22
+  auto: false         # desactivado el 2026-11-24 al lanzar Giro Final (a mano con --nicho evidencia); antes era la única activa desde 2026-11-22
   cuadros_hoja: 3     # inicio, mitad y final de cada escena en las hojas de revisión: así se ve el recorrido y no solo los extremos
   formato: historia   # Tito pregunta, Sombra revela el origen con un flashback (reglas en .claude/commands/video.md)
   marca: sombra       # portada serif y cierre con el logo (assets/marca/sombra.jpg)
@@ -190,6 +190,47 @@ estafa:
     - El QR falso pegado sobre el real en el restaurante
     - La voz de tu hijo clonada con inteligencia artificial
 
+riesgo:
+  nombre: 🎲 ¿Lo arriesgarías?
+  descripcion: >-
+    Historias REALES de personas famosas y de negocios que lo apostaron todo (despedidos, rechazados, en quiebra, sin dinero para la renta)
+    y lo que pasó después, contadas en 35-50 s con una silueta sin rostro, títulos gigantes y un giro que cambia cómo ves al personaje.
+    Cierra con un reto que divide los comentarios: «¿tú lo habrías arriesgado todo?». Cada video sale en español y en inglés.
+  tono: >-
+    Narrador directo y con tensión, frases cortas, números concretos (dólares, años, intentos) y un giro. Admira sin adorar: muestra el
+    costo real de arriesgarse y deja que el espectador decida. Todo verificable con fuentes; nada de rumores ni frases inventadas.
+  formato: riesgo        # gancho → el riesgo → la caída → el giro → el resultado → la moraleja → el reto (reglas en .claude/commands/video-riesgo.md)
+  personajes: ilustra    # silueta sin rostro (S30.hombre con silueta: true) sobre los decorados D
+  comando: video-riesgo
+  cuadros_hoja: 2
+  temas: libre           # Claude elige cada historia con WebSearch; la lista es solo de ejemplo
+  herramientas: "WebSearch,WebFetch"   # para verificar cada dato y traer las fuentes
+  modelo: sonnet
+  final: pregunta        # la última escena es el reto para comentar (la pone el sistema en grande)
+  portada_en_video: false
+  idiomas: [en]          # además del español, el mismo video en inglés (campo "en" del guion; voz_en = su voz). El inglés paga más por mil vistas
+  voz: "gemini:Charon"
+  voz_en: "gemini:Charon"
+  estilo_voz: "Say at a brisk, lively pace like a gripping short story"   # medido 2026-11-24: con "pausas y suspenso" el mismo texto duraba 60 s en vez de 37
+  auto: true
+  estilo: ilustracion
+  cierre: "¿Tú lo habrías arriesgado todo? Escríbelo en los comentarios."
+  lema: "¿Lo arriesgarías?"
+  paleta: {fondo: ["#2a1b4d", "#1a1033", "#0d0820"], acento: "#FFD23F", principal: "#FFFFFF", secundario: "#8E7CC3", peligro: "#FF4B3E", ok: "#5BBF7A"}
+  ideas:
+    # solo ejemplos de la clase de historia (Claude elige y verifica la suya, y no repite las ya hechas)
+    - Steve Jobs - lo echaron de Apple y volvió para salvarla
+    - James Dyson y sus 5.127 prototipos antes del primer éxito
+    - J. K. Rowling - doce editoriales rechazaron Harry Potter
+    - Walt Disney - su primera empresa quebró antes de crear a Mickey
+    - El coronel Sanders empezó a vender franquicias a los 65 años
+    - Airbnb vendía cereales de colección para pagar deudas
+    - Netflix ofreció venderse a Blockbuster y se rieron
+    - Phil Knight vendía zapatillas desde la cajuela de su auto antes de Nike
+    - Sylvester Stallone se negó a vender el guion de Rocky si no lo protagonizaba
+    - Oprah Winfrey - la sacaron de su primer puesto en televisión
+    - Michael Jordan no entró al equipo principal de su instituto
+    - Colgate, Ford o Honda - empresas que estuvieron a punto de desaparecer
 biologia:
   nombre: 🧬 Biología que no te contaron
   descripcion: Datos reales del cuerpo y los animales que contradicen lo que la gente cree, con giro sorprendente.

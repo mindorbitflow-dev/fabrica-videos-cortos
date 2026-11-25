@@ -16,7 +16,7 @@ on:
       nicho:
         description: Nicho (rotar = el que lleva más tiempo sin video)
         type: choice
-        options: [todos, rotar, evidencia, sobrevive, estafa, biologia, cotidiano, ciencia, cuerpo, tecnologia, dinero, mente]
+        options: [todos, rotar, riesgo, evidencia, sobrevive, estafa, biologia, cotidiano, ciencia, cuerpo, tecnologia, dinero, mente]
         default: rotar
       ejemplo:
         description: Renderizar un ejemplo (ejemplos/NOMBRE) en vez de fabricar, p. ej. estafa

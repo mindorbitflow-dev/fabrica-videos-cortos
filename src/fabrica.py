@@ -175,11 +175,16 @@ def nuevo_de_autor(nicho: str, guion: dict) -> dict:
     """Proyecto a partir de un guion ya escrito ({tema, titulo, portada, escenas: [{voz}], caption, hashtags}) cuyas escenas se dibujan
     a medida en escenas.js. El guion pasa la misma comprobación de muletillas que los de la IA; lo que falle queda como aviso."""
     p = nuevo_proyecto(nicho, guion["tema"])
-    p.update({k: guion[k] for k in ("titulo", "portada", "caption", "hashtags", "post", "serie") if guion.get(k)})
+    p.update({k: guion[k] for k in ("titulo", "portada", "caption", "hashtags", "post", "serie", "fuentes") if guion.get(k)})
     p["escenas"] = [{"voz": e["voz"].strip(), "visual": e.get("visual", ""), "html": "", "origen": "autor"} for e in guion["escenas"]]
     p["avisos"] = guionista.muletillas_en({**guion, "escenas": guion["escenas"][:-1]})  # la última escena pide seguir la página
     if cargar_nichos()[nicho].get("formato") == "historia":
         p["avisos"] += _avisos_historia(guion)
+    if cargar_nichos()[nicho].get("formato") == "riesgo":
+        p["avisos"] += _avisos_riesgo(guion)
+    if guion.get("en"):   # la misma historia narrada en inglés (mismas escenas, otra voz y otros textos): ver variante()
+        p["en"] = {k: guion["en"][k] for k in ("titulo", "portada", "caption", "hashtags") if guion["en"].get(k)}
+        p["en"]["escenas"] = [str(e["voz"] if isinstance(e, dict) else e).strip() for e in guion["en"]["escenas"]]
     p["autor"], p["estado"] = True, "guion"
     return guardar(p)
 
@@ -211,6 +216,35 @@ def _avisos_historia(guion: dict) -> list[str]:
     final = str(escenas[-1].get("voz", "")) if escenas else ""
     if "?" not in final or re.search(r"\bs[ií]guenos\b", final, re.I):
         avisos.append("la última escena no es una pregunta para comentar")
+    return avisos
+
+
+def _avisos_riesgo(guion: dict) -> list[str]:
+    """Lo que aleja un guion de ¿Lo arriesgarías? de lo que retiene: historia que no cabe en ~50 s, sin giro ni moraleja, sin pregunta
+    de reto, sin fuentes que verificar o con la versión en inglés desalineada."""
+    escenas = guion.get("escenas") or []
+    palabras = sum(len(str(e.get("voz", "")).split()) for e in escenas)
+    avisos = []
+    if palabras > 150 or palabras < 90:
+        avisos.append(f"guion de {palabras} palabras (≈{round(palabras / 2.9)} s); lo ideal son 100-140 (35-50 s)")
+    if len(escenas) > 17 or len(escenas) < 11:
+        avisos.append(f"{len(escenas)} escenas; lo ideal son 12-16")
+    roles = {e.get("rol") for e in escenas}
+    for rol in ("gancho", "giro", "moraleja"):
+        if rol not in roles:
+            avisos.append(f"falta la escena con rol {rol}")
+    if escenas and len(str(escenas[0].get("voz", "")).split()) > 14:
+        avisos.append("la primera frase pasa de 14 palabras")
+    final = str(escenas[-1].get("voz", "")) if escenas else ""
+    if "?" not in final or re.search(r"\bs[ií]guenos\b|\bfollow\b", final, re.I):
+        avisos.append("la última escena no es una pregunta de reto para comentar")
+    if len(guion.get("fuentes") or []) < 2:
+        avisos.append("faltan fuentes: el guion debe traer 2 o más enlaces de donde salen los datos (campo fuentes) para revisarlos antes de publicar")
+    en = (guion.get("en") or {}).get("escenas")
+    if not en:
+        avisos.append("falta la versión en inglés (campo en)")
+    elif len(en) != len(escenas):
+        avisos.append(f"la versión en inglés tiene {len(en)} escenas y la española {len(escenas)}: deben coincidir")
     return avisos
 
 
@@ -293,8 +327,10 @@ def componer_html(p: dict) -> str:
         estilo += " texto-oscuro"
     if conf.get("subtitulos") == "arriba":   # subtítulos en la parte de arriba del video, sin borde ni relieve
         estilo += " subs-arriba"
+    idioma = p.get("idioma", "es")
+    js = f'<script>window.IDIOMA = "{idioma}";</script>\n' + js   # las escenas eligen sus rótulos con window.IDIOMA
     return f"""<!DOCTYPE html>
-<html lang="es"><head><meta charset="utf-8"><title>{htmlmod.escape(p['titulo'])}</title>
+<html lang="{idioma}"><head><meta charset="utf-8"><title>{htmlmod.escape(p['titulo'])}</title>
 <style>{css}
 :root {{ --fondo-a:{fa}; --fondo-b:{fb}; --fondo-c:{fc}; --acento:{pal['acento']}; --rejilla:rgba({r},{g},{b},.07); }}</style>
 </head><body class="estilo-{estilo}"><div id="lienzo">
@@ -321,7 +357,7 @@ def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, m
     html.write_text(componer_html(p), encoding="utf-8")
     p["voz"] = voz or p.get("voz") or cargar_nichos()[p["nicho"]]["voz"]
     duracion, p["voz_usada"] = render.renderizar(html, mp4(p), p["voz"], velocidad, elegir_musica(musica), progreso,
-                                                 cargar_nichos()[p["nicho"]].get("estilo_voz", ""))
+                                                 cargar_nichos()[p["nicho"]].get("estilo_voz", ""), p.get("idioma", "es"))
     p["duracion"] = round(duracion, 1)
     p["verificacion"] = render.verificar_mp4(mp4(p))  # dimensiones, códecs, peso y final en silencio
     render.miniatura(mp4(p), miniatura(p), min(2.0, p["duracion"] / 2))
@@ -337,6 +373,41 @@ def renderizar(p: dict, voz: Optional[str] = None, velocidad: str = VELOCIDAD, m
     guardar(p)
     registrar_historial(p)
     return p
+
+
+def variante(p: dict, idioma: str) -> dict:
+    """Proyecto hermano del mismo video en otro idioma (`idiomas` del nicho): mismas escenas dibujadas (escenas.js), pero con la voz, los
+    subtítulos, el título y el texto de publicación de `p["en"]`. Los rótulos dibujados eligen idioma con window.IDIOMA."""
+    traduccion = p.get(idioma)
+    if not traduccion or len(traduccion.get("escenas", [])) != len(p["escenas"]):
+        raise RuntimeError(f"la versión «{idioma}» no coincide con las {len(p['escenas'])} escenas del video")
+    v = {**p, "id": f"{p['id']}_{idioma}", "idioma": idioma, "estado": "guion", "variantes": [],
+         "titulo": traduccion.get("titulo") or p["titulo"], "portada": traduccion.get("portada") or p.get("portada"),
+         "caption": traduccion.get("caption", p.get("caption", "")), "hashtags": traduccion.get("hashtags") or p.get("hashtags", []),
+         "voz": cargar_nichos()[p["nicho"]].get(f"voz_{idioma}") or p["voz"],
+         "escenas": [{**e, "voz": voz} for e, voz in zip(p["escenas"], traduccion["escenas"])]}
+    for k in ("en", "consumo", "duracion", "verificacion", "voz_usada"):
+        v.pop(k, None)
+    guardar(v)
+    shutil.copy(escenas_js(p), escenas_js(v))
+    return v
+
+
+def renderizar_variantes(p: dict, musica: str = "ninguna", progreso=None) -> list[dict]:
+    """Renderiza el video en los demás idiomas del nicho (`idiomas: [en]`). Si una versión falla, el video principal ya está entregado:
+    se registra el aviso y se sigue. Devuelve los proyectos listos."""
+    listos = []
+    for idioma in cargar_nichos()[p["nicho"]].get("idiomas") or []:
+        if not p.get(idioma):
+            continue
+        try:
+            listos.append(renderizar(variante(p, idioma), musica=musica, progreso=progreso))
+        except Exception as error:
+            p.setdefault("avisos", []).append(f"no se pudo hacer la versión «{idioma}»: {error}")
+            print(f"[Fábrica] versión {idioma}: {error}")
+    p["variantes"] = [v["id"] for v in listos]
+    guardar(p)
+    return listos
 
 
 def texto_publicacion(p: dict) -> str:
@@ -361,4 +432,6 @@ def fabricar(nicho: str, tema: Optional[str], router: LLMRouter, musica: str = "
     _, errores = hoja(p, por_escena=2)
     if errores:  # una escena con error saldría en negro
         raise RuntimeError("el dibujo tiene errores: " + "; ".join(errores)[:400])
-    return renderizar(p, musica=musica, progreso=lambda f, m: avisar(0.5 + 0.5 * f, m))
+    p = renderizar(p, musica=musica, progreso=lambda f, m: avisar(0.5 + 0.45 * f, m))
+    renderizar_variantes(p, musica=musica, progreso=lambda f, m: avisar(0.95 + 0.05 * f, f"[otro idioma] {m}"))
+    return cargar(p["id"])

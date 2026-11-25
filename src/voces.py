@@ -162,13 +162,13 @@ def _gemini_pcm(texto: str, voz: str, estilo: str = "") -> bytes:
     raise ultimo or RuntimeError("Gemini TTS no respondió")
 
 
-def _transcribir(audio: Path) -> list[tuple[str, float, float]]:
+def _transcribir(audio: Path, idioma: str = "es") -> list[tuple[str, float, float]]:
     global _whisper
     with _whisper_lock:
         if _whisper is None:
             from faster_whisper import WhisperModel
             _whisper = WhisperModel("base", device="cpu", compute_type="int8")
-        segmentos, _ = _whisper.transcribe(str(audio), language="es", word_timestamps=True)
+        segmentos, _ = _whisper.transcribe(str(audio), language=idioma, word_timestamps=True)
         return [(w.word.strip(), float(w.start), float(w.end)) for s in segmentos for w in (s.words or []) if w.word.strip()]
 
 
@@ -179,7 +179,7 @@ def _factor_velocidad(velocidad: str) -> float:
         return 1.0
 
 
-def _narrar_gemini(textos: list[str], voz: str, velocidad: str, tmp: Path, estilo: str = "") -> tuple[Path, list[dict]]:
+def _narrar_gemini(textos: list[str], voz: str, velocidad: str, tmp: Path, estilo: str = "", idioma: str = "es") -> tuple[Path, list[dict]]:
     crudo = tmp / "gemini.wav"
     with wave.open(str(crudo), "wb") as w:
         w.setnchannels(1)
@@ -196,7 +196,7 @@ def _narrar_gemini(textos: list[str], voz: str, velocidad: str, tmp: Path, estil
         for t in texto.split():
             tokens.append(t)
             escena_de.append(i)
-    oidas = _transcribir(voz_wav)
+    oidas = _transcribir(voz_wav, idioma)
     tiempos, cobertura = alinear(tokens, oidas)
     if cobertura < COBERTURA_MIN:
         raise RuntimeError(f"la voz solo leyó el {cobertura:.0%} del guion")
@@ -222,14 +222,14 @@ def _narrar_gemini(textos: list[str], voz: str, velocidad: str, tmp: Path, estil
 
 
 def narrar(textos: list[str], voz: str, velocidad: str, tmp: Path, avisar: Aviso = print,
-           estilo: str = "") -> tuple[Path, list[dict], str]:
+           estilo: str = "", idioma: str = "es") -> tuple[Path, list[dict], str]:
     """Devuelve (audio de voz, plan de escenas, voz realmente usada)."""
     tmp.mkdir(parents=True, exist_ok=True)
     if voz.startswith("gemini:"):
         for intento in range(2):  # la repetición de Gemini es aleatoria: un segundo intento suele salir bien
             try:
                 avisar(f"Voz {voz[7:]} (Gemini, intento {intento + 1})...")
-                return (*_narrar_gemini(textos, voz[7:], velocidad, tmp, estilo), voz)
+                return (*_narrar_gemini(textos, voz[7:], velocidad, tmp, estilo, idioma), voz)
             except Exception as error:
                 avisar(f"Gemini no sirvió: {str(error)[:100]}")
         avisar(f"Uso la voz de respaldo {nombre_voz(RESPALDO)}")
